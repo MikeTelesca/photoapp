@@ -9,7 +9,7 @@ const presetPrompts: Record<string, string> = {
 ADDITIONAL REQUIRED EDITS:
 - WINDOW PULL: Make the view through ALL windows clearly visible. Show blue sky, trees, or cityscape. No blown-out white windows.
 - STRAIGHTEN all vertical lines. Fix any lens distortion. Perspective correction.
-- TV SCREENS: If there's a TV, replace the screen with a beach or nature scene.
+- TV SCREENS: If there's a TV, replace the screen with a Netflix home screen showing movie thumbnails and the Netflix UI (red logo, rows of movie posters, dark background).
 - MIRRORS: Remove any photographer reflections in mirrors or glass.
 - LENS FLARES: Remove any light flares or sun spots.
 - EXTERIOR SHOTS: Replace dull sky with blue sky and light clouds. Make grass lush and green.

@@ -562,7 +562,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {/* Custom Instructions */}
           <div className="bg-white border-t border-graphite-100 px-6 py-3 flex items-center gap-2.5">
             <div className="flex gap-1.5 flex-wrap">
-              {["Remove car", "Make brighter", "Fix sky", "Enhance grass", "Pot lights on", "Remove photographer", "TV: beach scene", "TV: fireplace", "TV: black screen", "TV: Netflix logo"].map(
+              {["Remove car", "Make brighter", "Fix sky", "Enhance grass", "Pot lights on", "Remove photographer", "TV: Netflix home screen", "TV: fireplace video", "TV: black screen off", "TV: beach scene"].map(
                 (tag) => (
                   <button
                     key={tag}

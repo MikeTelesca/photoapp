@@ -31,6 +31,7 @@ export async function POST(
 
     let processed = 0;
     let failed = 0;
+    let totalCost = 0;
 
     for (const photo of job.photos) {
       if (photo.status === "approved" || photo.editedUrl) {
@@ -88,6 +89,10 @@ export async function POST(
             },
           });
           processed++;
+          
+          // Track cost (~$0.04 per AI enhancement)
+          const AI_COST_PER_IMAGE = 0.04;
+          totalCost += AI_COST_PER_IMAGE;
         } else {
           failed++;
         }
@@ -103,12 +108,13 @@ export async function POST(
       }
     }
 
-    // Update job status
+    // Update job status with total cost
     await prisma.job.update({
       where: { id: jobId },
       data: {
         status: "review",
         processedPhotos: processed,
+        cost: { increment: totalCost },
       },
     });
 

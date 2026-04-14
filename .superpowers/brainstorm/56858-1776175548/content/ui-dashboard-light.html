@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Editor Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: #F0F2F5;
+    color: #1a1a2e;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 230px;
+    background: #FFFFFF;
+    border-right: 1px solid #E8EBF0;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+  .brand {
+    padding: 0 24px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #4F6EF7, #7B61FF);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(79,110,247,0.3);
+  }
+  .brand-icon svg { width: 18px; height: 18px; color: white; }
+  .brand-name { font-size: 17px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.02em; }
+
+  .nav-section { margin-bottom: 28px; }
+  .nav-label {
+    font-size: 10px; font-weight: 700; color: #9CA3AF;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0 24px; margin-bottom: 8px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 24px; margin: 2px 10px;
+    border-radius: 10px;
+    font-size: 13.5px; font-weight: 500; color: #6B7280;
+    cursor: pointer; transition: all 150ms ease;
+  }
+  .nav-item:hover { background: #F5F6FA; color: #374151; }
+  .nav-item.active {
+    background: linear-gradient(135deg, #4F6EF7, #6C5CE7);
+    color: white;
+    box-shadow: 0 4px 12px rgba(79,110,247,0.25);
+  }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .nav-item.active svg { color: white; }
+  .nav-badge {
+    margin-left: auto;
+    background: #EF4444;
+    color: white;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    min-width: 20px; text-align: center;
+  }
+  .nav-item.active .nav-badge { background: rgba(255,255,255,0.3); }
+
+  .sidebar-spacer { flex: 1; }
+  .sidebar-user {
+    padding: 16px 24px;
+    border-top: 1px solid #E8EBF0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, #F97316, #EF4444);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: white;
+  }
+  .user-name { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+  .user-role { font-size: 11px; color: #9CA3AF; }
+
+  /* Main */
+  .main { flex: 1; margin-left: 230px; }
+
+  /* Top Bar */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(240,242,245,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #E8EBF0;
+  }
+  .topbar-left {}
+  .topbar-title { font-size: 22px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.02em; }
+  .topbar-sub { font-size: 13px; color: #9CA3AF; margin-top: 2px; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .search-bar {
+    display: flex; align-items: center; gap: 8px;
+    background: white;
+    border: 1px solid #E8EBF0;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px; color: #9CA3AF;
+    width: 200px;
+    transition: all 200ms ease;
+  }
+  .search-bar:hover { border-color: #D1D5DB; }
+  .search-bar svg { width: 15px; height: 15px; color: #9CA3AF; }
+  .btn-primary {
+    background: linear-gradient(135deg, #4F6EF7, #6C5CE7);
+    color: white;
+    padding: 9px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    box-shadow: 0 4px 12px rgba(79,110,247,0.25);
+    transition: all 200ms ease;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(79,110,247,0.35); }
+  .btn-primary svg { width: 14px; height: 14px; }
+  .btn-outline {
+    background: white;
+    color: #374151;
+    padding: 9px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    border: 1px solid #E8EBF0; cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .btn-outline:hover { background: #F9FAFB; border-color: #D1D5DB; }
+
+  .content { padding: 24px 32px; }
+
+  /* Stat Cards */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    border: 1px solid #E8EBF0;
+    transition: all 250ms ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+  .stat-card.highlight {
+    background: linear-gradient(135deg, #4F6EF7, #7B61FF);
+    border: none;
+    box-shadow: 0 8px 24px rgba(79,110,247,0.25);
+  }
+  .stat-card.highlight .stat-label { color: rgba(255,255,255,0.7); }
+  .stat-card.highlight .stat-number { color: white; }
+  .stat-card.highlight .stat-change { color: rgba(255,255,255,0.8); }
+  .stat-label {
+    font-size: 12px; font-weight: 600; color: #9CA3AF;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 12px;
+  }
+  .stat-number { font-size: 32px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .stat-change { font-size: 12px; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+  .stat-change.positive { color: #10B981; }
+  .stat-change.neutral { color: #9CA3AF; }
+  .stat-icon {
+    position: absolute; top: 18px; right: 18px;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stat-icon svg { width: 18px; height: 18px; }
+  .stat-icon.amber { background: #FEF3C7; color: #F59E0B; }
+  .stat-icon.blue { background: #DBEAFE; color: #3B82F6; }
+  .stat-icon.green { background: #D1FAE5; color: #10B981; }
+  .stat-icon.purple { background: #EDE9FE; color: #8B5CF6; }
+  .stat-card.highlight .stat-icon { background: rgba(255,255,255,0.2); color: white; }
+
+  /* Grid layout for lower section */
+  .grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+
+  /* Job List Card */
+  .card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #E8EBF0;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 18px 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #F3F4F6;
+  }
+  .card-title { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+
+  /* Segmented Control */
+  .segmented {
+    display: inline-flex;
+    background: #F3F4F6;
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .seg {
+    padding: 5px 14px;
+    font-size: 11.5px; font-weight: 600;
+    color: #9CA3AF;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .seg:hover { color: #6B7280; }
+  .seg.active { background: white; color: #1a1a2e; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* Jobs */
+  .job-list { padding: 4px 0; }
+  .job {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px;
+    cursor: pointer;
+    transition: background 150ms ease;
+    border-bottom: 1px solid #F9FAFB;
+  }
+  .job:last-child { border-bottom: none; }
+  .job:hover { background: #FAFBFC; }
+  .job-left { display: flex; align-items: center; gap: 12px; }
+  .job-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .job-dot.processing { background: #F59E0B; }
+  .job-dot.review { background: #4F6EF7; }
+  .job-dot.done { background: #10B981; }
+  .job-address { font-size: 13.5px; font-weight: 600; color: #1a1a2e; margin-bottom: 3px; }
+  .job-meta { display: flex; gap: 12px; font-size: 12px; color: #9CA3AF; }
+  .job-right { display: flex; align-items: center; gap: 12px; }
+  .job-status { font-size: 12px; font-weight: 600; }
+  .job-status.processing { color: #F59E0B; }
+  .job-status.review { color: #4F6EF7; }
+  .job-status.done { color: #10B981; }
+  .progress-track { width: 72px; height: 4px; background: #F3F4F6; border-radius: 2px; }
+  .progress-fill { height: 4px; border-radius: 2px; }
+  .progress-fill.amber { background: #F59E0B; }
+  .chevron { color: #D1D5DB; font-size: 16px; }
+
+  .tag {
+    font-size: 10.5px; font-weight: 600;
+    padding: 3px 8px; border-radius: 6px;
+  }
+  .tag.standard { background: #EFF6FF; color: #3B82F6; }
+  .tag.luxury { background: #F3E8FF; color: #8B5CF6; }
+
+  .btn-text { font-size: 12px; font-weight: 600; color: #4F6EF7; background: none; border: none; cursor: pointer; }
+  .btn-text:hover { color: #3B5DE7; }
+
+  /* Right panel */
+  .panel-stack { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Quick Actions */
+  .quick-actions { padding: 18px 22px; }
+  .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .quick-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 18px 12px;
+    background: #FAFBFC;
+    border: 1px solid #F3F4F6;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .quick-btn:hover { background: #F0F2F5; border-color: #E8EBF0; transform: translateY(-1px); }
+  .quick-btn-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quick-btn-icon svg { width: 18px; height: 18px; }
+  .quick-btn-icon.blue { background: #DBEAFE; color: #3B82F6; }
+  .quick-btn-icon.purple { background: #EDE9FE; color: #8B5CF6; }
+  .quick-btn-icon.green { background: #D1FAE5; color: #10B981; }
+  .quick-btn-icon.amber { background: #FEF3C7; color: #F59E0B; }
+  .quick-btn-label { font-size: 12px; font-weight: 600; color: #374151; }
+
+  /* Activity Feed */
+  .activity { padding: 0 22px 18px; }
+  .activity-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #F9FAFB;
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .activity-icon svg { width: 14px; height: 14px; }
+  .activity-icon.green { background: #D1FAE5; color: #10B981; }
+  .activity-icon.blue { background: #DBEAFE; color: #3B82F6; }
+  .activity-icon.amber { background: #FEF3C7; color: #F59E0B; }
+  .activity-text { font-size: 12.5px; color: #374151; line-height: 1.4; }
+  .activity-text strong { font-weight: 600; color: #1a1a2e; }
+  .activity-time { font-size: 11px; color: #D1D5DB; margin-top: 2px; }
+
+  /* Cost card */
+  .cost-card { padding: 22px; text-align: center; }
+  .cost-amount { font-size: 36px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.03em; margin: 8px 0 4px; font-variant-numeric: tabular-nums; }
+  .cost-label { font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.04em; }
+  .cost-sub { font-size: 13px; color: #9CA3AF; }
+  .cost-bar { margin-top: 16px; }
+  .cost-bar-track { height: 6px; background: #F3F4F6; border-radius: 3px; overflow: hidden; }
+  .cost-bar-fill { height: 6px; background: linear-gradient(90deg, #4F6EF7, #7B61FF); border-radius: 3px; width: 32%; }
+  .cost-bar-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: #D1D5DB; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
+      </div>
+      <span class="brand-name">PhotoApp</span>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Menu</div>
+      <div class="nav-item active">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+        Needs Review
+        <span class="nav-badge">5</span>
+      </div>
+      <div class="nav-item">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>
+        Processing
+      </div>
+      <div class="nav-item">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        Completed
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Settings</div>
+      <div class="nav-item">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"/></svg>
+        Presets
+      </div>
+      <div class="nav-item">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
+        Photographers
+      </div>
+      <div class="nav-item">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+        Settings
+      </div>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="avatar">A</div>
+      <div>
+        <div class="user-name">Admin</div>
+        <div class="user-role">aroundthehouse</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Dashboard</div>
+        <div class="topbar-sub">Manage your photo editing jobs</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="search-bar">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>
+          Search jobs...
+        </div>
+        <button class="btn-outline">Import Data</button>
+        <button class="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          New Job
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat-card highlight">
+          <div class="stat-label">Total Jobs</div>
+          <div class="stat-number">24</div>
+          <div class="stat-change positive">This week</div>
+          <div class="stat-icon" style="background:rgba(255,255,255,0.2);color:white;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"/></svg>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Processing</div>
+          <div class="stat-number">3</div>
+          <div class="stat-change neutral">~45 min left</div>
+          <div class="stat-icon amber">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Needs Review</div>
+          <div class="stat-number">5</div>
+          <div class="stat-change neutral">289 photos</div>
+          <div class="stat-icon blue">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Approved Today</div>
+          <div class="stat-number">12</div>
+          <div class="stat-change positive">4 properties</div>
+          <div class="stat-icon green">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid: Jobs + Right Panel -->
+      <div class="grid">
+
+        <!-- Jobs Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Jobs</div>
+            <div class="segmented">
+              <div class="seg active">All</div>
+              <div class="seg">Processing</div>
+              <div class="seg">Review</div>
+              <div class="seg">Approved</div>
+            </div>
+          </div>
+          <div class="job-list">
+            <div class="job">
+              <div class="job-left">
+                <div class="job-dot processing"></div>
+                <div>
+                  <div class="job-address">123 Main Street, Toronto</div>
+                  <div class="job-meta"><span>Mike R.</span><span>35 min ago</span><span>72 photos</span><span class="tag standard">Standard</span></div>
+                </div>
+              </div>
+              <div class="job-right">
+                <div>
+                  <div class="job-status processing">Processing 45/72</div>
+                  <div class="progress-track"><div class="progress-fill amber" style="width:62%"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="job">
+              <div class="job-left">
+                <div class="job-dot review"></div>
+                <div>
+                  <div class="job-address">456 Oak Avenue, Mississauga</div>
+                  <div class="job-meta"><span>Sarah K.</span><span>2 hrs ago</span><span>48 photos</span><span class="tag standard">Standard</span></div>
+                </div>
+              </div>
+              <div class="job-right">
+                <div class="job-status review">Ready for Review</div>
+                <span class="chevron">›</span>
+              </div>
+            </div>
+            <div class="job">
+              <div class="job-left">
+                <div class="job-dot review"></div>
+                <div>
+                  <div class="job-address">789 Pine Drive, Oakville</div>
+                  <div class="job-meta"><span>You</span><span>3 hrs ago</span><span>95 photos</span><span class="tag luxury">Luxury</span></div>
+                </div>
+              </div>
+              <div class="job-right">
+                <div class="job-status review">Ready for Review</div>
+                <span class="chevron">›</span>
+              </div>
+            </div>
+            <div class="job">
+              <div class="job-left">
+                <div class="job-dot done"></div>
+                <div>
+                  <div class="job-address">15 Birch Lane, Burlington</div>
+                  <div class="job-meta"><span>Mike R.</span><span>Yesterday</span><span>38 photos · 1 twilight</span><span class="tag standard">Standard</span></div>
+                </div>
+              </div>
+              <div class="job-right">
+                <div class="job-status done">Approved</div>
+                <button class="btn-text">Download</button>
+              </div>
+            </div>
+            <div class="job">
+              <div class="job-left">
+                <div class="job-dot done"></div>
+                <div>
+                  <div class="job-address">220 Lakeshore Blvd, Unit 1405</div>
+                  <div class="job-meta"><span>Sarah K.</span><span>Yesterday</span><span>32 photos (condo)</span><span class="tag standard">Standard</span></div>
+                </div>
+              </div>
+              <div class="job-right">
+                <div class="job-status done">Approved</div>
+                <button class="btn-text">Download</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="panel-stack">
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Quick Actions</div>
+            </div>
+            <div class="quick-actions">
+              <div class="quick-grid">
+                <div class="quick-btn">
+                  <div class="quick-btn-icon blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z"/></svg>
+                  </div>
+                  <span class="quick-btn-label">Upload Photos</span>
+                </div>
+                <div class="quick-btn">
+                  <div class="quick-btn-icon purple">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>
+                  </div>
+                  <span class="quick-btn-label">Dropbox Link</span>
+                </div>
+                <div class="quick-btn">
+                  <div class="quick-btn-icon green">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"/></svg>
+                  </div>
+                  <span class="quick-btn-label">Edit Presets</span>
+                </div>
+                <div class="quick-btn">
+                  <div class="quick-btn-icon amber">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                  </div>
+                  <span class="quick-btn-label">Batch Download</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cost This Month -->
+          <div class="card">
+            <div class="cost-card">
+              <div class="cost-label">Cost This Month</div>
+              <div class="cost-amount">$47<span style="font-weight:400;color:#9CA3AF;">.20</span></div>
+              <div class="cost-sub">682 images processed</div>
+              <div class="cost-bar">
+                <div class="cost-bar-track"><div class="cost-bar-fill"></div></div>
+                <div class="cost-bar-labels"><span>$0</span><span>Budget: $150</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Activity</div>
+              <button class="btn-text">See All</button>
+            </div>
+            <div class="activity">
+              <div class="activity-item">
+                <div class="activity-icon green">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                </div>
+                <div>
+                  <div class="activity-text"><strong>15 Birch Lane</strong> approved</div>
+                  <div class="activity-time">2 hours ago</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon blue">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z"/></svg>
+                </div>
+                <div>
+                  <div class="activity-text"><strong>Mike R.</strong> uploaded 123 Main St</div>
+                  <div class="activity-time">35 min ago</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon amber">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+                </div>
+                <div>
+                  <div class="activity-text"><strong>456 Oak Ave</strong> — 2 photos regenerated</div>
+                  <div class="activity-time">3 hours ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

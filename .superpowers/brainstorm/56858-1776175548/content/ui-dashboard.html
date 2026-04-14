@@ -1,0 +1,132 @@
+<h2>Web App UI — Dashboard</h2>
+<p class="subtitle">The main screen you see after logging in as admin</p>
+
+<div class="mockup">
+  <div class="mockup-header">Admin Dashboard</div>
+  <div class="mockup-body" style="padding: 0; background: #0f172a; min-height: 600px;">
+
+    <!-- Top Nav -->
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; background: #1e293b; border-bottom: 1px solid #334155;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-size: 20px; font-weight: 700; color: #f8fafc;">📷 PhotoApp</div>
+        <div style="color: #475569; font-size: 14px;">(we'll name it later)</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="color: #94a3b8; font-size: 14px; cursor: pointer;">Dashboard</div>
+        <div style="color: #94a3b8; font-size: 14px; cursor: pointer;">Presets</div>
+        <div style="color: #94a3b8; font-size: 14px; cursor: pointer;">Photographers</div>
+        <div style="background: #3b82f6; color: white; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;">+ New Job</div>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div style="display: flex; gap: 16px; padding: 24px;">
+      <div style="flex: 1; background: #1a1a2e; border-radius: 12px; padding: 16px;">
+        <div style="color: #64748b; font-size: 12px; text-transform: uppercase;">Processing</div>
+        <div style="color: #fbbf24; font-size: 28px; font-weight: 700;">3</div>
+      </div>
+      <div style="flex: 1; background: #1a1a2e; border-radius: 12px; padding: 16px;">
+        <div style="color: #64748b; font-size: 12px; text-transform: uppercase;">Ready for Review</div>
+        <div style="color: #3b82f6; font-size: 28px; font-weight: 700;">5</div>
+      </div>
+      <div style="flex: 1; background: #1a1a2e; border-radius: 12px; padding: 16px;">
+        <div style="color: #64748b; font-size: 12px; text-transform: uppercase;">Approved Today</div>
+        <div style="color: #22c55e; font-size: 28px; font-weight: 700;">12</div>
+      </div>
+      <div style="flex: 1; background: #1a1a2e; border-radius: 12px; padding: 16px;">
+        <div style="color: #64748b; font-size: 12px; text-transform: uppercase;">This Month Cost</div>
+        <div style="color: #94a3b8; font-size: 28px; font-weight: 700;">$47.20</div>
+      </div>
+    </div>
+
+    <!-- Job List -->
+    <div style="padding: 0 24px 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="color: #f8fafc; margin: 0;">Recent Jobs</h3>
+        <div style="display: flex; gap: 8px;">
+          <div style="background: #1e293b; color: #94a3b8; padding: 6px 12px; border-radius: 6px; font-size: 12px; border: 1px solid #334155;">All</div>
+          <div style="background: #1e293b; color: #fbbf24; padding: 6px 12px; border-radius: 6px; font-size: 12px; border: 1px solid #92400e;">Processing</div>
+          <div style="background: #1e293b; color: #3b82f6; padding: 6px 12px; border-radius: 6px; font-size: 12px; border: 1px solid #1e40af;">Review</div>
+          <div style="background: #1e293b; color: #22c55e; padding: 6px 12px; border-radius: 6px; font-size: 12px; border: 1px solid #166534;">Done</div>
+        </div>
+      </div>
+
+      <!-- Job Cards -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+
+        <!-- Job 1: Processing -->
+        <div style="background: #1a1a2e; border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #fbbf24;">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div>
+              <div style="color: #f8fafc; font-weight: 600;">123 Main Street, Toronto</div>
+              <div style="color: #64748b; font-size: 13px;">Uploaded by Mike R. • 35 min ago • 72 photos (216 brackets)</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="text-align: right;">
+              <div style="color: #fbbf24; font-size: 13px; font-weight: 600;">Processing 45/72</div>
+              <div style="background: #334155; border-radius: 4px; height: 6px; width: 120px; margin-top: 4px;">
+                <div style="background: #fbbf24; border-radius: 4px; height: 6px; width: 75px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Job 2: Ready for Review -->
+        <div style="background: #1a1a2e; border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #3b82f6; cursor: pointer;">
+          <div>
+            <div style="color: #f8fafc; font-weight: 600;">456 Oak Avenue, Mississauga</div>
+            <div style="color: #64748b; font-size: 13px;">Uploaded by Sarah K. • 2 hrs ago • 48 photos • Preset: Standard</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="color: #3b82f6; font-size: 13px; font-weight: 600;">Ready for Review</div>
+            <div style="color: #3b82f6; font-size: 18px;">→</div>
+          </div>
+        </div>
+
+        <!-- Job 3: Ready for Review -->
+        <div style="background: #1a1a2e; border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #3b82f6; cursor: pointer;">
+          <div>
+            <div style="color: #f8fafc; font-weight: 600;">789 Pine Drive, Oakville</div>
+            <div style="color: #64748b; font-size: 13px;">Uploaded by You • 3 hrs ago • 95 photos • Preset: Luxury</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="color: #3b82f6; font-size: 13px; font-weight: 600;">Ready for Review</div>
+            <div style="color: #3b82f6; font-size: 18px;">→</div>
+          </div>
+        </div>
+
+        <!-- Job 4: Approved -->
+        <div style="background: #1a1a2e; border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #22c55e;">
+          <div>
+            <div style="color: #f8fafc; font-weight: 600;">15 Birch Lane, Burlington</div>
+            <div style="color: #64748b; font-size: 13px;">Uploaded by Mike R. • Yesterday • 38 photos • 1 twilight</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="color: #22c55e; font-size: 13px; font-weight: 600;">Approved ✓</div>
+            <div style="background: #1e293b; color: #94a3b8; padding: 4px 10px; border-radius: 6px; font-size: 12px; border: 1px solid #334155;">Download</div>
+          </div>
+        </div>
+
+        <!-- Job 5: Approved -->
+        <div style="background: #1a1a2e; border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #22c55e;">
+          <div>
+            <div style="color: #f8fafc; font-weight: 600;">220 Lakeshore Blvd, Unit 1405</div>
+            <div style="color: #64748b; font-size: 13px;">Uploaded by Sarah K. • Yesterday • 32 photos (condo) • No twilight</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="color: #22c55e; font-size: 13px; font-weight: 600;">Approved ✓</div>
+            <div style="background: #1e293b; color: #94a3b8; padding: 4px 10px; border-radius: 6px; font-size: 12px; border: 1px solid #334155;">Download</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px; background: #1e293b; border-radius: 8px;">
+  <h3 style="margin-top: 0;">Dashboard Design</h3>
+  <p style="color: #94a3b8;">This is what you'd see every day. Stats at top, job list below with status filters. Click a "Ready for Review" job to enter the review gallery. How does this feel?</p>
+</div>

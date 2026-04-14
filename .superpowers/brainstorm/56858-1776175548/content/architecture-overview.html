@@ -1,0 +1,115 @@
+<h2>System Architecture Overview</h2>
+<p class="subtitle">How the pieces fit together — from camera to finished photos</p>
+
+<div class="mockup">
+  <div class="mockup-header">End-to-End Pipeline</div>
+  <div class="mockup-body" style="padding: 32px; background: #0a0a0a;">
+
+    <!-- Flow diagram using CSS -->
+    <div style="display: flex; flex-direction: column; gap: 24px; max-width: 800px; margin: 0 auto;">
+
+      <!-- Step 1: Input -->
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="background: #2563eb; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">1</div>
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #2563eb; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #93c5fd; margin-bottom: 4px;">📁 Dropbox Intake</div>
+          <div style="color: #94a3b8; font-size: 14px;">Photographer uploads bracketed photos to Dropbox → pastes link into web app</div>
+        </div>
+      </div>
+
+      <div style="text-align: center; color: #475569;">↓</div>
+
+      <!-- Step 2: Web App -->
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="background: #2563eb; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">2</div>
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #2563eb; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #93c5fd; margin-bottom: 4px;">🌐 Web App (Vercel / Next.js)</div>
+          <div style="color: #94a3b8; font-size: 14px;">Pulls photos from Dropbox → reads EXIF metadata → groups brackets (3 or 5 per angle) → creates processing job</div>
+        </div>
+      </div>
+
+      <div style="text-align: center; color: #475569;">↓</div>
+
+      <!-- Step 3: Processing -->
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="background: #7c3aed; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">3</div>
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #7c3aed; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #c4b5fd; margin-bottom: 4px;">⚙️ Processing Worker (Google Cloud Run)</div>
+          <div style="color: #94a3b8; font-size: 14px;">
+            <strong>Programmatic (free, full-res):</strong> HDR merge, straighten, lens correction, brightness/color balance<br>
+            <strong>Tools:</strong> enfuse/OpenCV, lensfun, ImageMagick
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; color: #475569;">↓</div>
+
+      <!-- Step 4: AI Enhancement -->
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="background: #059669; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">4</div>
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #059669; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #6ee7b7; margin-bottom: 4px;">🤖 AI Enhancement (Google Imagen 4)</div>
+          <div style="color: #94a3b8; font-size: 14px;">
+            Sky replacement • TV replacement • Reflection/photographer removal • Grass enhancement • Window pulls • Lens flare removal<br>
+            <span style="color: #fbbf24; font-size: 12px;">~$0.04-0.08 per final image</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; color: #475569;">↓</div>
+
+      <!-- Step 5: Review -->
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="background: #ea580c; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">5</div>
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #ea580c; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #fdba74; margin-bottom: 4px;">👁️ Review Gallery</div>
+          <div style="color: #94a3b8; font-size: 14px;">
+            Browse all edited photos • Approve / Reject / Regenerate each one • Add custom instructions ("remove car", "make twilight") • Mark 1-2 exteriors for twilight conversion
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; color: #475569;">↓</div>
+
+      <!-- Step 6: Output -->
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="background: #dc2626; color: white; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">6</div>
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #dc2626; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #fca5a5; margin-bottom: 4px;">📦 Download</div>
+          <div style="color: #94a3b8; font-size: 14px;">
+            Batch download all approved photos • Under 19MB each • Under 7999px • Back to Dropbox or local download
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Cost summary -->
+    <div style="margin-top: 32px; padding: 16px; background: #1e293b; border-radius: 12px; max-width: 800px; margin-left: auto; margin-right: auto;">
+      <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <div style="color: #64748b; font-size: 12px; text-transform: uppercase;">Cost per final photo</div>
+          <div style="color: #22c55e; font-size: 20px; font-weight: bold;">~$0.05-0.09</div>
+        </div>
+        <div>
+          <div style="color: #64748b; font-size: 12px; text-transform: uppercase;">vs. Current</div>
+          <div style="color: #ef4444; font-size: 20px; font-weight: bold;">$0.40</div>
+        </div>
+        <div>
+          <div style="color: #64748b; font-size: 12px; text-transform: uppercase;">Monthly savings (busy)</div>
+          <div style="color: #22c55e; font-size: 20px; font-weight: bold;">~$450-500</div>
+        </div>
+        <div>
+          <div style="color: #64748b; font-size: 12px; text-transform: uppercase;">Hosting</div>
+          <div style="color: #93c5fd; font-size: 20px; font-weight: bold;">~$5-15/mo</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px; background: #1e293b; border-radius: 8px;">
+  <h3 style="margin-top: 0;">Does this flow look right?</h3>
+  <p style="color: #94a3b8;">This is the high-level pipeline. Let me know if anything feels off or if I'm missing a step, then we'll dive into the web app UI design next.</p>
+</div>

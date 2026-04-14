@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:help.apiyi.com)",
+      "WebFetch(domain:higgsfield.ai)",
+      "Bash(/Users/aroundthehouse/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh --project-dir \"/Users/aroundthehouse/Ai Editor ATH\")",
+      "Bash(python3 \"/Users/aroundthehouse/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.0.1/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate photography SaaS tool dashboard dark professional\" --design-system -p \"Photo Editor\")",
+      "Bash(python3 \"/Users/aroundthehouse/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.0.1/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"dark mode dashboard professional tool\" --domain style -n 5)",
+      "Bash(git init:*)"
+    ]
+  }
+}

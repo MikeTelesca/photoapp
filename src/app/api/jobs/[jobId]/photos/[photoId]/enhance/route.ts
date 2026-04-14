@@ -109,6 +109,13 @@ export async function POST(
       },
     });
 
+    // Track cost (~$0.04 per AI enhancement)
+    const AI_COST_PER_IMAGE = 0.04;
+    await prisma.job.update({
+      where: { id: jobId },
+      data: { cost: { increment: AI_COST_PER_IMAGE } },
+    });
+
     return NextResponse.json({
       success: true,
       photoId,

@@ -1,0 +1,120 @@
+<h2>Updated System Architecture</h2>
+<p class="subtitle">Full pipeline with all features</p>
+
+<div class="mockup">
+  <div class="mockup-header">Complete Feature Set</div>
+  <div class="mockup-body" style="padding: 32px; background: #0a0a0a;">
+    <div style="max-width: 850px; margin: 0 auto;">
+
+      <!-- Row 1: Users -->
+      <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #3b82f6; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #93c5fd; margin-bottom: 8px;">👤 Photographer Login</div>
+          <div style="color: #94a3b8; font-size: 13px;">
+            • Paste Dropbox link<br>
+            • Submit new jobs<br>
+            • View own job status
+          </div>
+        </div>
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #f59e0b; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #fcd34d; margin-bottom: 8px;">👑 Admin Login (You)</div>
+          <div style="color: #94a3b8; font-size: 13px;">
+            • See all jobs from all photographers<br>
+            • Review / approve / reject / regenerate<br>
+            • Manage presets & photographer accounts
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div style="background: #1a1a2e; border: 1px solid #6366f1; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+        <div style="font-weight: 600; color: #a5b4fc; margin-bottom: 8px;">📊 Property Dashboard</div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <div style="background: #0f172a; padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+            <span style="color: #fbbf24;">●</span> <span style="color: #94a3b8;">123 Main St — Processing (45/70)</span>
+          </div>
+          <div style="background: #0f172a; padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+            <span style="color: #3b82f6;">●</span> <span style="color: #94a3b8;">456 Oak Ave — Ready for Review</span>
+          </div>
+          <div style="background: #0f172a; padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+            <span style="color: #22c55e;">●</span> <span style="color: #94a3b8;">789 Pine Dr — Approved ✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing Pipeline -->
+      <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+        <!-- Left: Programmatic -->
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #7c3aed; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #c4b5fd; margin-bottom: 8px;">⚙️ Programmatic Processing</div>
+          <div style="color: #94a3b8; font-size: 13px;">
+            • EXIF bracket grouping (3 or 5)<br>
+            • HDR merge (enfuse/OpenCV)<br>
+            • Straighten verticals<br>
+            • Lens distortion correction<br>
+            • Brightness & color balance<br>
+            <span style="color: #22c55e; font-size: 11px;">FREE — runs on Cloud Run</span>
+          </div>
+        </div>
+        <!-- Right: AI -->
+        <div style="flex: 1; background: #1a1a2e; border: 1px solid #059669; border-radius: 12px; padding: 16px;">
+          <div style="font-weight: 600; color: #6ee7b7; margin-bottom: 8px;">🤖 AI Enhancement (Imagen 4)</div>
+          <div style="color: #94a3b8; font-size: 13px;">
+            • <strong>Auto-detect interior vs exterior</strong><br>
+            • Exteriors: sky replace, grass enhance<br>
+            • Interiors: TV replace, window pull<br>
+            • Both: reflection/photographer removal, lens flare removal<br>
+            <span style="color: #fbbf24; font-size: 11px;">~$0.04-0.08 per image</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Presets -->
+      <div style="background: #1a1a2e; border: 1px solid #ec4899; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+        <div style="font-weight: 600; color: #f9a8d4; margin-bottom: 8px;">🎨 Editing Presets</div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <div style="background: #0f172a; padding: 8px 16px; border-radius: 8px; border: 2px solid #3b82f6;">
+            <div style="color: #93c5fd; font-size: 13px; font-weight: 600;">Standard</div>
+            <div style="color: #64748b; font-size: 11px;">Window-pulled HDR, natural+magazine</div>
+          </div>
+          <div style="background: #0f172a; padding: 8px 16px; border-radius: 8px; border: 1px solid #334155;">
+            <div style="color: #94a3b8; font-size: 13px; font-weight: 600;">Bright & Airy</div>
+            <div style="color: #64748b; font-size: 11px;">Light, warm, lifted shadows</div>
+          </div>
+          <div style="background: #0f172a; padding: 8px 16px; border-radius: 8px; border: 1px solid #334155;">
+            <div style="color: #94a3b8; font-size: 13px; font-weight: 600;">Luxury</div>
+            <div style="color: #64748b; font-size: 11px;">Rich contrast, dramatic, moody</div>
+          </div>
+          <div style="background: #0f172a; padding: 8px 16px; border-radius: 8px; border: 1px dashed #475569;">
+            <div style="color: #64748b; font-size: 13px;">+ Custom</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review -->
+      <div style="background: #1a1a2e; border: 1px solid #ea580c; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+        <div style="font-weight: 600; color: #fdba74; margin-bottom: 8px;">👁️ Review Gallery</div>
+        <div style="color: #94a3b8; font-size: 13px;">
+          • <strong>Before / After</strong> side-by-side (original merged HDR vs AI edit)<br>
+          • Approve ✓ / Reject ✗ / Regenerate 🔄 per photo<br>
+          • Type custom instructions: <span style="color: #93c5fd;">"remove the car"</span> <span style="color: #93c5fd;">"make brighter"</span><br>
+          • <strong>Twilight queue:</strong> mark 1-2 exteriors → specify details <span style="color: #93c5fd;">"pot lights on, exterior sconces lit"</span>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div style="background: #1a1a2e; border: 1px solid #22c55e; border-radius: 12px; padding: 16px;">
+        <div style="font-weight: 600; color: #86efac; margin-bottom: 8px;">📦 Output</div>
+        <div style="color: #94a3b8; font-size: 13px;">
+          Batch download all approved photos • Under 19MB • Under 7999px • Save to Dropbox or local download
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px; background: #1e293b; border-radius: 8px;">
+  <h3 style="margin-top: 0;">Architecture approved?</h3>
+  <p style="color: #94a3b8;">If this looks good, we'll move on to designing the actual web app UI — what the screens look like.</p>
+</div>

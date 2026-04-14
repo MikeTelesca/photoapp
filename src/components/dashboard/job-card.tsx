@@ -61,6 +61,7 @@ export function JobCard({ job }: JobCardProps) {
             <span>{job.photographerName}</span>
             <span>{formatTime(job.createdAt)}</span>
             <span>{job.totalPhotos} photos{job.twilightCount > 0 ? ` · ${job.twilightCount} twilight` : ""}</span>
+            {job.cost > 0 && <span>${job.cost.toFixed(2)}</span>}
             <Badge variant={job.preset === "luxury" ? "luxury" : "standard"}>
               {job.preset.charAt(0).toUpperCase() + job.preset.slice(1)}
             </Badge>

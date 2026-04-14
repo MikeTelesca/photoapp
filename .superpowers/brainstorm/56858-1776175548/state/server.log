@@ -1,0 +1,12 @@
+{"type":"server-started","port":49920,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:49920","screen_dir":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content","state_dir":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/state"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/architecture-overview.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/architecture-v2.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/ui-dashboard.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/ui-dashboard-v2.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/ui-dashboard-apple.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/ui-dashboard-light.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/color-options.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/color-options-2.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/dashboard-graphite.html"}
+{"type":"screen-added","file":"/Users/aroundthehouse/Ai Editor ATH/.superpowers/brainstorm/56858-1776175548/content/review-gallery.html"}
+{"type":"server-stopped","reason":"idle timeout"}

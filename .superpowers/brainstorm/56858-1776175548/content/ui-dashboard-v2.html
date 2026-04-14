@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Editor Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #050506; color: #EDEDEF; }
+
+  /* Nav */
+  .nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; background: #0a0a0c; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #2563EB, #7c3aed); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .nav-brand-icon svg { width: 18px; height: 18px; color: white; }
+  .nav-brand-name { font-size: 18px; font-weight: 700; color: #f8fafc; letter-spacing: -0.02em; }
+  .nav-links { display: flex; align-items: center; gap: 8px; }
+  .nav-link { color: #8A8F98; font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: all 200ms ease; }
+  .nav-link:hover { color: #EDEDEF; background: rgba(255,255,255,0.05); }
+  .nav-link.active { color: #EDEDEF; background: rgba(255,255,255,0.08); }
+  .nav-btn { background: #2563EB; color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 200ms ease; display: flex; align-items: center; gap: 6px; }
+  .nav-btn:hover { background: #3b82f6; }
+  .nav-btn svg { width: 14px; height: 14px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px 28px; }
+  .stat-card { background: #0a0a0c; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; }
+  .stat-label { color: #8A8F98; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .stat-label svg { width: 14px; height: 14px; }
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .stat-value.yellow { color: #fbbf24; }
+  .stat-value.blue { color: #3b82f6; }
+  .stat-value.green { color: #22c55e; }
+  .stat-value.muted { color: #EDEDEF; }
+  .stat-sub { color: #8A8F98; font-size: 12px; margin-top: 4px; }
+
+  /* Job List */
+  .jobs { padding: 0 28px 28px; }
+  .jobs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .jobs-title { font-size: 16px; font-weight: 600; }
+  .filters { display: flex; gap: 6px; }
+  .filter { background: transparent; color: #8A8F98; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.06); transition: all 200ms ease; }
+  .filter:hover { color: #EDEDEF; border-color: rgba(255,255,255,0.12); }
+  .filter.active { color: #EDEDEF; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+
+  /* Job Cards */
+  .job-card { background: #0a0a0c; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 18px 20px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 200ms ease; }
+  .job-card:hover { border-color: rgba(255,255,255,0.12); background: #0f0f12; }
+  .job-left { display: flex; align-items: center; gap: 16px; }
+  .job-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .job-status-dot.processing { background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.3); }
+  .job-status-dot.review { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.3); }
+  .job-status-dot.done { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.3); }
+  .job-info {}
+  .job-address { font-size: 14px; font-weight: 600; color: #f8fafc; margin-bottom: 4px; }
+  .job-meta { font-size: 12px; color: #8A8F98; display: flex; gap: 12px; align-items: center; }
+  .job-meta-item { display: flex; align-items: center; gap: 4px; }
+  .job-meta-item svg { width: 12px; height: 12px; color: #64748b; }
+  .job-right { display: flex; align-items: center; gap: 16px; }
+  .job-status-text { font-size: 12px; font-weight: 600; text-align: right; }
+  .job-status-text.processing { color: #fbbf24; }
+  .job-status-text.review { color: #3b82f6; }
+  .job-status-text.done { color: #22c55e; }
+  .progress-bar { width: 100px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 6px; }
+  .progress-fill { height: 4px; background: #fbbf24; border-radius: 2px; }
+  .job-action { background: rgba(255,255,255,0.05); color: #8A8F98; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); transition: all 200ms ease; display: flex; align-items: center; gap: 4px; }
+  .job-action:hover { background: rgba(255,255,255,0.08); color: #EDEDEF; }
+  .job-action svg { width: 12px; height: 12px; }
+  .job-arrow { color: #3b82f6; font-size: 18px; }
+
+  .preset-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .preset-standard { background: rgba(37,99,235,0.15); color: #93c5fd; }
+  .preset-luxury { background: rgba(124,58,237,0.15); color: #c4b5fd; }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
+    </div>
+    <span class="nav-brand-name">PhotoApp</span>
+  </div>
+  <div class="nav-links">
+    <div class="nav-link active">Dashboard</div>
+    <div class="nav-link">Presets</div>
+    <div class="nav-link">Photographers</div>
+    <div class="nav-link">Settings</div>
+    <button class="nav-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+      New Job
+    </button>
+  </div>
+</nav>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>
+      Processing
+    </div>
+    <div class="stat-value yellow">3</div>
+    <div class="stat-sub">~45 min remaining</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+      Ready for Review
+    </div>
+    <div class="stat-value blue">5</div>
+    <div class="stat-sub">289 photos total</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+      Approved Today
+    </div>
+    <div class="stat-value green">12</div>
+    <div class="stat-sub">4 properties</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+      Cost This Month
+    </div>
+    <div class="stat-value muted">$47<span style="font-size: 16px; color: #8A8F98;">.20</span></div>
+    <div class="stat-sub">682 images processed</div>
+  </div>
+</div>
+
+<!-- Jobs -->
+<div class="jobs">
+  <div class="jobs-header">
+    <h2 class="jobs-title">Recent Jobs</h2>
+    <div class="filters">
+      <div class="filter active">All</div>
+      <div class="filter">Processing</div>
+      <div class="filter">Review</div>
+      <div class="filter">Approved</div>
+    </div>
+  </div>
+
+  <!-- Processing -->
+  <div class="job-card">
+    <div class="job-left">
+      <div class="job-status-dot processing"></div>
+      <div class="job-info">
+        <div class="job-address">123 Main Street, Toronto</div>
+        <div class="job-meta">
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0"/></svg>
+            Mike R.
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            35 min ago
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/></svg>
+            72 photos (216 brackets)
+          </span>
+          <span class="preset-tag preset-standard">Standard</span>
+        </div>
+      </div>
+    </div>
+    <div class="job-right">
+      <div>
+        <div class="job-status-text processing">Processing 45 / 72</div>
+        <div class="progress-bar"><div class="progress-fill" style="width: 62%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ready for Review -->
+  <div class="job-card">
+    <div class="job-left">
+      <div class="job-status-dot review"></div>
+      <div class="job-info">
+        <div class="job-address">456 Oak Avenue, Mississauga</div>
+        <div class="job-meta">
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0"/></svg>
+            Sarah K.
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            2 hrs ago
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/></svg>
+            48 photos
+          </span>
+          <span class="preset-tag preset-standard">Standard</span>
+        </div>
+      </div>
+    </div>
+    <div class="job-right">
+      <div class="job-status-text review">Ready for Review</div>
+      <span class="job-arrow">→</span>
+    </div>
+  </div>
+
+  <!-- Ready for Review 2 -->
+  <div class="job-card">
+    <div class="job-left">
+      <div class="job-status-dot review"></div>
+      <div class="job-info">
+        <div class="job-address">789 Pine Drive, Oakville</div>
+        <div class="job-meta">
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0"/></svg>
+            You
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            3 hrs ago
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/></svg>
+            95 photos
+          </span>
+          <span class="preset-tag preset-luxury">Luxury</span>
+        </div>
+      </div>
+    </div>
+    <div class="job-right">
+      <div class="job-status-text review">Ready for Review</div>
+      <span class="job-arrow">→</span>
+    </div>
+  </div>
+
+  <!-- Approved -->
+  <div class="job-card">
+    <div class="job-left">
+      <div class="job-status-dot done"></div>
+      <div class="job-info">
+        <div class="job-address">15 Birch Lane, Burlington</div>
+        <div class="job-meta">
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0"/></svg>
+            Mike R.
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            Yesterday
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/></svg>
+            38 photos · 1 twilight
+          </span>
+          <span class="preset-tag preset-standard">Standard</span>
+        </div>
+      </div>
+    </div>
+    <div class="job-right">
+      <div class="job-status-text done">Approved</div>
+      <div class="job-action">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        Download
+      </div>
+    </div>
+  </div>
+
+  <!-- Approved 2 -->
+  <div class="job-card">
+    <div class="job-left">
+      <div class="job-status-dot done"></div>
+      <div class="job-info">
+        <div class="job-address">220 Lakeshore Blvd, Unit 1405</div>
+        <div class="job-meta">
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0"/></svg>
+            Sarah K.
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            Yesterday
+          </span>
+          <span class="job-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/></svg>
+            32 photos (condo)
+          </span>
+          <span class="preset-tag preset-standard">Standard</span>
+        </div>
+      </div>
+    </div>
+    <div class="job-right">
+      <div class="job-status-text done">Approved</div>
+      <div class="job-action">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        Download
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

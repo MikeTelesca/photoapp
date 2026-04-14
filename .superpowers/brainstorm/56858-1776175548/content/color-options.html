@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #F0F2F5; -webkit-font-smoothing: antialiased; }
+  h1 { text-align: center; padding: 40px 0 8px; font-size: 24px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.02em; }
+  .sub { text-align: center; font-size: 14px; color: #9CA3AB; margin-bottom: 32px; }
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+
+  .option {
+    background: white; border-radius: 16px; overflow: hidden;
+    border: 3px solid transparent; cursor: pointer;
+    transition: all 250ms ease; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .option:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+
+  .option-header { padding: 20px 24px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F3F4F6; }
+  .option-swatch { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+  .option-swatch svg { width: 20px; height: 20px; color: white; }
+  .option-name { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+  .option-desc { font-size: 12px; color: #9CA3AF; margin-top: 2px; }
+  .option-label { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-left: auto; }
+
+  /* Preview area */
+  .preview { padding: 20px 24px; }
+  .preview-row { display: flex; gap: 10px; margin-bottom: 12px; }
+
+  .mini-stat {
+    flex: 1; border-radius: 10px; padding: 14px;
+    border: 1px solid #E8EBF0;
+  }
+  .mini-stat.accent { border: none; color: white; }
+  .mini-stat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; margin-bottom: 6px; }
+  .mini-stat-value { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
+  .mini-stat.accent .mini-stat-label { color: rgba(255,255,255,0.8); }
+  .mini-stat.accent .mini-stat-value { color: white; }
+
+  .mini-nav { display: flex; gap: 4px; margin-bottom: 12px; }
+  .mini-nav-item {
+    padding: 5px 12px; border-radius: 6px;
+    font-size: 10px; font-weight: 600; color: #9CA3AF;
+  }
+  .mini-nav-item.active { color: white; }
+
+  .mini-job { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #F9FAFB; }
+  .mini-job:last-child { border-bottom: none; }
+  .mini-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .mini-job-text { font-size: 11px; font-weight: 500; color: #374151; flex: 1; }
+  .mini-job-status { font-size: 10px; font-weight: 600; }
+
+  .mini-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 14px; border-radius: 8px;
+    font-size: 11px; font-weight: 600; color: white;
+    border: none;
+  }
+
+  /* Color palettes */
+  .palette { display: flex; gap: 4px; margin-top: 12px; }
+  .palette-dot { width: 20px; height: 20px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); }
+</style>
+</head>
+<body>
+
+<h1>Pick Your Accent Color</h1>
+<p class="sub">Same layout — different personality. Click to select.</p>
+
+<div class="options">
+
+  <!-- Option A: Emerald -->
+  <div class="option" data-choice="emerald" onclick="if(window.toggleSelect)toggleSelect(this)">
+    <div class="option-header">
+      <div class="option-swatch" style="background: linear-gradient(135deg, #059669, #10B981); box-shadow: 0 4px 12px rgba(5,150,105,0.3);">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
+      </div>
+      <div>
+        <div class="option-name">A. Emerald</div>
+        <div class="option-desc">Clean, professional, trustworthy</div>
+      </div>
+      <div class="option-label" style="background: #D1FAE5; color: #059669;">Fresh</div>
+    </div>
+    <div class="preview">
+      <div class="preview-row">
+        <div class="mini-stat accent" style="background: linear-gradient(135deg, #059669, #10B981); box-shadow: 0 4px 12px rgba(5,150,105,0.25);">
+          <div class="mini-stat-label">Total Jobs</div>
+          <div class="mini-stat-value">24</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label" style="color:#9CA3AF;">Processing</div>
+          <div class="mini-stat-value" style="color:#1a1a2e;">3</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label" style="color:#9CA3AF;">Review</div>
+          <div class="mini-stat-value" style="color:#1a1a2e;">5</div>
+        </div>
+      </div>
+      <div class="mini-nav">
+        <div class="mini-nav-item active" style="background: linear-gradient(135deg, #059669, #10B981);">All</div>
+        <div class="mini-nav-item">Processing</div>
+        <div class="mini-nav-item">Review</div>
+      </div>
+      <div class="mini-job"><div class="mini-dot" style="background:#059669;"></div><div class="mini-job-text">456 Oak Avenue</div><div class="mini-job-status" style="color:#059669;">Ready for Review</div></div>
+      <div class="mini-job"><div class="mini-dot" style="background:#F59E0B;"></div><div class="mini-job-text">123 Main Street</div><div class="mini-job-status" style="color:#F59E0B;">Processing</div></div>
+      <div style="margin-top:12px;"><button class="mini-btn" style="background: linear-gradient(135deg, #059669, #10B981); box-shadow: 0 4px 12px rgba(5,150,105,0.25);">+ New Job</button></div>
+      <div class="palette">
+        <div class="palette-dot" style="background:#059669;"></div>
+        <div class="palette-dot" style="background:#10B981;"></div>
+        <div class="palette-dot" style="background:#34D399;"></div>
+        <div class="palette-dot" style="background:#6EE7B7;"></div>
+        <div class="palette-dot" style="background:#D1FAE5;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Slate/Charcoal -->
+  <div class="option" data-choice="slate" onclick="if(window.toggleSelect)toggleSelect(this)">
+    <div class="option-header">
+      <div class="option-swatch" style="background: linear-gradient(135deg, #1E293B, #475569); box-shadow: 0 4px 12px rgba(30,41,59,0.3);">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
+      </div>
+      <div>
+        <div class="option-name">B. Slate</div>
+        <div class="option-desc">Minimal, serious, premium</div>
+      </div>
+      <div class="option-label" style="background: #F1F5F9; color: #475569;">Classic</div>
+    </div>
+    <div class="preview">
+      <div class="preview-row">
+        <div class="mini-stat accent" style="background: linear-gradient(135deg, #1E293B, #334155); box-shadow: 0 4px 12px rgba(30,41,59,0.25);">
+          <div class="mini-stat-label">Total Jobs</div>
+          <div class="mini-stat-value">24</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label" style="color:#9CA3AF;">Processing</div>
+          <div class="mini-stat-value" style="color:#1a1a2e;">3</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label" style="color:#9CA3AF;">Review</div>
+          <div class="mini-stat-value" style="color:#1a1a2e;">5</div>
+        </div>
+      </div>
+      <div class="mini-nav">
+        <div class="mini-nav-item active" style="background: linear-gradient(135deg, #1E293B, #334155);">All</div>
+        <div class="mini-nav-item">Processing</div>
+        <div class="mini-nav-item">Review</div>
+      </div>
+      <div class="mini-job"><div class="mini-dot" style="background:#1E293B;"></div><div class="mini-job-text">456 Oak Avenue</div><div class="mini-job-status" style="color:#1E293B;">Ready for Review</div></div>
+      <div class="mini-job"><div class="mini-dot" style="background:#F59E0B;"></div><div class="mini-job-text">123 Main Street</div><div class="mini-job-status" style="color:#F59E0B;">Processing</div></div>
+      <div style="margin-top:12px;"><button class="mini-btn" style="background: linear-gradient(135deg, #1E293B, #334155); box-shadow: 0 4px 12px rgba(30,41,59,0.25);">+ New Job</button></div>
+      <div class="palette">
+        <div class="palette-dot" style="background:#0F172A;"></div>
+        <div class="palette-dot" style="background:#1E293B;"></div>
+        <div class="palette-dot" style="background:#334155;"></div>
+        <div class="palette-dot" style="background:#64748B;"></div>
+        <div class="palette-dot" style="background:#CBD5E1;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: Warm Orange -->
+  <div class="option" data-choice="orange" onclick="if(window.toggleSelect)toggleSelect(this)">
+    <div class="option-header">
+      <div class="option-swatch" style="background: linear-gradient(135deg, #EA580C, #F97316); box-shadow: 0 4px 12px rgba(234,88,12,0.3);">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
+      </div>
+      <div>
+        <div class="option-name">C. Warm Orange</div>
+        <div class="option-desc">Energetic, friendly, creative</div>
+      </div>
+      <div class="option-label" style="background: #FFF7ED; color: #EA580C;">Bold</div>
+    </div>
+    <div class="preview">
+      <div class="preview-row">
+        <div class="mini-stat accent" style="background: linear-gradient(135deg, #EA580C, #F97316); box-shadow: 0 4px 12px rgba(234,88,12,0.25);">
+          <div class="mini-stat-label">Total Jobs</div>
+          <div class="mini-stat-value">24</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label" style="color:#9CA3AF;">Processing</div>
+          <div class="mini-stat-value" style="color:#1a1a2e;">3</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label" style="color:#9CA3AF;">Review</div>
+          <div class="mini-stat-value" style="color:#1a1a2e;">5</div>
+        </div>
+      </div>
+      <div class="mini-nav">
+        <div class="mini-nav-item active" style="background: linear-gradient(135deg, #EA580C, #F97316);">All</div>
+        <div class="mini-nav-item">Processing</div>
+        <div class="mini-nav-item">Review</div>
+      </div>
+      <div class="mini-job"><div class="mini-dot" style="background:#EA580C;"></div><div class="mini-job-text">456 Oak Avenue</div><div class="mini-job-status" style="color:#EA580C;">Ready for Review</div></div>
+      <div class="mini-job"><div class="mini-dot" style="background:#F59E0B;"></div><div class="mini-job-text">123 Main Street</div><div class="mini-job-status" style="color:#F59E0B;">Processing</div></div>
+      <div style="margin-top:12px;"><button class="mini-btn" style="background: linear-gradient(135deg, #EA580C, #F97316); box-shadow: 0 4px 12px rgba(234,88,12,0.25);">+ New Job</button></div>
+      <div class="palette">
+        <div class="palette-dot" style="background:#9A3412;"></div>
+        <div class="palette-dot" style="background:#EA580C;"></div>
+        <div class="palette-dot" style="background:#F97316;"></div>
+        <div class="palette-dot" style="background:#FB923C;"></div>
+        <div class="palette-dot" style="background:#FED7AA;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option D: Teal -->
+  <div class="option" data-choice="teal" onclick="if(window.toggleSelect)toggleSelect(this)">
+    <div class="option-header">
+      <div class="option-swatch" style="background: linear-gradient(135deg, #0D9488, #14B8A6); box-shadow: 0 4px 12px rgba(13,148,136,0.3);">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/></svg>
+      </div>
+      <div>
+        <div class="option-name">D. Teal</div>
+        <div class="option-desc">Balanced, modern, calming</div>
+      </div>
+      <div class="option-label" style="background: #CCFBF1; color: #0D9488;">Smooth</div>
+    </div>
+    <div class="preview">
+      <div class="preview-row">
+        <div class="mini-stat accent" style="background: linear-gradient(135deg, #0D9488, #14B8A6); box-shadow: 0 4px 12px rgba(13,148,136,0.25);">
+          <div class="mini-stat-label">Total Jobs</div>
+          <div class="mini-stat-value">24</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label" style="color:#9CA3AF;">Processing</div>
+          <div class="mini-stat-value" style="color:#1a1a2e;">3</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label" style="color:#9CA3AF;">Review</div>
+          <div class="mini-stat-value" style="color:#1a1a2e;">5</div>
+        </div>
+      </div>
+      <div class="mini-nav">
+        <div class="mini-nav-item active" style="background: linear-gradient(135deg, #0D9488, #14B8A6);">All</div>
+        <div class="mini-nav-item">Processing</div>
+        <div class="mini-nav-item">Review</div>
+      </div>
+      <div class="mini-job"><div class="mini-dot" style="background:#0D9488;"></div><div class="mini-job-text">456 Oak Avenue</div><div class="mini-job-status" style="color:#0D9488;">Ready for Review</div></div>
+      <div class="mini-job"><div class="mini-dot" style="background:#F59E0B;"></div><div class="mini-job-text">123 Main Street</div><div class="mini-job-status" style="color:#F59E0B;">Processing</div></div>
+      <div style="margin-top:12px;"><button class="mini-btn" style="background: linear-gradient(135deg, #0D9488, #14B8A6); box-shadow: 0 4px 12px rgba(13,148,136,0.25);">+ New Job</button></div>
+      <div class="palette">
+        <div class="palette-dot" style="background:#0F766E;"></div>
+        <div class="palette-dot" style="background:#0D9488;"></div>
+        <div class="palette-dot" style="background:#14B8A6;"></div>
+        <div class="palette-dot" style="background:#2DD4BF;"></div>
+        <div class="palette-dot" style="background:#99F6E4;"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

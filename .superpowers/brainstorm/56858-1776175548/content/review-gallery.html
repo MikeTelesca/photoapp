@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #F0F2F5; color: #18181B; -webkit-font-smoothing: antialiased; }
+
+  /* Top bar */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid #E4E4E7;
+    padding: 12px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .back-btn {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 13px; font-weight: 500; color: #0891B2;
+    cursor: pointer; background: none; border: none;
+    transition: opacity 150ms;
+  }
+  .back-btn:hover { opacity: 0.7; }
+  .back-btn svg { width: 16px; height: 16px; }
+  .topbar-info {}
+  .topbar-address { font-size: 16px; font-weight: 700; color: #18181B; letter-spacing: -0.01em; }
+  .topbar-meta { font-size: 12px; color: #A1A1AA; margin-top: 2px; display: flex; gap: 12px; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .progress-text { font-size: 12px; font-weight: 600; color: #3F3F46; }
+  .progress-bar { width: 120px; height: 4px; background: #E4E4E7; border-radius: 2px; }
+  .progress-fill { height: 4px; background: #059669; border-radius: 2px; }
+  .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 200ms; display: flex; align-items: center; gap: 5px; }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-approve { background: #059669; color: white; }
+  .btn-approve:hover { background: #047857; }
+  .btn-download { background: linear-gradient(135deg, #18181B, #3F3F46); color: white; box-shadow: 0 2px 8px rgba(24,24,27,0.15); }
+  .btn-download:hover { transform: translateY(-1px); }
+  .btn-outline { background: white; color: #3F3F46; border: 1px solid #E4E4E7; }
+  .btn-outline:hover { background: #FAFAFA; }
+
+  /* Layout */
+  .layout { display: flex; height: calc(100vh - 61px); }
+
+  /* Thumbnail strip */
+  .strip {
+    width: 100px; background: white; border-right: 1px solid #E4E4E7;
+    overflow-y: auto; padding: 8px;
+    display: flex; flex-direction: column; gap: 4px;
+    flex-shrink: 0;
+  }
+  .strip::-webkit-scrollbar { width: 4px; }
+  .strip::-webkit-scrollbar-thumb { background: #D4D4D8; border-radius: 2px; }
+  .thumb {
+    width: 84px; height: 56px; border-radius: 6px;
+    background: #E4E4E7; cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 150ms; position: relative;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .thumb:hover { border-color: #A1A1AA; }
+  .thumb.active { border-color: #0891B2; box-shadow: 0 0 0 1px #0891B2; }
+  .thumb.approved::after {
+    content: ''; position: absolute; top: 3px; right: 3px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #059669; border: 2px solid white;
+  }
+  .thumb.rejected::after {
+    content: ''; position: absolute; top: 3px; right: 3px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #EF4444; border: 2px solid white;
+  }
+  .thumb.twilight::before {
+    content: '🌙'; position: absolute; bottom: 2px; left: 3px;
+    font-size: 10px;
+  }
+  .thumb-num {
+    position: absolute; bottom: 2px; right: 3px;
+    font-size: 9px; font-weight: 700; color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+  /* Placeholder photo colors */
+  .thumb.t1 { background: linear-gradient(135deg, #94A3B8, #CBD5E1); }
+  .thumb.t2 { background: linear-gradient(135deg, #A1A1AA, #D4D4D8); }
+  .thumb.t3 { background: linear-gradient(135deg, #9CA3AF, #D1D5DB); }
+  .thumb.t4 { background: linear-gradient(135deg, #78716C, #A8A29E); }
+  .thumb.t5 { background: linear-gradient(135deg, #64748B, #94A3B8); }
+  .thumb.t6 { background: linear-gradient(135deg, #71717A, #A1A1AA); }
+
+  /* Main viewer */
+  .viewer { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Before/After */
+  .compare {
+    flex: 1; display: flex; gap: 2px; padding: 16px;
+    background: #18181B; position: relative;
+    min-height: 0;
+  }
+  .compare-side {
+    flex: 1; border-radius: 8px; overflow: hidden;
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .compare-label {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(0,0,0,0.6); color: white;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 4px 10px; border-radius: 4px;
+    backdrop-filter: blur(8px);
+  }
+  .compare-img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  /* Placeholder images */
+  .img-before {
+    background: linear-gradient(180deg, #475569 0%, #1E293B 40%, #334155 60%, #64748B 100%);
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .img-before::after {
+    content: 'Original HDR Merge';
+    font-size: 13px; color: rgba(255,255,255,0.3); font-weight: 500;
+  }
+  .img-after {
+    background: linear-gradient(180deg, #60A5FA 0%, #93C5FD 15%, #E2E8F0 30%, #F8FAFC 50%, #D4C5A9 80%, #78716C 100%);
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .img-after::after {
+    content: 'AI Enhanced';
+    font-size: 13px; color: rgba(0,0,0,0.25); font-weight: 500;
+  }
+  .divider {
+    position: absolute; top: 16px; bottom: 16px;
+    left: 50%; transform: translateX(-50%);
+    width: 3px; background: rgba(255,255,255,0.4);
+    border-radius: 2px; z-index: 2;
+  }
+  .divider-handle {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px; height: 32px; border-radius: 50%;
+    background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 3; cursor: ew-resize;
+  }
+  .divider-handle svg { width: 16px; height: 16px; color: #3F3F46; }
+
+  /* Action bar */
+  .action-bar {
+    background: white; border-top: 1px solid #E4E4E7;
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .action-left { display: flex; align-items: center; gap: 16px; }
+  .photo-nav { display: flex; align-items: center; gap: 8px; }
+  .photo-label { font-size: 13px; font-weight: 600; color: #18181B; }
+  .photo-count { font-size: 12px; color: #A1A1AA; }
+  .nav-arrows { display: flex; gap: 4px; }
+  .nav-arrow {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #F4F4F5; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 150ms;
+  }
+  .nav-arrow:hover { background: #E4E4E7; }
+  .nav-arrow svg { width: 16px; height: 16px; color: #3F3F46; }
+
+  .action-center { display: flex; align-items: center; gap: 8px; }
+  .action-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    border: none; transition: all 200ms;
+  }
+  .action-btn svg { width: 16px; height: 16px; }
+  .action-btn.approve { background: #D1FAE5; color: #059669; }
+  .action-btn.approve:hover { background: #A7F3D0; }
+  .action-btn.reject { background: #FEE2E2; color: #DC2626; }
+  .action-btn.reject:hover { background: #FECACA; }
+  .action-btn.regen { background: #CFFAFE; color: #0891B2; }
+  .action-btn.regen:hover { background: #A5F3FC; }
+  .action-btn.twilight { background: #EDE9FE; color: #7C3AED; }
+  .action-btn.twilight:hover { background: #DDD6FE; }
+
+  .action-right { display: flex; align-items: center; gap: 8px; }
+
+  /* Instructions input */
+  .instructions {
+    background: white; border-top: 1px solid #F4F4F5;
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .instruct-input {
+    flex: 1; padding: 10px 14px;
+    background: #F4F4F5; border: 1px solid #E4E4E7;
+    border-radius: 8px; font-size: 13px; font-family: inherit;
+    color: #18181B; outline: none;
+    transition: border-color 200ms;
+  }
+  .instruct-input:focus { border-color: #0891B2; background: white; }
+  .instruct-input::placeholder { color: #A1A1AA; }
+  .instruct-send {
+    padding: 10px 16px; border-radius: 8px;
+    background: linear-gradient(135deg, #18181B, #3F3F46);
+    color: white; font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer;
+    transition: all 200ms;
+  }
+  .instruct-send:hover { transform: translateY(-1px); }
+
+  /* Tags row */
+  .tags-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .quick-tag {
+    padding: 5px 10px; border-radius: 6px;
+    background: #F4F4F5; color: #71717A;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    border: 1px solid #E4E4E7;
+    transition: all 150ms;
+  }
+  .quick-tag:hover { background: #E4E4E7; color: #3F3F46; }
+
+  /* Detection badges */
+  .detections {
+    position: absolute; bottom: 10px; right: 10px;
+    display: flex; gap: 4px; z-index: 5;
+  }
+  .detect-badge {
+    padding: 3px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 600;
+    backdrop-filter: blur(8px);
+  }
+  .detect-badge.interior { background: rgba(8,145,178,0.8); color: white; }
+  .detect-badge.tv { background: rgba(124,58,237,0.8); color: white; }
+  .detect-badge.reflection { background: rgba(234,88,12,0.8); color: white; }
+  .detect-badge.sky { background: rgba(59,130,246,0.8); color: white; }
+  .detect-badge.grass { background: rgba(5,150,105,0.8); color: white; }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="back-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+      Dashboard
+    </button>
+    <div class="topbar-info">
+      <div class="topbar-address">456 Oak Avenue, Mississauga</div>
+      <div class="topbar-meta">
+        <span>Sarah K.</span>
+        <span>48 photos</span>
+        <span>Standard preset</span>
+      </div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div>
+      <div class="progress-text">32 / 48 approved</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:67%"></div></div>
+    </div>
+    <button class="btn btn-approve">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+      Approve All Remaining
+    </button>
+    <button class="btn btn-download">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+      Download Approved
+    </button>
+  </div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Thumbnail Strip -->
+  <div class="strip">
+    <div class="thumb t1 active"><span class="thumb-num">1</span></div>
+    <div class="thumb t2 approved"><span class="thumb-num">2</span></div>
+    <div class="thumb t3 approved"><span class="thumb-num">3</span></div>
+    <div class="thumb t4 approved"><span class="thumb-num">4</span></div>
+    <div class="thumb t5"><span class="thumb-num">5</span></div>
+    <div class="thumb t6 approved"><span class="thumb-num">6</span></div>
+    <div class="thumb t1 approved"><span class="thumb-num">7</span></div>
+    <div class="thumb t3 rejected"><span class="thumb-num">8</span></div>
+    <div class="thumb t2 approved"><span class="thumb-num">9</span></div>
+    <div class="thumb t4"><span class="thumb-num">10</span></div>
+    <div class="thumb t5 approved"><span class="thumb-num">11</span></div>
+    <div class="thumb t6 approved"><span class="thumb-num">12</span></div>
+    <div class="thumb t1"><span class="thumb-num">13</span></div>
+    <div class="thumb t3 approved"><span class="thumb-num">14</span></div>
+    <div class="thumb t2 twilight"><span class="thumb-num">15</span></div>
+    <div class="thumb t4 approved"><span class="thumb-num">16</span></div>
+    <div class="thumb t5 approved"><span class="thumb-num">17</span></div>
+    <div class="thumb t6"><span class="thumb-num">18</span></div>
+  </div>
+
+  <!-- Main Viewer -->
+  <div class="viewer">
+
+    <!-- Before / After Compare -->
+    <div class="compare">
+      <div class="compare-side">
+        <div class="compare-label">Before</div>
+        <div class="img-before"></div>
+      </div>
+      <div class="compare-side">
+        <div class="compare-label">After</div>
+        <div class="img-after">
+          <div class="detections">
+            <span class="detect-badge interior">Interior</span>
+            <span class="detect-badge tv">TV Replaced</span>
+            <span class="detect-badge reflection">Reflection Removed</span>
+          </div>
+        </div>
+      </div>
+      <div class="divider">
+        <div class="divider-handle">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15 12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-left">
+        <div class="photo-nav">
+          <div class="nav-arrows">
+            <button class="nav-arrow">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+            </button>
+            <button class="nav-arrow">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+            </button>
+          </div>
+          <div class="photo-label">Photo 1</div>
+          <div class="photo-count">of 48</div>
+        </div>
+      </div>
+
+      <div class="action-center">
+        <button class="action-btn approve">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+          Approve
+        </button>
+        <button class="action-btn reject">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+          Reject
+        </button>
+        <button class="action-btn regen">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"/></svg>
+          Regenerate
+        </button>
+        <button class="action-btn twilight">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/></svg>
+          Make Twilight
+        </button>
+      </div>
+
+      <div class="action-right">
+        <div class="tags-row">
+          <span class="quick-tag">Keyboard: A = Approve</span>
+          <span class="quick-tag">R = Reject</span>
+          <span class="quick-tag">→ = Next</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Instructions -->
+    <div class="instructions">
+      <div class="tags-row">
+        <span class="quick-tag">Remove car</span>
+        <span class="quick-tag">Make brighter</span>
+        <span class="quick-tag">Fix sky</span>
+        <span class="quick-tag">Enhance grass</span>
+        <span class="quick-tag">Pot lights on</span>
+      </div>
+      <input class="instruct-input" placeholder="Type custom instructions... e.g. 'remove the photographer from the mirror'" />
+      <button class="instruct-send">Send & Regenerate</button>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

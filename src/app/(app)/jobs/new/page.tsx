@@ -27,6 +27,7 @@ export default function NewJobPage() {
   const [address, setAddress] = useState("");
   const [dropboxUrl, setDropboxUrl] = useState("");
   const [preset, setPreset] = useState("standard");
+  const [tvStyle, setTvStyle] = useState("netflix");
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);
@@ -46,6 +47,16 @@ export default function NewJobPage() {
       .catch(console.error)
       .finally(() => setPresetsLoading(false));
   }, []);
+  const tvOptions = [
+    { value: "netflix", label: "Netflix Home Screen", desc: "Netflix UI with movie thumbnails" },
+    { value: "black", label: "Black Screen (Off)", desc: "TV appears turned off" },
+    { value: "beach", label: "Beach Scene", desc: "Tropical beach with blue water" },
+    { value: "mountains", label: "Mountain Landscape", desc: "Scenic mountain view" },
+    { value: "fireplace", label: "Fireplace", desc: "Cozy crackling fireplace" },
+    { value: "art", label: "Abstract Art", desc: "Modern abstract artwork" },
+    { value: "off", label: "Don't Touch TV", desc: "Leave the TV screen as-is" },
+  ];
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [isCheckingDropbox, setIsCheckingDropbox] = useState(false);
@@ -98,6 +109,7 @@ export default function NewJobPage() {
           address: address.trim(),
           dropboxUrl: dropboxUrl.trim() || null,
           preset,
+          tvStyle,
         }),
       });
 
@@ -251,6 +263,39 @@ export default function NewJobPage() {
                       )}
                     </div>
                     <span className="text-xs text-graphite-400">{p.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TV Screen Style */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-graphite-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 20.25h12m-7.5-3v3m3-3v3m-10.125-3h17.25c.621 0 1.125-.504 1.125-1.125V4.125c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125Z" />
+                </svg>
+                TV Screen Style
+                <span className="text-xs font-normal text-graphite-400">(for rooms with TVs)</span>
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {tvOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setTvStyle(opt.value)}
+                    className={`p-3 rounded-xl border-2 text-left transition-all duration-200 ${
+                      tvStyle === opt.value
+                        ? "border-cyan bg-cyan-50"
+                        : "border-graphite-200 bg-white hover:border-graphite-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs font-semibold text-graphite-900">{opt.label}</span>
+                      {tvStyle === opt.value && (
+                        <CheckIcon className="w-3.5 h-3.5 text-cyan" />
+                      )}
+                    </div>
+                    <span className="text-[10px] text-graphite-400">{opt.desc}</span>
                   </button>
                 ))}
               </div>

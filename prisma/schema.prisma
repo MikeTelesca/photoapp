@@ -24,6 +24,7 @@ model Job {
   address          String
   dropboxUrl       String?
   preset           String   @default("standard") // "standard", "bright-airy", "luxury", "custom"
+  tvStyle          String   @default("netflix") // "netflix", "black", "beach", "mountains", "fireplace", "art", "off"
   status           String   @default("pending") // "pending", "processing", "review", "approved", "rejected"
   totalPhotos      Int      @default(0)
   processedPhotos  Int      @default(0)

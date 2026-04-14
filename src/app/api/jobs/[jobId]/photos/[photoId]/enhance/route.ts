@@ -96,7 +96,23 @@ export async function POST(
         });
       }
 
-      result = await enhancePhoto(imageBuffer, mimeType, job.preset, customPresetPrompt || customInstructions);
+      // Build TV instruction based on job's tvStyle
+      const tvInstructions: Record<string, string> = {
+        netflix: "If there's a TV, replace the screen with a Netflix home screen showing movie thumbnails and the Netflix UI (red logo, rows of movie posters, dark background).",
+        black: "If there's a TV, make the screen completely black/off - a turned off TV with a dark, reflective screen.",
+        beach: "If there's a TV, replace the screen with a beautiful tropical beach scene - blue water, white sand, palm trees.",
+        mountains: "If there's a TV, replace the screen with a scenic mountain landscape - snow-capped peaks, green valleys.",
+        fireplace: "If there's a TV, replace the screen with a cozy crackling fireplace video - warm orange flames.",
+        art: "If there's a TV, replace the screen with modern abstract artwork - colorful, tasteful, gallery-quality.",
+        off: "Leave any TV screens exactly as they are - do not modify TV screens at all.",
+      };
+      const tvInstruction = tvInstructions[(job as any).tvStyle || "netflix"] || tvInstructions.netflix;
+
+      const additionalInstructions = [tvInstruction];
+      if (customInstructions) additionalInstructions.push(customInstructions);
+      const combinedInstructions = additionalInstructions.join("\n");
+
+      result = await enhancePhoto(imageBuffer, mimeType, job.preset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions);
     }
 
     if (!result.success) {

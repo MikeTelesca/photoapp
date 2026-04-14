@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const sessionUserRole = (session?.user as any)?.role;
 
     const body = await request.json();
-    const { address, dropboxUrl, preset, photographerId } = body;
+    const { address, dropboxUrl, preset, photographerId, tvStyle } = body;
 
     if (!address) {
       return NextResponse.json({ error: "Address is required" }, { status: 400 });
@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
         address,
         dropboxUrl: dropboxUrl || null,
         preset: preset || "standard",
+        tvStyle: tvStyle || "netflix",
         status: dropboxUrl ? "pending" : "pending",
         photographerId: userId,
       },

@@ -9,7 +9,7 @@ const presetPrompts: Record<string, string> = {
 ADDITIONAL REQUIRED EDITS:
 - WINDOW PULL: For EXISTING windows ONLY — make the outdoor view visible through them. Show blue sky, trees, or cityscape. No blown-out white windows. IMPORTANT: Do NOT add new windows or openings where none exist. Only enhance windows that are already in the photo.
 - STRAIGHTEN all vertical lines. Fix any lens distortion. Perspective correction.
-- TV SCREENS: If there's a TV, replace the screen with a Netflix home screen showing movie thumbnails and the Netflix UI (red logo, rows of movie posters, dark background).
+- TV SCREENS: Handle according to the TV style instructions provided below.
 - MIRRORS: Remove any photographer reflections in mirrors or glass.
 - LENS FLARES: Remove any light flares or sun spots.
 - EXTERIOR SHOTS: Replace dull sky with blue sky and light clouds. Make grass lush and green.
@@ -41,7 +41,7 @@ EXTERIOR SHOTS:
 - GRASS: Lush, vibrant green. Remove dead patches.
 
 OBJECT EDITS:
-- TV SCREENS: Replace with lifestyle/nature scene.
+- TV SCREENS: Handle according to the TV style instructions provided below.
 - MIRRORS: Remove photographer reflections.
 - LENS FLARES: Remove all.
 
@@ -72,7 +72,7 @@ EXTERIOR SHOTS:
 - GRASS: Manicured, deep green, estate-quality landscaping.
 
 OBJECT EDITS:
-- TV SCREENS: Replace with elegant art or lifestyle scene.
+- TV SCREENS: Handle according to the TV style instructions provided below.
 - MIRRORS: Remove photographer reflections.
 - LENS FLARES: Remove all.
 

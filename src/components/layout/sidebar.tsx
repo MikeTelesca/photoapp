@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   Squares2X2Icon,
   EyeIcon,
@@ -28,6 +29,7 @@ const settingsItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   return (
     <aside className="w-[230px] bg-white border-r border-graphite-200 flex flex-col fixed top-0 left-0 bottom-0 z-20">
@@ -90,11 +92,26 @@ export function Sidebar() {
       <div className="flex-1" />
 
       <div className="px-6 py-4 border-t border-graphite-200 flex items-center gap-2.5">
-        <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-cyan to-cyan-light flex items-center justify-center text-[13px] font-bold text-white">A</div>
-        <div>
-          <div className="text-[13px] font-semibold text-graphite-900">Admin</div>
-          <div className="text-[11px] text-graphite-400">aroundthehouse</div>
+        <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-cyan to-cyan-light flex items-center justify-center text-[13px] font-bold text-white">
+          {session?.user?.name?.charAt(0) || "?"}
         </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-semibold text-graphite-900 truncate">
+            {session?.user?.name || "User"}
+          </div>
+          <div className="text-[11px] text-graphite-400 truncate">
+            {session?.user?.email || ""}
+          </div>
+        </div>
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="text-graphite-400 hover:text-graphite-600 transition-colors"
+          title="Sign out"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+          </svg>
+        </button>
       </div>
     </aside>
   );

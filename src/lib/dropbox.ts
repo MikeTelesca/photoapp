@@ -124,6 +124,47 @@ export async function downloadFileFromSharedLink(
 }
 
 /**
+ * Upload a file to Dropbox and return a shared link URL.
+ */
+export async function uploadToDropbox(
+  buffer: Buffer,
+  path: string
+): Promise<string> {
+  // Upload the file
+  const uploadResponse = await dbx.filesUpload({
+    path,
+    contents: buffer,
+    mode: { ".tag": "overwrite" },
+  });
+
+  // Create a shared link
+  try {
+    const linkResponse = await dbx.sharingCreateSharedLinkWithSettings({
+      path: uploadResponse.result.path_display || path,
+      settings: {
+        requested_visibility: { ".tag": "public" },
+        audience: { ".tag": "public" },
+        access: { ".tag": "viewer" },
+      },
+    });
+    // Convert share link to direct download link
+    return linkResponse.result.url.replace("dl=0", "dl=1");
+  } catch (error: any) {
+    // If link already exists, get the existing one
+    if (error?.error?.error?.[".tag"] === "shared_link_already_exists") {
+      const links = await dbx.sharingListSharedLinks({
+        path: uploadResponse.result.path_display || path,
+        direct_only: true,
+      });
+      if (links.result.links.length > 0) {
+        return links.result.links[0].url.replace("dl=0", "dl=1");
+      }
+    }
+    throw error;
+  }
+}
+
+/**
  * Test the Dropbox connection by getting account info.
  */
 export async function testConnection(): Promise<{

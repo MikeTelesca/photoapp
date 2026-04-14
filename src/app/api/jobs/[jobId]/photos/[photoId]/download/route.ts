@@ -25,7 +25,12 @@ export async function GET(
       );
     }
 
-    // Extract base64 data from data URL
+    if (photo.editedUrl.startsWith("http")) {
+      // Redirect to Dropbox download URL
+      return NextResponse.redirect(photo.editedUrl);
+    }
+
+    // Otherwise fall back to base64 decode
     const base64Data = photo.editedUrl.split(",")[1];
     if (!base64Data) {
       return NextResponse.json(

@@ -1,0 +1,68 @@
+import { Badge } from "@/components/ui/badge";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { Button } from "@/components/ui/button";
+import type { Job } from "@/lib/types";
+
+interface JobCardProps {
+  job: Job;
+}
+
+const dotColors: Record<string, string> = {
+  processing: "bg-amber-500",
+  review: "bg-cyan",
+  approved: "bg-emerald-500",
+  rejected: "bg-red-500",
+};
+
+export function JobCard({ job }: JobCardProps) {
+  const progress = job.totalPhotos > 0 ? Math.round((job.processedPhotos / job.totalPhotos) * 100) : 0;
+
+  return (
+    <div className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 border-b border-graphite-50 last:border-b-0">
+      <div className="flex items-center gap-3">
+        <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
+        <div>
+          <div className="text-[13.5px] font-semibold text-graphite-900">{job.address}</div>
+          <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">
+            <span>{job.photographerName}</span>
+            <span>{formatTime(job.createdAt)}</span>
+            <span>{job.totalPhotos} photos{job.twilightCount > 0 ? ` · ${job.twilightCount} twilight` : ""}</span>
+            <Badge variant={job.preset === "luxury" ? "luxury" : "standard"}>
+              {job.preset.charAt(0).toUpperCase() + job.preset.slice(1)}
+            </Badge>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        {job.status === "processing" && (
+          <div>
+            <div className="text-xs font-semibold text-amber-600">Processing {job.processedPhotos}/{job.totalPhotos}</div>
+            <ProgressBar value={progress} color="amber" />
+          </div>
+        )}
+        {job.status === "review" && (
+          <>
+            <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <span className="text-graphite-300 text-base">›</span>
+          </>
+        )}
+        {job.status === "approved" && (
+          <>
+            <span className="text-xs font-semibold text-emerald-600">Approved</span>
+            <Button variant="text" className="text-xs">Download</Button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function formatTime(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hrs ago`;
+  return "Yesterday";
+}

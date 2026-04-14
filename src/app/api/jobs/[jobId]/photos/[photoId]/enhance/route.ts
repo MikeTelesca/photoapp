@@ -1,7 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { enhancePhoto, convertToTwilight, analyzePhoto } from "@/lib/ai-enhance";
-import { downloadFileFromSharedLink, uploadToDropbox } from "@/lib/dropbox";
+import { uploadToDropbox } from "@/lib/dropbox";
+
+// Download a file from Dropbox shared link using raw API
+async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
+  const token = process.env.DROPBOX_ACCESS_TOKEN;
+  if (!token) throw new Error("No Dropbox token");
+
+  const response = await fetch("https://content.dropboxapi.com/2/sharing/get_shared_link_file", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Dropbox-API-Arg": JSON.stringify({
+        url: sharedUrl,
+        path: `/${fileName.toLowerCase()}`,
+      }),
+    },
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Dropbox download failed: ${errText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
 
 // POST /api/jobs/:jobId/photos/:photoId/enhance
 export async function POST(
@@ -17,7 +42,6 @@ export async function POST(
       makeTwilight?: boolean;
     };
 
-    // Get photo and job
     const photo = await prisma.photo.findUnique({ where: { id: photoId } });
     const job = await prisma.job.findUnique({ where: { id: jobId } });
 
@@ -25,41 +49,35 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Update status to processing
     await prisma.photo.update({
       where: { id: photoId },
       data: { status: "processing" },
     });
 
-    // Get the original image
+    // Get original image from Dropbox
     let imageBuffer: Buffer;
     const mimeType = "image/jpeg";
 
-    if (photo.originalUrl) {
-      // Download from URL
+    if (photo.originalUrl && photo.originalUrl.startsWith("http")) {
       const response = await fetch(photo.originalUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      imageBuffer = Buffer.from(arrayBuffer);
+      imageBuffer = Buffer.from(await response.arrayBuffer());
     } else if (job.dropboxUrl && photo.exifData) {
-      // Try to get the first file from the bracket group via Dropbox
       const exif = JSON.parse(photo.exifData);
       const fileName = exif?.photos?.[0]?.fileName;
-      if (fileName && job.dropboxUrl) {
-        imageBuffer = await downloadFileFromSharedLink(job.dropboxUrl, `/${fileName}`);
-      } else {
-        return NextResponse.json({ error: "No source image available" }, { status: 400 });
+      if (!fileName) {
+        return NextResponse.json({ error: "No source filename" }, { status: 400 });
       }
+      imageBuffer = await downloadFromDropbox(job.dropboxUrl, fileName);
     } else {
-      return NextResponse.json({ error: "No source image available" }, { status: 400 });
+      return NextResponse.json({ error: "No source image" }, { status: 400 });
     }
 
     let result;
 
     if (makeTwilight) {
-      // Twilight conversion
       result = await convertToTwilight(imageBuffer, mimeType, customInstructions);
     } else {
-      // Analyze the photo if not already analyzed
+      // Analyze photo for detections
       if (!photo.detections || photo.detections === "[]") {
         const analysis = await analyzePhoto(imageBuffer, mimeType);
         await prisma.photo.update({
@@ -71,7 +89,6 @@ export async function POST(
         });
       }
 
-      // Enhance the photo
       result = await enhancePhoto(imageBuffer, mimeType, job.preset, customInstructions);
     }
 
@@ -83,19 +100,17 @@ export async function POST(
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
+    // Store edited image
     const outputBuffer = Buffer.from(result.imageBase64!, "base64");
-
-    // Create a Dropbox path for the edited photo
     const sanitizedAddress = job.address.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 40);
-    const fileName = `photo_${photo.orderIndex + 1}.jpg`;
-    const dropboxPath = `/PhotoApp/edited/${sanitizedAddress}_${job.id.substring(0, 8)}/${fileName}`;
+    const editedFileName = `photo_${photo.orderIndex + 1}.jpg`;
+    const dropboxPath = `/PhotoApp/edited/${sanitizedAddress}_${job.id.substring(0, 8)}/${editedFileName}`;
 
     let editedUrl: string;
     try {
       editedUrl = await uploadToDropbox(outputBuffer, dropboxPath);
     } catch (uploadError) {
-      console.error("Failed to upload to Dropbox, falling back to data URL:", uploadError);
-      // Fallback to data URL if Dropbox upload fails
+      console.error("Dropbox upload failed, using data URL:", uploadError);
       editedUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
     }
 
@@ -109,18 +124,14 @@ export async function POST(
       },
     });
 
-    // Track cost (~$0.04 per AI enhancement)
+    // Track cost
     const AI_COST_PER_IMAGE = 0.04;
     await prisma.job.update({
       where: { id: jobId },
       data: { cost: { increment: AI_COST_PER_IMAGE } },
     });
 
-    return NextResponse.json({
-      success: true,
-      photoId,
-      editedUrl,
-    });
+    return NextResponse.json({ success: true, photoId, editedUrl });
   } catch (error: unknown) {
     const err = error as Error;
     console.error("Enhance error:", err);

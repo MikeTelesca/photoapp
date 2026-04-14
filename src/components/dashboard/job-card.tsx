@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { DownloadButton } from "@/components/dashboard/download-button";
+import { DeleteJobButton } from "@/components/dashboard/delete-job-button";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -80,19 +81,23 @@ export function JobCard({ job }: JobCardProps) {
           </>
         )}
         {job.status === "pending" && (
-          <Button
-            variant="outline"
-            className="text-xs"
-            onClick={handleStartProcessing}
-            disabled={isStarting}
-          >
-            {isStarting ? "Starting..." : "Start Processing"}
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              className="text-xs"
+              onClick={handleStartProcessing}
+              disabled={isStarting}
+            >
+              {isStarting ? "Starting..." : "Start Processing"}
+            </Button>
+            <DeleteJobButton jobId={job.id} />
+          </>
         )}
         {job.status === "approved" && (
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
             <DownloadButton jobId={job.id} />
+            <DeleteJobButton jobId={job.id} />
             <span className="text-graphite-300 text-base">›</span>
           </>
         )}

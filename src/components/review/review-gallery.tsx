@@ -224,31 +224,42 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     if (pending.length === 0) return;
 
     setIsEnhancingAll(true);
-    let completed = 0;
+    setEnhanceProgress(0);
 
-    for (const photo of pending) {
+    // Process photos one at a time via the server endpoint.
+    // Each call processes one photo and returns. If the user navigates away,
+    // re-opening the page will see current state and can resume.
+    let remaining = pending.length;
+    const total = pending.length;
+
+    while (remaining > 0) {
       try {
-        setEnhanceProgress(Math.round((completed / pending.length) * 100));
+        const res = await fetch(`/api/jobs/${job.id}/start-enhance`, { method: "POST" });
+        const data = await res.json();
 
-        const res = await fetch(`/api/jobs/${job.id}/photos/${photo.id}/enhance`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
+        if (data.done) {
+          break;
+        }
 
-        if (res.ok) {
-          const data = await res.json();
+        if (data.editedUrl && data.photoId) {
           setJob(prev => ({
             ...prev,
             photos: prev.photos.map(p =>
-              p.id === photo.id ? { ...p, status: "edited", editedUrl: data.editedUrl } : p
+              p.id === data.photoId ? { ...p, status: "edited", editedUrl: data.editedUrl } : p
             ),
           }));
         }
-        completed++;
+
+        remaining = data.remaining ?? remaining - 1;
+        setEnhanceProgress(Math.round(((total - remaining) / total) * 100));
+
+        if (data.error && !data.editedUrl) {
+          console.error("Enhancement error:", data.error);
+          // Continue to next photo even if one fails
+        }
       } catch (err) {
-        console.error(`Failed to enhance photo ${photo.id}:`, err);
-        completed++;
+        console.error("Process error:", err);
+        break;
       }
     }
 
@@ -316,6 +327,33 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleApprove, handleReject, goNext, goPrev]);
+
+  // Poll for photo updates when job is processing or enhancing.
+  // This lets the UI recover state after a page refresh or navigation.
+  useEffect(() => {
+    const hasProcessing = photos.some(p => p.status === "processing" || p.status === "regenerating");
+    if (!hasProcessing && !isEnhancingAll) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/jobs/${job.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.photos) {
+            setJob(prev => ({
+              ...prev,
+              ...data,
+              photos: data.photos,
+            }));
+          }
+        }
+      } catch {
+        // Silently ignore polling errors
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [job.id, photos, isEnhancingAll]);
 
   const detections = currentPhoto
     ? (() => {

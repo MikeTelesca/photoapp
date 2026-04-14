@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.DROPBOX_ACCESS_TOKEN) {
+    if (!process.env.DROPBOX_ACCESS_TOKEN && !process.env.DROPBOX_REFRESH_TOKEN) {
       return NextResponse.json(
-        { error: "Dropbox is not configured. Add DROPBOX_ACCESS_TOKEN to .env" },
+        { error: "Dropbox is not configured. Add DROPBOX_ACCESS_TOKEN to environment." },
         { status: 500 }
       );
     }
@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
       fileCount: files.length,
       files,
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error("Dropbox list error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to list Dropbox files";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Extract the actual Dropbox API error
+    const dbxError = error?.error?.error_summary || error?.error?.error || error?.message || "Failed to list Dropbox files";
+    return NextResponse.json({ error: typeof dbxError === 'string' ? dbxError : JSON.stringify(dbxError) }, { status: 500 });
   }
 }

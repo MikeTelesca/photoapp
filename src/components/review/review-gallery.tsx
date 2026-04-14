@@ -98,13 +98,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const handleApprove = useCallback(() => {
     if (!currentPhoto) return;
     updatePhoto(currentPhoto.id, { status: "approved" });
-    goNext();
+    setTimeout(() => goNext(), 300);
   }, [currentPhoto, updatePhoto, goNext]);
 
   const handleReject = useCallback(() => {
     if (!currentPhoto) return;
     updatePhoto(currentPhoto.id, { status: "rejected" });
-    goNext();
+    setTimeout(() => goNext(), 300);
   }, [currentPhoto, updatePhoto, goNext]);
 
   const [enhanceError, setEnhanceError] = useState<string | null>(null);
@@ -164,39 +164,60 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [currentPhoto, job.id, customInstruction]);
 
-  const handleTwilight = useCallback(() => {
+  const handleTwilight = useCallback(async () => {
     if (!currentPhoto) return;
-    const instruction = customInstruction.trim() || "Convert to twilight with warm lighting";
+
+    // Toggle twilight off if already set
+    if (currentPhoto.isTwilight) {
+      await updatePhoto(currentPhoto.id, { isTwilight: false, twilightInstructions: null });
+      return;
+    }
+
+    // Otherwise, set twilight and regenerate
+    const instruction = customInstruction.trim() || "Convert to twilight/dusk with warm lighting, all lights on";
+    setEnhanceError(null);
+    setEnhanceLoading(true);
 
     setJob((prev) => ({
       ...prev,
       photos: prev.photos.map((p) =>
-        p.id === currentPhoto.id ? { ...p, status: "regenerating", isTwilight: true } : p
+        p.id === currentPhoto.id ? { ...p, status: "regenerating", editedUrl: null, isTwilight: true } : p
       ),
     }));
 
-    fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customInstructions: instruction, makeTwilight: true }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setJob((prev) => ({
-            ...prev,
-            photos: prev.photos.map((p) =>
-              p.id === currentPhoto.id
-                ? { ...p, status: "edited", editedUrl: data.editedUrl, isTwilight: true }
-                : p
-            ),
-          }));
-        }
-      })
-      .catch(console.error);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customInstructions: instruction, makeTwilight: true }),
+      });
+      const data = await res.json();
 
-    setCustomInstruction("");
-  }, [currentPhoto, job.id, customInstruction]);
+      if (data.success) {
+        setJob((prev) => ({
+          ...prev,
+          photos: prev.photos.map((p) =>
+            p.id === currentPhoto.id
+              ? { ...p, status: "edited", editedUrl: data.editedUrl, isTwilight: true }
+              : p
+          ),
+        }));
+      } else {
+        setEnhanceError(data.error || "Twilight conversion failed");
+        setJob((prev) => ({
+          ...prev,
+          photos: prev.photos.map((p) =>
+            p.id === currentPhoto.id ? { ...p, status: "pending", isTwilight: false } : p
+          ),
+        }));
+      }
+    } catch (err: any) {
+      setEnhanceError(err.message || "Network error");
+    } finally {
+      setEnhanceLoading(false);
+      setCustomInstruction("");
+    }
+  }, [currentPhoto, job.id, customInstruction, updatePhoto]);
 
   const handleEnhanceAll = useCallback(async () => {
     const pending = photos.filter(p => p.status === "pending");
@@ -441,7 +462,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               ) : enhanceLoading ? (
                 <div className="flex flex-col items-center gap-3">
                   <ArrowPathIcon className="w-8 h-8 text-cyan animate-spin" />
-                  <div className="text-cyan text-sm font-medium">Enhancing with AI...</div>
+                  <div className="text-cyan text-sm font-medium">Enhancing Photo {currentIndex + 1} with AI...</div>
                   <div className="text-graphite-500 text-xs">This may take 15-30 seconds</div>
                 </div>
               ) : enhanceError ? (
@@ -511,7 +532,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               {currentPhoto?.status === "pending" && (
                 <button
                   onClick={handleRegenerate}
-                  disabled={isUpdating}
+                  disabled={isUpdating || enhanceLoading}
                   className="flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold bg-gradient-to-br from-graphite-900 to-graphite-700 text-white shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-50"
                 >
                   <ArrowPathIcon className="w-4 h-4" />
@@ -520,7 +541,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               )}
               <button
                 onClick={handleApprove}
-                disabled={isUpdating}
+                disabled={isUpdating || enhanceLoading}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors disabled:opacity-50"
               >
                 <CheckIcon className="w-4 h-4" />
@@ -528,7 +549,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </button>
               <button
                 onClick={handleReject}
-                disabled={isUpdating}
+                disabled={isUpdating || enhanceLoading}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-red-100 text-red-600 hover:bg-red-200 transition-colors disabled:opacity-50"
               >
                 <XMarkIcon className="w-4 h-4" />
@@ -536,7 +557,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </button>
               <button
                 onClick={handleRegenerate}
-                disabled={isUpdating}
+                disabled={isUpdating || enhanceLoading}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-cyan-50 text-cyan hover:bg-cyan-50/80 transition-colors disabled:opacity-50"
               >
                 <ArrowPathIcon className="w-4 h-4" />
@@ -544,11 +565,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </button>
               <button
                 onClick={handleTwilight}
-                disabled={isUpdating}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors disabled:opacity-50"
+                disabled={isUpdating || enhanceLoading}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
+                  currentPhoto?.isTwilight
+                    ? "bg-purple-600 text-white hover:bg-purple-700"
+                    : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                }`}
               >
                 <MoonIcon className="w-4 h-4" />
-                Twilight
+                {currentPhoto?.isTwilight ? "Remove Twilight" : "Twilight"}
               </button>
             </div>
 

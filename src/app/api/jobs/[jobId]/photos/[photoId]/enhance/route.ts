@@ -82,7 +82,7 @@ export async function POST(
     let result;
 
     if (makeTwilight) {
-      result = await convertToTwilight(imageBuffer, mimeType, customInstructions);
+      result = await convertToTwilight(imageBuffer, mimeType, photo.isExterior, customInstructions);
     } else {
       // Analyze photo for detections
       if (!photo.detections || photo.detections === "[]") {

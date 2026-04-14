@@ -7,13 +7,19 @@ const presetPrompts: Record<string, string> = {
   standard: `Enhance this image to look like a professionally shot real estate photo with perfect, balanced lighting—bright natural window light, clean white tones, even exposure, and sharp detail throughout. Maintain the original composition, angles, and structure exactly as is.
 
 ADDITIONAL REQUIRED EDITS:
-- WINDOW PULL: For EXISTING windows ONLY — make the outdoor view visible through them. Show blue sky, trees, or cityscape. No blown-out white windows. IMPORTANT: Do NOT add new windows or openings where none exist. Only enhance windows that are already in the photo.
+- WINDOW PULL: ONLY for windows that ALREADY EXIST in the original photo — make the outdoor view visible through them. CRITICAL: Do NOT create, add, or hallucinate new windows, openings, or views where none exist in the original photo. If a wall is solid, keep it solid. Only enhance windows you can clearly see in the original image.
 - STRAIGHTEN all vertical lines. Fix any lens distortion. Perspective correction.
 - TV SCREENS: Handle according to the TV style instructions provided below.
 - MIRRORS: Remove any photographer reflections in mirrors or glass.
 - LENS FLARES: Remove any light flares or sun spots.
 - EXTERIOR SHOTS: Handle sky according to the sky style instructions provided below. Make grass lush and green.
 - Keep the image photorealistic. No AI artifacts, no blur, no warping.
+
+CRITICAL RULES:
+- NEVER add windows, doors, or openings that don't exist in the original photo.
+- NEVER change the room layout or architecture.
+- NEVER add or remove walls, furniture, or structural elements.
+- Maintain the EXACT same composition and structure as the original.
 
 Output the edited image.`,
 
@@ -33,7 +39,7 @@ GEOMETRY:
 - Level the horizon.
 
 WINDOWS (WINDOW PULL):
-- Show the exterior view clearly through all windows.
+- ONLY for windows that ALREADY EXIST in the original photo — make the outdoor view visible through them. CRITICAL: Do NOT create, add, or hallucinate new windows, openings, or views where none exist in the original photo. If a wall is solid, keep it solid. Only enhance windows you can clearly see in the original image.
 - Bright sky visible, no blown-out white rectangles.
 
 EXTERIOR SHOTS:
@@ -44,6 +50,12 @@ OBJECT EDITS:
 - TV SCREENS: Handle according to the TV style instructions provided below.
 - MIRRORS: Remove photographer reflections.
 - LENS FLARES: Remove all.
+
+CRITICAL RULES:
+- NEVER add windows, doors, or openings that don't exist in the original photo.
+- NEVER change the room layout or architecture.
+- NEVER add or remove walls, furniture, or structural elements.
+- Maintain the EXACT same composition and structure as the original.
 
 Style reference: Restoration Hardware catalog. Light, airy, dreamy, spacious, but photorealistic.
 Output the edited image.`,
@@ -64,7 +76,7 @@ GEOMETRY:
 - Level the horizon.
 
 WINDOWS (WINDOW PULL):
-- Show dramatic exterior view through all windows.
+- ONLY for windows that ALREADY EXIST in the original photo — make the outdoor view visible through them. CRITICAL: Do NOT create, add, or hallucinate new windows, openings, or views where none exist in the original photo. If a wall is solid, keep it solid. Only enhance windows you can clearly see in the original image.
 - Dramatic sky visible - golden hour or blue hour feel.
 
 EXTERIOR SHOTS:
@@ -76,23 +88,37 @@ OBJECT EDITS:
 - MIRRORS: Remove photographer reflections.
 - LENS FLARES: Remove all.
 
+CRITICAL RULES:
+- NEVER add windows, doors, or openings that don't exist in the original photo.
+- NEVER change the room layout or architecture.
+- NEVER add or remove walls, furniture, or structural elements.
+- Maintain the EXACT same composition and structure as the original.
+
 Style reference: Architectural Digest. Premium, dramatic, aspirational, photorealistic.
 Output the edited image.`,
 };
 
-const twilightPrompt = `You are an expert real estate photo editor. Convert this daytime exterior into a STUNNING TWILIGHT/DUSK shot:
+const twilightExteriorPrompt = `Convert this daytime EXTERIOR photo into a stunning twilight/dusk shot:
 
-CRITICAL EDITS:
-1. SKY: Replace with a beautiful twilight sky - deep blue to warm orange/pink gradient near the horizon. Stars optional.
-2. INTERIOR LIGHTS: All windows should glow with warm golden/amber light from inside.
-3. EXTERIOR LIGHTS: Turn on ALL exterior lighting - landscape lights, path lights, porch lights, sconces, pot lights.
-4. WARM ATMOSPHERE: Overall warm, inviting mood.
-5. GRASS/LANDSCAPING: Should still be visible but darker, lit by landscape lighting.
-6. DRIVEWAY: Slightly wet/reflective look optional for drama.
-7. Keep all architectural details sharp and clear.
-8. The image should look like it was actually photographed at dusk by a professional.
+- SKY: Beautiful twilight sky — deep blue to warm orange/pink gradient near the horizon.
+- INTERIOR LIGHTS: All windows should glow with warm golden/amber light from inside.
+- EXTERIOR LIGHTS: Turn on ALL exterior lighting — landscape lights, path lights, porch lights, sconces, pot lights.
+- WARM ATMOSPHERE: Overall warm, inviting evening mood.
+- Keep all architectural details sharp and clear.
+- The image should look like it was photographed at dusk by a professional.
+- CRITICAL: Do NOT change the house or property. Keep the EXACT same building, architecture, and composition.
 
-Make it look STUNNING - this is the hero shot for the listing.
+Output the edited image.`;
+
+const twilightInteriorPrompt = `Convert this daytime INTERIOR photo into an evening/night ambiance shot:
+
+- LIGHTING: Create warm, cozy evening lighting — table lamps glowing, pendant lights on, warm ambient light throughout.
+- WINDOWS: Through any windows, show a dark blue twilight/evening sky. The exterior should look like dusk or nighttime.
+- MOOD: Warm, inviting, cozy evening atmosphere. Like the lights are on in the evening.
+- KEEP the exact same room, furniture, layout, and composition. Do NOT change the interior design.
+- Do NOT turn this into an exterior shot. This is an INTERIOR photo — keep it as an interior.
+- Keep the image photorealistic.
+
 Output the edited image.`;
 
 export interface EnhanceResult {
@@ -194,6 +220,7 @@ export async function enhancePhoto(
 export async function convertToTwilight(
   imageBuffer: Buffer,
   mimeType: string,
+  isExterior: boolean,
   customInstructions?: string | null
 ): Promise<EnhanceResult> {
   try {
@@ -204,9 +231,10 @@ export async function convertToTwilight(
       } as Record<string, unknown>,
     });
 
+    const basePrompt = isExterior ? twilightExteriorPrompt : twilightInteriorPrompt;
     const prompt = customInstructions
-      ? `${twilightPrompt}\n\nAdditional details: ${customInstructions}`
-      : twilightPrompt;
+      ? `${basePrompt}\n\nAdditional details: ${customInstructions}`
+      : basePrompt;
 
     const imageBase64 = imageBuffer.toString("base64");
 

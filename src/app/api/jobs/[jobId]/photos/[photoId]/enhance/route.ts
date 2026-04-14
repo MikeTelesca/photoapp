@@ -49,14 +49,11 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Load custom preset prompt if not a built-in preset
+    // Always check database for preset prompt - this lets users edit prompts in the UI
     let customPresetPrompt: string | null = null;
-    const builtInPresets = ["standard", "bright-airy", "luxury"];
-    if (!builtInPresets.includes(job.preset)) {
-      const preset = await prisma.preset.findFirst({ where: { slug: job.preset } });
-      if (preset?.promptModifiers) {
-        customPresetPrompt = preset.promptModifiers;
-      }
+    const dbPreset = await prisma.preset.findFirst({ where: { slug: job.preset } });
+    if (dbPreset?.promptModifiers && dbPreset.promptModifiers.trim().length > 0) {
+      customPresetPrompt = dbPreset.promptModifiers;
     }
 
     await prisma.photo.update({

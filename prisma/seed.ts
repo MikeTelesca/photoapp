@@ -34,38 +34,113 @@ async function main() {
     },
   });
 
-  // Create default presets
+  // Create default presets with full prompts (these are the source of truth for AI editing)
+  const standardPrompt = `Enhance this image to look like a professionally shot real estate photo with perfect, balanced lighting—bright natural window light, clean white tones, even exposure, and sharp detail throughout. Maintain the original composition, angles, and structure exactly as is.
+
+ADDITIONAL REQUIRED EDITS:
+- WINDOW PULL: For EXISTING windows ONLY — make the outdoor view visible through them. Show blue sky, trees, or cityscape. No blown-out white windows. IMPORTANT: Do NOT add new windows or openings where none exist. Only enhance windows that are already in the photo.
+- STRAIGHTEN all vertical lines. Fix any lens distortion. Perspective correction.
+- TV SCREENS: If there's a TV, replace the screen with a Netflix home screen showing movie thumbnails and the Netflix UI (red logo, rows of movie posters, dark background).
+- MIRRORS: Remove any photographer reflections in mirrors or glass.
+- LENS FLARES: Remove any light flares or sun spots.
+- EXTERIOR SHOTS: Replace dull sky with blue sky and light clouds. Make grass lush and green.
+- Keep the image photorealistic. No AI artifacts, no blur, no warping.
+
+Output the edited image.`;
+
+  const brightAiryPrompt = `You are an expert real estate photo editor. Create a BRIGHT AND AIRY style edit.
+
+MANDATORY EDITS:
+
+EXPOSURE & COLOR:
+- EXTREMELY BRIGHT - increase exposure dramatically. The image should feel flooded with soft natural light.
+- Warm color temperature - golden, inviting warmth.
+- Lift ALL shadows completely. Zero dark areas.
+- All white surfaces should glow bright, clean white.
+
+GEOMETRY:
+- STRAIGHTEN all verticals perfectly.
+- PERSPECTIVE CORRECTION: Fix lens distortion, correct converging lines.
+- Level the horizon.
+
+WINDOWS (WINDOW PULL):
+- Show the exterior view clearly through all windows.
+- Bright sky visible, no blown-out white rectangles.
+
+EXTERIOR SHOTS:
+- SKY: Bright blue sky with soft clouds.
+- GRASS: Lush, vibrant green. Remove dead patches.
+
+OBJECT EDITS:
+- TV SCREENS: Replace with lifestyle/nature scene.
+- MIRRORS: Remove photographer reflections.
+- LENS FLARES: Remove all.
+
+Style reference: Restoration Hardware catalog. Light, airy, dreamy, spacious, but photorealistic.
+Output the edited image.`;
+
+  const luxuryPrompt = `You are an expert real estate photo editor. Create a LUXURY MAGAZINE style edit.
+
+MANDATORY EDITS:
+
+EXPOSURE & COLOR:
+- Rich contrast with well-exposed interiors. Moody but inviting.
+- Deep, warm shadows with golden highlights.
+- Saturated but natural colors. Deep wood tones, rich fabrics, warm metallics.
+- High-end editorial color grading.
+
+GEOMETRY:
+- STRAIGHTEN all verticals perfectly.
+- PERSPECTIVE CORRECTION: Fix all lens distortion. Architecturally perfect lines.
+- Level the horizon.
+
+WINDOWS (WINDOW PULL):
+- Show dramatic exterior view through all windows.
+- Dramatic sky visible - golden hour or blue hour feel.
+
+EXTERIOR SHOTS:
+- SKY: Dramatic sky - deep blue or golden sunset tones.
+- GRASS: Manicured, deep green, estate-quality landscaping.
+
+OBJECT EDITS:
+- TV SCREENS: Replace with elegant art or lifestyle scene.
+- MIRRORS: Remove photographer reflections.
+- LENS FLARES: Remove all.
+
+Style reference: Architectural Digest. Premium, dramatic, aspirational, photorealistic.
+Output the edited image.`;
+
   await prisma.preset.upsert({
     where: { slug: "standard" },
-    update: {},
+    update: { promptModifiers: standardPrompt },
     create: {
       name: "Standard",
       slug: "standard",
       description: "Window-pulled HDR, natural + magazine style",
-      promptModifiers: "Professional real estate photo. Window-pulled HDR with balanced interior and exterior exposure. Rich but natural colors. Magazine quality but true-to-life. No blown-out windows.",
+      promptModifiers: standardPrompt,
       isDefault: true,
     },
   });
 
   await prisma.preset.upsert({
     where: { slug: "bright-airy" },
-    update: {},
+    update: { promptModifiers: brightAiryPrompt },
     create: {
       name: "Bright & Airy",
       slug: "bright-airy",
       description: "Light, warm, lifted shadows",
-      promptModifiers: "Bright and airy real estate photo. Light, warm tones. Lifted shadows. Clean and spacious feel. Soft natural light.",
+      promptModifiers: brightAiryPrompt,
     },
   });
 
   await prisma.preset.upsert({
     where: { slug: "luxury" },
-    update: {},
+    update: { promptModifiers: luxuryPrompt },
     create: {
       name: "Luxury",
       slug: "luxury",
       description: "Rich contrast, dramatic, moody",
-      promptModifiers: "Luxury real estate photo. Rich contrast, dramatic lighting. Moody but inviting. Deep shadows, warm highlights. High-end magazine feel.",
+      promptModifiers: luxuryPrompt,
     },
   });
 

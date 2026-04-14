@@ -16,15 +16,19 @@
     "@prisma/client": "^7.7.0",
     "better-sqlite3": "^12.9.0",
     "dotenv": "^17.4.2",
+    "dropbox": "^10.34.0",
+    "exif-reader": "^2.0.3",
     "next": "16.2.3",
     "prisma": "^7.7.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "^0.34.5"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
   },
   "devDependencies": {
+    "@types/exif-reader": "^1.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -16,93 +16,115 @@ import type { Job } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 async function getStats() {
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [totalJobs, processingJobs, reviewJobs, approvedToday, monthlyCost, totalImages] =
-    await Promise.all([
-      prisma.job.count(),
-      prisma.job.count({ where: { status: "processing" } }),
-      prisma.job.count({ where: { status: "review" } }),
-      prisma.job.count({
-        where: { status: "approved", updatedAt: { gte: startOfDay } },
-      }),
-      prisma.job.aggregate({
-        where: { createdAt: { gte: startOfMonth } },
-        _sum: { cost: true },
-      }),
-      prisma.photo.count({
-        where: { status: { not: "pending" }, createdAt: { gte: startOfMonth } },
-      }),
-    ]);
+    const [totalJobs, processingJobs, reviewJobs, approvedToday, monthlyCost, totalImages] =
+      await Promise.all([
+        prisma.job.count(),
+        prisma.job.count({ where: { status: "processing" } }),
+        prisma.job.count({ where: { status: "review" } }),
+        prisma.job.count({
+          where: { status: "approved", updatedAt: { gte: startOfDay } },
+        }),
+        prisma.job.aggregate({
+          where: { createdAt: { gte: startOfMonth } },
+          _sum: { cost: true },
+        }),
+        prisma.photo.count({
+          where: { status: { not: "pending" }, createdAt: { gte: startOfMonth } },
+        }),
+      ]);
 
-  return {
-    totalJobs,
-    processingJobs,
-    reviewJobs,
-    approvedToday,
-    monthlyCost: monthlyCost._sum.cost || 0,
-    totalImages,
-  };
+    return {
+      totalJobs,
+      processingJobs,
+      reviewJobs,
+      approvedToday,
+      monthlyCost: monthlyCost._sum.cost || 0,
+      totalImages,
+    };
+  } catch (error) {
+    console.error("Failed to fetch stats:", error);
+    return {
+      totalJobs: 0,
+      processingJobs: 0,
+      reviewJobs: 0,
+      approvedToday: 0,
+      monthlyCost: 0,
+      totalImages: 0,
+    };
+  }
 }
 
 async function getJobs(): Promise<Job[]> {
-  const dbJobs = await prisma.job.findMany({
-    include: {
-      photographer: {
-        select: { name: true },
+  try {
+    const dbJobs = await prisma.job.findMany({
+      include: {
+        photographer: {
+          select: { name: true },
+        },
       },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
 
-  return dbJobs.map((j) => ({
-    id: j.id,
-    address: j.address,
-    photographerId: j.photographerId,
-    photographerName: j.photographer.name,
-    preset: j.preset as Job["preset"],
-    status: j.status as Job["status"],
-    totalPhotos: j.totalPhotos,
-    processedPhotos: j.processedPhotos,
-    approvedPhotos: j.approvedPhotos,
-    rejectedPhotos: j.rejectedPhotos,
-    twilightCount: j.twilightCount,
-    createdAt: j.createdAt,
-    updatedAt: j.updatedAt,
-  }));
+    return dbJobs.map((j) => ({
+      id: j.id,
+      address: j.address,
+      photographerId: j.photographerId,
+      photographerName: j.photographer.name,
+      preset: j.preset as Job["preset"],
+      status: j.status as Job["status"],
+      totalPhotos: j.totalPhotos,
+      processedPhotos: j.processedPhotos,
+      approvedPhotos: j.approvedPhotos,
+      rejectedPhotos: j.rejectedPhotos,
+      twilightCount: j.twilightCount,
+      createdAt: j.createdAt,
+      updatedAt: j.updatedAt,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch jobs:", error);
+    return [];
+  }
 }
 
 async function getRecentActivity() {
-  const recentJobs = await prisma.job.findMany({
-    where: {
-      status: { in: ["approved", "review", "processing"] },
-    },
-    include: {
-      photographer: { select: { name: true } },
-    },
-    orderBy: { updatedAt: "desc" },
-    take: 5,
-  });
+  try {
+    const recentJobs = await prisma.job.findMany({
+      where: {
+        status: { in: ["approved", "review", "processing"] },
+      },
+      include: {
+        photographer: { select: { name: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    });
 
-  return recentJobs.map((j, i) => ({
-    id: `a${i}`,
-    icon: (j.status === "approved"
-      ? "approved"
-      : j.status === "processing"
-      ? "uploaded"
-      : "regenerated") as "approved" | "uploaded" | "regenerated",
-    highlight: j.status === "approved" ? j.address : j.photographer.name,
-    text:
-      j.status === "approved"
+    return recentJobs.map((j, i) => ({
+      id: `a${i}`,
+      icon: (j.status === "approved"
         ? "approved"
         : j.status === "processing"
-        ? `uploaded ${j.address}`
-        : `ready for review — ${j.totalPhotos} photos`,
-    time: formatTime(j.updatedAt),
-  }));
+        ? "uploaded"
+        : "regenerated") as "approved" | "uploaded" | "regenerated",
+      highlight: j.status === "approved" ? j.address : j.photographer.name,
+      text:
+        j.status === "approved"
+          ? "approved"
+          : j.status === "processing"
+          ? `uploaded ${j.address}`
+          : `ready for review — ${j.totalPhotos} photos`,
+      time: formatTime(j.updatedAt),
+    }));
+  } catch (error) {
+    console.error("Failed to fetch recent activity:", error);
+    return [];
+  }
 }
 
 function formatTime(date: Date): string {

@@ -6,25 +6,33 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const { jobId } = await params;
+  try {
+    const { jobId } = await params;
 
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
-    include: {
-      photographer: {
-        select: { id: true, name: true, email: true },
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      include: {
+        photographer: {
+          select: { id: true, name: true, email: true },
+        },
+        photos: {
+          orderBy: { orderIndex: "asc" },
+        },
       },
-      photos: {
-        orderBy: { orderIndex: "asc" },
-      },
-    },
-  });
+    });
 
-  if (!job) {
-    return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    if (!job) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(job);
+  } catch (error) {
+    console.error("Failed to fetch job:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch job" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json(job);
 }
 
 // PATCH /api/jobs/:jobId - update a job
@@ -32,20 +40,28 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const { jobId } = await params;
-  const body = await request.json();
+  try {
+    const { jobId } = await params;
+    const body = await request.json();
 
-  const job = await prisma.job.update({
-    where: { id: jobId },
-    data: body,
-    include: {
-      photographer: {
-        select: { id: true, name: true, email: true },
+    const job = await prisma.job.update({
+      where: { id: jobId },
+      data: body,
+      include: {
+        photographer: {
+          select: { id: true, name: true, email: true },
+        },
       },
-    },
-  });
+    });
 
-  return NextResponse.json(job);
+    return NextResponse.json(job);
+  } catch (error) {
+    console.error("Failed to update job:", error);
+    return NextResponse.json(
+      { error: "Failed to update job" },
+      { status: 500 }
+    );
+  }
 }
 
 // DELETE /api/jobs/:jobId - delete a job and its photos
@@ -53,9 +69,17 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const { jobId } = await params;
+  try {
+    const { jobId } = await params;
 
-  await prisma.job.delete({ where: { id: jobId } });
+    await prisma.job.delete({ where: { id: jobId } });
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete job:", error);
+    return NextResponse.json(
+      { error: "Failed to delete job" },
+      { status: 500 }
+    );
+  }
 }

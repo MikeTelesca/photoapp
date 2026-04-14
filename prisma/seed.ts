@@ -5,7 +5,7 @@ import { PrismaClient } from "../src/generated/prisma/client.js";
 function createPrismaClient(): PrismaClient {
   const dbUrl = process.env.DATABASE_URL;
 
-  if (dbUrl?.startsWith("postgres")) {
+  if (dbUrl?.startsWith("postgres://") || dbUrl?.startsWith("postgresql://")) {
     const { PrismaNeon } = require("@prisma/adapter-neon");
     const adapter = new PrismaNeon({ connectionString: dbUrl });
     return new PrismaClient({ adapter });
@@ -25,7 +25,7 @@ async function main() {
   const hashedPassword = await bcrypt.hash("admin123", 10);
   const admin = await prisma.user.upsert({
     where: { email: "admin@photoapp.com" },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       name: "Admin",
       email: "admin@photoapp.com",

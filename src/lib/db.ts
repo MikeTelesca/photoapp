@@ -5,9 +5,9 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const isProduction = process.env.NODE_ENV === "production" || process.env.DATABASE_URL?.startsWith("postgres");
+  const isProduction = process.env.NODE_ENV === "production" || process.env.DATABASE_URL?.match(/^postgres(ql)?:\/\//);
 
-  if (isProduction && process.env.DATABASE_URL?.startsWith("postgres")) {
+  if (isProduction && process.env.DATABASE_URL?.match(/^postgres(ql)?:\/\//)) {
     // Use Neon serverless adapter for Postgres (Pool-based, supports transactions)
     const { PrismaNeon } = require("@prisma/adapter-neon");
     const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });

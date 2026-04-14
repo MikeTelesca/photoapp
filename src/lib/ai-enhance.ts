@@ -4,55 +4,100 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
 // Editing prompts per preset
 const presetPrompts: Record<string, string> = {
-  standard: `You are an expert real estate photo editor. DRAMATICALLY improve this photo for an MLS listing:
+  standard: `You are an expert real estate photo editor. DRAMATICALLY improve this photo for an MLS listing.
 
-CRITICAL EDITS (do ALL of these):
-1. BRIGHTEN THE ENTIRE IMAGE SIGNIFICANTLY - make it look light, airy, and inviting. Real estate photos should be MUCH brighter than normal photos.
-2. WINDOWS: Make the view through ALL windows clearly visible. Pull the exterior view - show blue sky, trees, buildings. NO blown-out white windows.
-3. WHITE BALANCE: Correct to neutral/warm. Remove any yellow/green color casts.
-4. SHADOWS: Lift all shadows dramatically. No dark corners or underexposed areas.
-5. COLORS: Make colors rich and vibrant but natural. Wood floors should look warm, whites should be bright white.
-6. STRAIGHTEN: Fix any tilted verticals or horizontals.
-7. TV SCREENS: If there's a TV, replace the screen with a beach/nature scene.
-8. MIRRORS: If you see a photographer's reflection in any mirror or glass, remove them completely.
-9. LENS FLARES: Remove any light flares or sun spots.
-10. CLEAN UP: Remove any clutter, personal items, or distracting objects if possible.
+MANDATORY EDITS - DO EVERY SINGLE ONE:
 
-The final image should look like it belongs in a luxury real estate magazine. BRIGHT, CLEAN, PROFESSIONAL.
+EXPOSURE & COLOR:
+- BRIGHTEN significantly. Real estate photos must be bright, airy, inviting. Increase exposure by at least 1-2 stops.
+- Lift ALL shadows. No dark corners, no underexposed areas. Every part of the room should be clearly visible.
+- White balance: correct to neutral/slightly warm. Remove yellow/green casts.
+- Colors: rich and vibrant but natural. Wood floors warm, whites bright white, countertops clean.
+
+GEOMETRY:
+- STRAIGHTEN all vertical lines. Walls, door frames, and columns must be perfectly vertical.
+- PERSPECTIVE CORRECTION: Fix any lens distortion. Correct converging verticals. Make the room look architecturally correct.
+- LEVEL the horizon line.
+
+WINDOWS (CRITICAL - WINDOW PULL):
+- Make the view through ALL windows clearly visible. This is called a "window pull."
+- Show blue sky, clouds, trees, or cityscape through every window.
+- NO blown-out white windows. NO pure white rectangles. The exterior MUST be visible.
+- Balance interior brightness with exterior view.
+
+EXTERIOR SHOTS:
+- SKY REPLACEMENT: Replace overcast/dull sky with beautiful blue sky with light white clouds.
+- GRASS: Make all grass look lush, green, and healthy. Remove brown patches, dead spots, or weeds.
+- Landscaping should look manicured and vibrant.
+
+OBJECT EDITS:
+- TV SCREENS: Replace any visible TV screen with a beach, nature, or lifestyle scene.
+- MIRRORS/REFLECTIONS: Remove any photographer reflections in mirrors, glass, or reflective surfaces.
+- LENS FLARES: Remove all light flares, sun spots, or glare.
+- Remove visible photographer equipment (tripods, bags, etc).
+
+The result must be photorealistic - no AI artifacts, no blur, no warping. Output the edited image.`,
+
+  "bright-airy": `You are an expert real estate photo editor. Create a BRIGHT AND AIRY style edit.
+
+MANDATORY EDITS:
+
+EXPOSURE & COLOR:
+- EXTREMELY BRIGHT - increase exposure dramatically. The image should feel flooded with soft natural light.
+- Warm color temperature - golden, inviting warmth.
+- Lift ALL shadows completely. Zero dark areas.
+- All white surfaces should glow bright, clean white.
+
+GEOMETRY:
+- STRAIGHTEN all verticals perfectly.
+- PERSPECTIVE CORRECTION: Fix lens distortion, correct converging lines.
+- Level the horizon.
+
+WINDOWS (WINDOW PULL):
+- Show the exterior view clearly through all windows.
+- Bright sky visible, no blown-out white rectangles.
+
+EXTERIOR SHOTS:
+- SKY: Bright blue sky with soft clouds.
+- GRASS: Lush, vibrant green. Remove dead patches.
+
+OBJECT EDITS:
+- TV SCREENS: Replace with lifestyle/nature scene.
+- MIRRORS: Remove photographer reflections.
+- LENS FLARES: Remove all.
+
+Style reference: Restoration Hardware catalog. Light, airy, dreamy, spacious, but photorealistic.
 Output the edited image.`,
 
-  "bright-airy": `You are an expert real estate photo editor. Create a BRIGHT AND AIRY look:
+  luxury: `You are an expert real estate photo editor. Create a LUXURY MAGAZINE style edit.
 
-CRITICAL EDITS:
-1. EXTREMELY BRIGHT - push brightness way up. The image should feel flooded with natural light.
-2. WARM TONES - slight warm color temperature, golden light feel.
-3. LIFTED SHADOWS - no shadows at all, everything should be visible and light.
-4. WINDOWS: Show the view clearly, bright sky visible.
-5. WHITE BALANCE: Warm and clean.
-6. WHITES: All white surfaces should glow bright white.
-7. TV SCREENS: Replace with lifestyle scene.
-8. MIRRORS: Remove photographer reflections.
-9. LENS FLARES: Remove.
-10. Make it feel spacious, clean, and magazine-quality.
+MANDATORY EDITS:
 
-Think: Restoration Hardware catalog. Light, airy, dreamy, but still realistic.
-Output the edited image.`,
+EXPOSURE & COLOR:
+- Rich contrast with well-exposed interiors. Moody but inviting.
+- Deep, warm shadows with golden highlights.
+- Saturated but natural colors. Deep wood tones, rich fabrics, warm metallics.
+- High-end editorial color grading.
 
-  luxury: `You are an expert real estate photo editor. Create a LUXURY MAGAZINE look:
+GEOMETRY:
+- STRAIGHTEN all verticals perfectly.
+- PERSPECTIVE CORRECTION: Fix all lens distortion. Architecturally perfect lines.
+- Level the horizon.
 
-CRITICAL EDITS:
-1. DRAMATIC LIGHTING - rich contrast but still well-exposed. Deep, moody shadows with warm highlights.
-2. RICH COLORS - saturated but natural. Deep wood tones, rich fabrics, warm metals.
-3. WINDOWS: Show exterior view clearly with dramatic sky.
-4. HIGH-END FEEL - make the space look like a luxury hotel or high-end condo.
-5. WARM HIGHLIGHTS - golden hour warmth in the highlights.
-6. TV SCREENS: Replace with elegant scene.
-7. MIRRORS: Remove photographer reflections.
-8. LENS FLARES: Remove.
-9. STRAIGHTEN all verticals.
-10. CLEAN UP any clutter.
+WINDOWS (WINDOW PULL):
+- Show dramatic exterior view through all windows.
+- Dramatic sky visible - golden hour or blue hour feel.
 
-Think: Architectural Digest. Rich, dramatic, inviting, premium.
+EXTERIOR SHOTS:
+- SKY: Dramatic sky - deep blue or golden sunset tones.
+- GRASS: Manicured, deep green, estate-quality landscaping.
+
+OBJECT EDITS:
+- TV SCREENS: Replace with elegant art or lifestyle scene.
+- MIRRORS: Remove photographer reflections.
+- LENS FLARES: Remove all.
+
+Style reference: Architectural Digest. Premium, dramatic, aspirational, photorealistic.
 Output the edited image.`,
 };
 

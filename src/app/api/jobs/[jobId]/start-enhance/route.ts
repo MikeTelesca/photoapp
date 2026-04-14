@@ -118,15 +118,16 @@ export async function POST(
     const tvInstruction = tvInstructions[(job as any).tvStyle || "netflix"] || tvInstructions.netflix;
 
     // Build Sky instruction based on job's skyStyle
+    // NOTE: "as-is" is the default - AI must not hallucinate sky/clouds/scenery
     const skyInstructions: Record<string, string> = {
-      "blue-clouds": "For EXTERIOR shots: Replace the sky with a clear blue sky with scattered fluffy white cumulus clouds. The sun should appear to be at a 45-degree angle creating warm natural light. Use this EXACT same sky appearance for consistency across all photos.",
-      "clear-blue": "For EXTERIOR shots: Replace the sky with a pure crystal clear blue sky with no clouds at all. Deep blue at the top, lighter blue near the horizon. Consistent across all photos.",
-      "golden-hour": "For EXTERIOR shots: Replace the sky with a warm golden hour sky - soft orange and pink hues near the horizon transitioning to warm blue above. The lighting should feel like late afternoon sun. Consistent across all photos.",
-      "dramatic": "For EXTERIOR shots: Replace the sky with a dramatic deep blue sky with large bold white cumulus clouds. Strong contrast between sky and clouds. Consistent across all photos.",
-      "overcast-soft": "For EXTERIOR shots: Keep the sky as a bright, even, soft white/light gray overcast. This provides very even, flattering lighting on the property. Do not add blue sky.",
-      "as-is": "Do NOT modify or replace the sky. Keep the original sky exactly as it appears in the photo.",
+      "blue-clouds": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is clearly overcast/dull/gray, you MAY replace ONLY the sky area with a clear blue sky with scattered white clouds. DO NOT touch anything below the horizon line. DO NOT add clouds to an already-clear sky. If the photo is INTERIOR or has no sky visible, do NOT modify anything.",
+      "clear-blue": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is clearly overcast/dull, you MAY replace ONLY the sky area with a pure clear blue sky. DO NOT touch anything below the horizon. If INTERIOR or no sky visible, do NOT modify.",
+      "golden-hour": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is dull, you MAY replace ONLY the sky with a warm golden hour sky. DO NOT touch anything below the horizon. If INTERIOR, do NOT modify.",
+      "dramatic": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is dull, you MAY replace ONLY the sky with a dramatic deep blue sky with bold clouds. DO NOT touch anything below the horizon. If INTERIOR, do NOT modify.",
+      "overcast-soft": "Do NOT modify the sky.",
+      "as-is": "Do NOT modify or replace the sky. Keep the original sky exactly as it appears. Do not add clouds. Do not brighten the sky.",
     };
-    const skyInstruction = skyInstructions[(job as any).skyStyle || "blue-clouds"] || skyInstructions["blue-clouds"];
+    const skyInstruction = skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"];
 
     const combinedInstructions = [tvInstruction, skyInstruction].join("\n");
     const fullPrompt = customPresetPrompt

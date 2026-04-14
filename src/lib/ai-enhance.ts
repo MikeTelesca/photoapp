@@ -4,98 +4,72 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
 // Editing prompts per preset
 const presetPrompts: Record<string, string> = {
-  standard: `Enhance this image to look like a professionally shot real estate photo with perfect, balanced lighting—bright natural window light, clean white tones, even exposure, and sharp detail throughout. Maintain the original composition, angles, and structure exactly as is.
+  standard: `You are performing REAL ESTATE PHOTO CORRECTION — color/exposure adjustments ONLY. This is a LISTING PHOTO that must accurately represent the actual property. Do NOT embellish reality.
 
-ADDITIONAL REQUIRED EDITS:
-- WINDOW PULL: ONLY for windows that ALREADY EXIST in the original photo — make the outdoor view visible through them. CRITICAL: Do NOT create, add, or hallucinate new windows, openings, or views where none exist in the original photo. If a wall is solid, keep it solid. Only enhance windows you can clearly see in the original image.
-- STRAIGHTEN all vertical lines. Fix any lens distortion. Perspective correction.
-- TV SCREENS: Handle according to the TV style instructions provided below.
-- MIRRORS: Remove any photographer reflections in mirrors or glass.
-- LENS FLARES: Remove any light flares or sun spots.
-- EXTERIOR SHOTS: Handle sky according to the sky style instructions provided below. Make grass lush and green.
-- Keep the image photorealistic. No AI artifacts, no blur, no warping.
+STRICT RULES — DO NOT VIOLATE:
+- DO NOT add, remove, or change ANY physical content in the image
+- DO NOT replace the sky (even if it looks dull — keep it as-is)
+- DO NOT add clouds that aren't there
+- DO NOT make grass greener than it actually is
+- DO NOT change what's visible through windows (no fake views, no fake scenery)
+- DO NOT add, remove, or modify any buildings, landscaping, cars, or objects
+- DO NOT change construction/dirt areas into grass
+- DO NOT add windows, doors, or openings
+- DO NOT remove walls, objects, or existing features
 
-CRITICAL RULES:
-- NEVER add windows, doors, or openings that don't exist in the original photo.
-- NEVER change the room layout or architecture.
-- NEVER add or remove walls, furniture, or structural elements.
-- Maintain the EXACT same composition and structure as the original.
+ONLY DO THESE SAFE ADJUSTMENTS:
+1. EXPOSURE: Balance brightness — lift dark shadows, recover blown highlights. Keep it realistic, not overexposed.
+2. WHITE BALANCE: Correct color casts (too yellow, too green, too cool) to neutral.
+3. CONTRAST: Slight contrast boost for pop, but don't crush blacks.
+4. SATURATION: Very mild saturation boost for natural-looking colors. Do not oversaturate.
+5. SHARPNESS: Gentle sharpening for crisp detail.
+6. NOISE: Reduce noise if visible.
 
-Output the edited image.`,
+The goal: make the photo look like it was taken with perfect lighting and exposure. NOT like a different photo of a different place.
 
-  "bright-airy": `You are an expert real estate photo editor. Create a BRIGHT AND AIRY style edit.
+The output must be THE EXACT SAME SCENE — same sky, same grass, same buildings, same everything — just with better exposure and color.
 
-MANDATORY EDITS:
+Output the corrected image.`,
 
-EXPOSURE & COLOR:
-- EXTREMELY BRIGHT - increase exposure dramatically. The image should feel flooded with soft natural light.
-- Warm color temperature - golden, inviting warmth.
-- Lift ALL shadows completely. Zero dark areas.
-- All white surfaces should glow bright, clean white.
+  "bright-airy": `You are performing REAL ESTATE PHOTO CORRECTION in a BRIGHT & AIRY style. This is a LISTING PHOTO that must accurately represent the property. Do NOT embellish reality.
 
-GEOMETRY:
-- STRAIGHTEN all verticals perfectly.
-- PERSPECTIVE CORRECTION: Fix lens distortion, correct converging lines.
-- Level the horizon.
+STRICT RULES — DO NOT VIOLATE:
+- DO NOT add, remove, or change ANY physical content
+- DO NOT replace the sky, add clouds, or make grass greener than reality
+- DO NOT change what's visible through windows
+- DO NOT modify buildings, landscaping, or any objects
+- DO NOT add or remove anything structural
 
-WINDOWS (WINDOW PULL):
-- ONLY for windows that ALREADY EXIST in the original photo — make the outdoor view visible through them. CRITICAL: Do NOT create, add, or hallucinate new windows, openings, or views where none exist in the original photo. If a wall is solid, keep it solid. Only enhance windows you can clearly see in the original image.
-- Bright sky visible, no blown-out white rectangles.
+ONLY DO THESE SAFE ADJUSTMENTS:
+1. EXPOSURE: Push brightness higher than standard — bright, airy feel. Lift shadows fully. Do not blow out highlights.
+2. WHITE BALANCE: Slightly warm neutral.
+3. COLORS: Soft, gentle, slightly desaturated for a clean look.
+4. WHITES: Make whites clean and bright (walls, ceilings, trim).
+5. SHARPNESS: Gentle sharpening.
 
-EXTERIOR SHOTS:
-- SKY: Handle according to the sky style instructions provided below.
-- GRASS: Lush, vibrant green. Remove dead patches.
+The output must be THE EXACT SAME SCENE — same sky, same grass, same view through windows — just lighter, airier, and cleaner.
 
-OBJECT EDITS:
-- TV SCREENS: Handle according to the TV style instructions provided below.
-- MIRRORS: Remove photographer reflections.
-- LENS FLARES: Remove all.
+Output the corrected image.`,
 
-CRITICAL RULES:
-- NEVER add windows, doors, or openings that don't exist in the original photo.
-- NEVER change the room layout or architecture.
-- NEVER add or remove walls, furniture, or structural elements.
-- Maintain the EXACT same composition and structure as the original.
+  luxury: `You are performing REAL ESTATE PHOTO CORRECTION in a LUXURY MAGAZINE style. This is a LISTING PHOTO that must accurately represent the property. Do NOT embellish reality.
 
-Style reference: Restoration Hardware catalog. Light, airy, dreamy, spacious, but photorealistic.
-Output the edited image.`,
+STRICT RULES — DO NOT VIOLATE:
+- DO NOT add, remove, or change ANY physical content
+- DO NOT replace the sky, add clouds, or make grass greener than reality
+- DO NOT change what's visible through windows
+- DO NOT modify buildings, landscaping, or any objects
+- DO NOT add or remove anything structural
 
-  luxury: `You are an expert real estate photo editor. Create a LUXURY MAGAZINE style edit.
+ONLY DO THESE SAFE ADJUSTMENTS:
+1. EXPOSURE: Balanced exposure with rich shadows. Don't crush blacks completely.
+2. CONTRAST: Higher contrast for editorial feel.
+3. COLORS: Rich, saturated but natural. Warm highlights, cool shadows.
+4. WHITE BALANCE: Slightly warm neutral.
+5. SHARPNESS: Crisp sharpening for high-end look.
 
-MANDATORY EDITS:
+The output must be THE EXACT SAME SCENE — same sky, same grass, same view through windows — just with a premium color grade.
 
-EXPOSURE & COLOR:
-- Rich contrast with well-exposed interiors. Moody but inviting.
-- Deep, warm shadows with golden highlights.
-- Saturated but natural colors. Deep wood tones, rich fabrics, warm metallics.
-- High-end editorial color grading.
-
-GEOMETRY:
-- STRAIGHTEN all verticals perfectly.
-- PERSPECTIVE CORRECTION: Fix all lens distortion. Architecturally perfect lines.
-- Level the horizon.
-
-WINDOWS (WINDOW PULL):
-- ONLY for windows that ALREADY EXIST in the original photo — make the outdoor view visible through them. CRITICAL: Do NOT create, add, or hallucinate new windows, openings, or views where none exist in the original photo. If a wall is solid, keep it solid. Only enhance windows you can clearly see in the original image.
-- Dramatic sky visible - golden hour or blue hour feel.
-
-EXTERIOR SHOTS:
-- SKY: Handle according to the sky style instructions provided below.
-- GRASS: Manicured, deep green, estate-quality landscaping.
-
-OBJECT EDITS:
-- TV SCREENS: Handle according to the TV style instructions provided below.
-- MIRRORS: Remove photographer reflections.
-- LENS FLARES: Remove all.
-
-CRITICAL RULES:
-- NEVER add windows, doors, or openings that don't exist in the original photo.
-- NEVER change the room layout or architecture.
-- NEVER add or remove walls, furniture, or structural elements.
-- Maintain the EXACT same composition and structure as the original.
-
-Style reference: Architectural Digest. Premium, dramatic, aspirational, photorealistic.
-Output the edited image.`,
+Output the corrected image.`,
 };
 
 const twilightExteriorPrompt = `Convert this daytime EXTERIOR photo into a stunning twilight/dusk shot:

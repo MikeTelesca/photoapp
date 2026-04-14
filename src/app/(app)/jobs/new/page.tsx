@@ -27,8 +27,8 @@ export default function NewJobPage() {
   const [address, setAddress] = useState("");
   const [dropboxUrl, setDropboxUrl] = useState("");
   const [preset, setPreset] = useState("standard");
-  const [tvStyle, setTvStyle] = useState("netflix");
-  const [skyStyle, setSkyStyle] = useState("blue-clouds");
+  const [tvStyle, setTvStyle] = useState("off");
+  const [skyStyle, setSkyStyle] = useState("as-is");
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);

@@ -107,9 +107,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     goNext();
   }, [currentPhoto, updatePhoto, goNext]);
 
-  const handleRegenerate = useCallback(() => {
+  const [enhanceError, setEnhanceError] = useState<string | null>(null);
+  const [enhanceLoading, setEnhanceLoading] = useState(false);
+
+  const handleRegenerate = useCallback(async () => {
     if (!currentPhoto) return;
     const instruction = customInstruction.trim() || null;
+    setEnhanceError(null);
+    setEnhanceLoading(true);
 
     // Update status optimistically
     setJob((prev) => ({
@@ -119,36 +124,44 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       ),
     }));
 
-    // Call enhance API
-    fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customInstructions: instruction }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setJob((prev) => ({
-            ...prev,
-            photos: prev.photos.map((p) =>
-              p.id === currentPhoto.id
-                ? { ...p, status: "edited", editedUrl: data.editedUrl }
-                : p
-            ),
-          }));
-        } else {
-          setJob((prev) => ({
-            ...prev,
-            photos: prev.photos.map((p) =>
-              p.id === currentPhoto.id ? { ...p, status: "pending" } : p
-            ),
-          }));
-          console.error("Enhancement failed:", data.error);
-        }
-      })
-      .catch(console.error);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customInstructions: instruction }),
+      });
+      const data = await res.json();
 
-    setCustomInstruction("");
+      if (data.success) {
+        setJob((prev) => ({
+          ...prev,
+          photos: prev.photos.map((p) =>
+            p.id === currentPhoto.id
+              ? { ...p, status: "edited", editedUrl: data.editedUrl }
+              : p
+          ),
+        }));
+      } else {
+        setEnhanceError(data.error || "Enhancement failed");
+        setJob((prev) => ({
+          ...prev,
+          photos: prev.photos.map((p) =>
+            p.id === currentPhoto.id ? { ...p, status: "pending" } : p
+          ),
+        }));
+      }
+    } catch (err: any) {
+      setEnhanceError(err.message || "Network error");
+      setJob((prev) => ({
+        ...prev,
+        photos: prev.photos.map((p) =>
+          p.id === currentPhoto.id ? { ...p, status: "pending" } : p
+        ),
+      }));
+    } finally {
+      setEnhanceLoading(false);
+      setCustomInstruction("");
+    }
   }, [currentPhoto, job.id, customInstruction]);
 
   const handleTwilight = useCallback(() => {
@@ -425,13 +438,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   alt="Edited"
                   className="max-w-full max-h-full object-contain"
                 />
+              ) : enhanceLoading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <ArrowPathIcon className="w-8 h-8 text-cyan animate-spin" />
+                  <div className="text-cyan text-sm font-medium">Enhancing with AI...</div>
+                  <div className="text-graphite-500 text-xs">This may take 15-30 seconds</div>
+                </div>
+              ) : enhanceError ? (
+                <div className="flex flex-col items-center gap-2 max-w-sm text-center px-4">
+                  <div className="text-red-400 text-sm font-medium">Enhancement failed</div>
+                  <div className="text-graphite-500 text-xs">{enhanceError}</div>
+                  <button
+                    onClick={handleRegenerate}
+                    className="mt-2 px-4 py-1.5 rounded-lg bg-cyan/20 text-cyan text-xs font-semibold hover:bg-cyan/30 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
               ) : (
                 <div className="text-graphite-500 text-sm">
-                  {currentPhoto?.status === "processing"
-                    ? "Processing..."
-                    : currentPhoto?.status === "regenerating"
+                  {currentPhoto?.status === "regenerating"
                     ? "Regenerating..."
-                    : "AI Enhanced"}
+                    : "Click 'Enhance with AI' to edit this photo"}
                 </div>
               )}
               {/* Detection badges */}

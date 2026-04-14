@@ -1,13 +1,26 @@
+import { prisma } from "@/lib/db";
 import { Topbar } from "@/components/layout/topbar";
+import { PresetsManager } from "@/components/presets/presets-manager";
 
-export default function PresetsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function PresetsPage() {
+  let presets: any[] = [];
+  try {
+    presets = await prisma.preset.findMany({ orderBy: { createdAt: "asc" } });
+  } catch {}
+
+  const serialized = presets.map((p) => ({
+    ...p,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+  }));
+
   return (
     <>
-      <Topbar title="Editing Presets" subtitle="Manage your editing styles" />
+      <Topbar title="Editing Presets" subtitle="Manage your photo editing styles" />
       <div className="p-6">
-        <div className="bg-white rounded-card border border-graphite-200 p-12 text-center">
-          <p className="text-graphite-400">Presets manager — coming in Phase 2</p>
-        </div>
+        <PresetsManager initialPresets={serialized} />
       </div>
     </>
   );

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { enhancePhoto, convertToTwilight, analyzePhoto } from "@/lib/ai-enhance";
-import { downloadFileFromSharedLink } from "@/lib/dropbox";
+import { downloadFileFromSharedLink, uploadToDropbox } from "@/lib/dropbox";
 
 // POST /api/jobs/:jobId/photos/:photoId/enhance
 export async function POST(
@@ -83,14 +83,26 @@ export async function POST(
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
-    // Store the edited image as a data URL for now
-    // In production, upload to cloud storage (S3/GCS/Dropbox)
-    const editedDataUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+    const outputBuffer = Buffer.from(result.imageBase64!, "base64");
+
+    // Create a Dropbox path for the edited photo
+    const sanitizedAddress = job.address.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 40);
+    const fileName = `photo_${photo.orderIndex + 1}.jpg`;
+    const dropboxPath = `/PhotoApp/edited/${sanitizedAddress}_${job.id.substring(0, 8)}/${fileName}`;
+
+    let editedUrl: string;
+    try {
+      editedUrl = await uploadToDropbox(outputBuffer, dropboxPath);
+    } catch (uploadError) {
+      console.error("Failed to upload to Dropbox, falling back to data URL:", uploadError);
+      // Fallback to data URL if Dropbox upload fails
+      editedUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+    }
 
     await prisma.photo.update({
       where: { id: photoId },
       data: {
-        editedUrl: editedDataUrl,
+        editedUrl,
         status: "edited",
         customInstructions: customInstructions || null,
         isTwilight: makeTwilight || photo.isTwilight,
@@ -100,7 +112,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       photoId,
-      editedUrl: editedDataUrl,
+      editedUrl,
     });
   } catch (error: unknown) {
     const err = error as Error;

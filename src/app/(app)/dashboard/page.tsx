@@ -13,10 +13,11 @@ import {
 } from "@heroicons/react/24/outline";
 import { prisma } from "@/lib/db";
 import type { Job } from "@/lib/types";
+import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-async function getStats() {
+async function getStats(where: object) {
   try {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -24,14 +25,14 @@ async function getStats() {
 
     const [totalJobs, processingJobs, reviewJobs, approvedToday, monthlyCost, totalImages] =
       await Promise.all([
-        prisma.job.count(),
-        prisma.job.count({ where: { status: "processing" } }),
-        prisma.job.count({ where: { status: "review" } }),
+        prisma.job.count({ where }),
+        prisma.job.count({ where: { ...where, status: "processing" } }),
+        prisma.job.count({ where: { ...where, status: "review" } }),
         prisma.job.count({
-          where: { status: "approved", updatedAt: { gte: startOfDay } },
+          where: { ...where, status: "approved", updatedAt: { gte: startOfDay } },
         }),
         prisma.job.aggregate({
-          where: { createdAt: { gte: startOfMonth } },
+          where: { ...where, createdAt: { gte: startOfMonth } },
           _sum: { cost: true },
         }),
         prisma.photo.count({
@@ -60,9 +61,10 @@ async function getStats() {
   }
 }
 
-async function getJobs(): Promise<Job[]> {
+async function getJobs(where: object): Promise<Job[]> {
   try {
     const dbJobs = await prisma.job.findMany({
+      where,
       include: {
         photographer: {
           select: { name: true },
@@ -84,6 +86,7 @@ async function getJobs(): Promise<Job[]> {
       approvedPhotos: j.approvedPhotos,
       rejectedPhotos: j.rejectedPhotos,
       twilightCount: j.twilightCount,
+      cost: j.cost,
       createdAt: j.createdAt,
       updatedAt: j.updatedAt,
     }));
@@ -141,9 +144,14 @@ function formatTime(date: Date): string {
 }
 
 export default async function DashboardPage() {
+  const session = await auth();
+  const userId = (session?.user as any)?.id;
+  const userRole = (session?.user as any)?.role;
+  const where = userRole === "admin" ? {} : { photographerId: userId };
+
   const [stats, jobs, activity] = await Promise.all([
-    getStats(),
-    getJobs(),
+    getStats(where),
+    getJobs(where),
     getRecentActivity(),
   ]);
 

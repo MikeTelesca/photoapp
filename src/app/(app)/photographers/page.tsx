@@ -1,10 +1,16 @@
 import { prisma } from "@/lib/db";
 import { Topbar } from "@/components/layout/topbar";
 import { PhotographersManager } from "@/components/photographers/photographers-manager";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function PhotographersPage() {
+  const session = await auth();
+  if ((session?.user as any)?.role !== "admin") {
+    redirect("/dashboard");
+  }
   let users: any[] = [];
   try {
     users = await prisma.user.findMany({

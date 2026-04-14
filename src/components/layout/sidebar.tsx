@@ -80,27 +80,29 @@ export function Sidebar() {
         })}
       </nav>
 
-      <nav className="mb-7">
-        <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Settings</div>
-        {settingsItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-2.5 px-6 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
-                isActive
-                  ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
-                  : "text-graphite-500 hover:bg-graphite-100 hover:text-graphite-700"
-              }`}
-            >
-              <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {(session?.user as any)?.role === "admin" && (
+        <nav className="mb-7">
+          <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Settings</div>
+          {settingsItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-2.5 px-6 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
+                  isActive
+                    ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
+                    : "text-graphite-500 hover:bg-graphite-100 hover:text-graphite-700"
+                }`}
+              >
+                <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
       <div className="flex-1" />
 

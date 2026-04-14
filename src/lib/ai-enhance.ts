@@ -65,7 +65,7 @@ export async function enhancePhoto(
 ): Promise<EnhanceResult> {
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash-image",
       generationConfig: {
         responseModalities: ["image", "text"],
       } as Record<string, unknown>,
@@ -140,7 +140,7 @@ export async function convertToTwilight(
 ): Promise<EnhanceResult> {
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash-image",
       generationConfig: {
         responseModalities: ["image", "text"],
       } as Record<string, unknown>,
@@ -200,7 +200,7 @@ export async function analyzePhoto(
   detections: string[];
 }> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
 
     const result = await model.generateContent([
       {

@@ -69,10 +69,15 @@ export default function NewJobPage() {
       const jobData = await res.json();
 
       if (dropboxUrl.trim()) {
-        // Trigger ingestion in the background
-        fetch(`/api/jobs/${jobData.id}/ingest`, { method: "POST" }).catch(
-          console.error
-        );
+        // Trigger ingestion, then enhancement in background
+        fetch(`/api/jobs/${jobData.id}/ingest`, { method: "POST" })
+          .then((res) => {
+            if (res.ok) {
+              // After ingestion, trigger AI enhancement
+              return fetch(`/api/jobs/${jobData.id}/enhance`, { method: "POST" });
+            }
+          })
+          .catch(console.error);
       }
 
       router.push("/dashboard");

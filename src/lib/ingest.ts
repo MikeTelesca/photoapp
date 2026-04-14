@@ -112,7 +112,7 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
     await prisma.job.update({
       where: { id: jobId },
       data: {
-        status: "review", // For now, skip processing and go to review. HDR merge comes later.
+        status: "processing", // Photos still need AI enhancement before review
         totalPhotos: groups.length,
         processedPhotos: groups.length,
       },

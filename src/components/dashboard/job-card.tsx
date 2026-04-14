@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -9,6 +12,7 @@ interface JobCardProps {
 }
 
 const dotColors: Record<string, string> = {
+  pending: "bg-graphite-400",
   processing: "bg-amber-500",
   review: "bg-cyan",
   approved: "bg-emerald-500",
@@ -16,7 +20,24 @@ const dotColors: Record<string, string> = {
 };
 
 export function JobCard({ job }: JobCardProps) {
+  const [isStarting, setIsStarting] = useState(false);
   const progress = job.totalPhotos > 0 ? Math.round((job.processedPhotos / job.totalPhotos) * 100) : 0;
+
+  function handleStartProcessing(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsStarting(true);
+    fetch(`/api/jobs/${job.id}/ingest`, { method: "POST" })
+      .then((res) => {
+        if (res.ok) {
+          return fetch(`/api/jobs/${job.id}/enhance`, { method: "POST" });
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        window.location.reload();
+      });
+  }
 
   const Wrapper = job.status === "review"
     ? ({ children, className }: { children: React.ReactNode; className: string }) => (
@@ -54,6 +75,16 @@ export function JobCard({ job }: JobCardProps) {
             <span className="text-xs font-semibold text-cyan">Ready for Review</span>
             <span className="text-graphite-300 text-base">›</span>
           </>
+        )}
+        {job.status === "pending" && (
+          <Button
+            variant="outline"
+            className="text-xs"
+            onClick={handleStartProcessing}
+            disabled={isStarting}
+          >
+            {isStarting ? "Starting..." : "Start Processing"}
+          </Button>
         )}
         {job.status === "approved" && (
           <>

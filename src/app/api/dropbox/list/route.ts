@@ -1,35 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listFilesFromSharedLink } from "@/lib/dropbox";
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf"];
 
 // POST /api/dropbox/list - list files from a shared Dropbox link
+// Uses raw Dropbox API to avoid SDK compatibility issues on Vercel
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
 
     if (!url) {
-      return NextResponse.json(
-        { error: "Dropbox URL is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Dropbox URL is required" }, { status: 400 });
     }
 
-    if (!process.env.DROPBOX_ACCESS_TOKEN && !process.env.DROPBOX_REFRESH_TOKEN) {
-      return NextResponse.json(
-        { error: "Dropbox is not configured. Add DROPBOX_ACCESS_TOKEN to environment." },
-        { status: 500 }
-      );
+    const token = process.env.DROPBOX_ACCESS_TOKEN;
+    if (!token) {
+      return NextResponse.json({ error: "Dropbox not configured" }, { status: 500 });
     }
 
-    const files = await listFilesFromSharedLink(url);
-
-    return NextResponse.json({
-      fileCount: files.length,
-      files,
+    // Call Dropbox API directly
+    const dbxResponse = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        path: "",
+        shared_link: { url },
+        recursive: true,
+        limit: 2000,
+      }),
     });
+
+    if (!dbxResponse.ok) {
+      const errText = await dbxResponse.text();
+      return NextResponse.json({ error: `Dropbox API error: ${errText}` }, { status: 500 });
+    }
+
+    const data = await dbxResponse.json();
+
+    const files = data.entries
+      .filter((entry: any) => {
+        if (entry[".tag"] !== "file") return false;
+        const ext = entry.name.toLowerCase().slice(entry.name.lastIndexOf("."));
+        return IMAGE_EXTENSIONS.includes(ext);
+      })
+      .map((entry: any) => ({
+        name: entry.name,
+        path: entry.path_lower || entry.path_display || "",
+        size: entry.size || 0,
+        id: entry.id || "",
+      }))
+      .sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+    return NextResponse.json({ fileCount: files.length, files });
   } catch (error: any) {
     console.error("Dropbox list error:", error);
-    // Extract the actual Dropbox API error
-    const dbxError = error?.error?.error_summary || error?.error?.error || error?.message || "Failed to list Dropbox files";
-    return NextResponse.json({ error: typeof dbxError === 'string' ? dbxError : JSON.stringify(dbxError) }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to list files" }, { status: 500 });
   }
 }

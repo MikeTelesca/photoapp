@@ -183,6 +183,29 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     setCustomInstruction("");
   }, [currentPhoto, job.id, customInstruction]);
 
+  const handleDownload = useCallback(async () => {
+    const approvedPhotos = photos.filter(
+      (p) => p.status === "approved" && p.editedUrl
+    );
+
+    if (approvedPhotos.length === 0) {
+      alert("No approved photos to download");
+      return;
+    }
+
+    // Download each approved photo
+    for (const photo of approvedPhotos) {
+      const link = document.createElement("a");
+      link.href = `/api/jobs/${job.id}/photos/${photo.id}/download`;
+      link.download = `photo_${photo.orderIndex + 1}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      // Small delay between downloads to avoid browser blocking
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }, [photos, job.id]);
+
   const handleApproveAll = useCallback(async () => {
     const pending = photos.filter(
       (p) => p.status !== "approved" && p.status !== "rejected"
@@ -268,7 +291,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <CheckCircleIcon className="w-4 h-4" />
             Approve All
           </Button>
-          <Button>
+          <Button onClick={handleDownload}>
             <ArrowDownTrayIcon className="w-4 h-4" />
             Download
           </Button>

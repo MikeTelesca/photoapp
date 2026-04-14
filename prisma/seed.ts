@@ -1,4 +1,5 @@
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client.js";
 
 function createPrismaClient(): PrismaClient {
@@ -21,13 +22,14 @@ const prisma = createPrismaClient();
 
 async function main() {
   // Create admin user
+  const hashedPassword = await bcrypt.hash("admin123", 10);
   const admin = await prisma.user.upsert({
     where: { email: "admin@photoapp.com" },
     update: {},
     create: {
       name: "Admin",
       email: "admin@photoapp.com",
-      password: "admin123", // Will be hashed in auth phase
+      password: hashedPassword,
       role: "admin",
     },
   });

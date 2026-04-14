@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { prisma } from "./db";
 import { authConfig } from "./auth.config";
 
@@ -21,9 +22,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user) return null;
 
-        // For now, simple password comparison
-        // TODO: Use bcrypt in production
-        if (user.password !== credentials.password) return null;
+        const isValid = await bcrypt.compare(credentials.password as string, user.password);
+        if (!isValid) return null;
 
         return {
           id: user.id,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 
 // GET /api/users - list photographers
@@ -29,8 +30,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email already exists" }, { status: 400 });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await prisma.user.create({
-      data: { name, email, password, role: role || "photographer" },
+      data: { name, email, password: hashedPassword, role: role || "photographer" },
       select: { id: true, name: true, email: true, role: true, createdAt: true },
     });
 

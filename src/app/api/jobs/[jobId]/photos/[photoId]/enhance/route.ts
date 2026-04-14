@@ -108,7 +108,18 @@ export async function POST(
       };
       const tvInstruction = tvInstructions[(job as any).tvStyle || "netflix"] || tvInstructions.netflix;
 
-      const additionalInstructions = [tvInstruction];
+      // Build Sky instruction based on job's skyStyle
+      const skyInstructions: Record<string, string> = {
+        "blue-clouds": "For EXTERIOR shots: Replace the sky with a clear blue sky with scattered fluffy white cumulus clouds. The sun should appear to be at a 45-degree angle creating warm natural light. Use this EXACT same sky appearance for consistency across all photos.",
+        "clear-blue": "For EXTERIOR shots: Replace the sky with a pure crystal clear blue sky with no clouds at all. Deep blue at the top, lighter blue near the horizon. Consistent across all photos.",
+        "golden-hour": "For EXTERIOR shots: Replace the sky with a warm golden hour sky - soft orange and pink hues near the horizon transitioning to warm blue above. The lighting should feel like late afternoon sun. Consistent across all photos.",
+        "dramatic": "For EXTERIOR shots: Replace the sky with a dramatic deep blue sky with large bold white cumulus clouds. Strong contrast between sky and clouds. Consistent across all photos.",
+        "overcast-soft": "For EXTERIOR shots: Keep the sky as a bright, even, soft white/light gray overcast. This provides very even, flattering lighting on the property. Do not add blue sky.",
+        "as-is": "Do NOT modify or replace the sky. Keep the original sky exactly as it appears in the photo.",
+      };
+      const skyInstruction = skyInstructions[(job as any).skyStyle || "blue-clouds"] || skyInstructions["blue-clouds"];
+
+      const additionalInstructions = [tvInstruction, skyInstruction];
       if (customInstructions) additionalInstructions.push(customInstructions);
       const combinedInstructions = additionalInstructions.join("\n");
 

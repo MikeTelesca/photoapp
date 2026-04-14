@@ -28,6 +28,7 @@ export default function NewJobPage() {
   const [dropboxUrl, setDropboxUrl] = useState("");
   const [preset, setPreset] = useState("standard");
   const [tvStyle, setTvStyle] = useState("netflix");
+  const [skyStyle, setSkyStyle] = useState("blue-clouds");
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);
@@ -55,6 +56,15 @@ export default function NewJobPage() {
     { value: "fireplace", label: "Fireplace", desc: "Cozy crackling fireplace" },
     { value: "art", label: "Abstract Art", desc: "Modern abstract artwork" },
     { value: "off", label: "Don't Touch TV", desc: "Leave the TV screen as-is" },
+  ];
+
+  const skyOptions = [
+    { value: "blue-clouds", label: "Blue + White Clouds", desc: "Clear blue sky with scattered white clouds" },
+    { value: "clear-blue", label: "Crystal Clear Blue", desc: "Pure blue sky, no clouds" },
+    { value: "golden-hour", label: "Golden Hour", desc: "Warm golden sunset/sunrise sky" },
+    { value: "dramatic", label: "Dramatic", desc: "Deep blue with bold white clouds" },
+    { value: "overcast-soft", label: "Soft Overcast", desc: "Bright white/light gray, even lighting" },
+    { value: "as-is", label: "Keep Original Sky", desc: "Don't replace the sky" },
   ];
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,6 +120,7 @@ export default function NewJobPage() {
           dropboxUrl: dropboxUrl.trim() || null,
           preset,
           tvStyle,
+          skyStyle,
         }),
       });
 
@@ -292,6 +303,39 @@ export default function NewJobPage() {
                     <div className="flex items-center justify-between mb-0.5">
                       <span className="text-xs font-semibold text-graphite-900">{opt.label}</span>
                       {tvStyle === opt.value && (
+                        <CheckIcon className="w-3.5 h-3.5 text-cyan" />
+                      )}
+                    </div>
+                    <span className="text-[10px] text-graphite-400">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sky Style */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-graphite-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" />
+                </svg>
+                Sky Style
+                <span className="text-xs font-normal text-graphite-400">(for exterior shots)</span>
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {skyOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setSkyStyle(opt.value)}
+                    className={`p-3 rounded-xl border-2 text-left transition-all duration-200 ${
+                      skyStyle === opt.value
+                        ? "border-cyan bg-cyan-50"
+                        : "border-graphite-200 bg-white hover:border-graphite-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs font-semibold text-graphite-900">{opt.label}</span>
+                      {skyStyle === opt.value && (
                         <CheckIcon className="w-3.5 h-3.5 text-cyan" />
                       )}
                     </div>

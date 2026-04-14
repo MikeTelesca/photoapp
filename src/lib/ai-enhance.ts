@@ -12,7 +12,7 @@ ADDITIONAL REQUIRED EDITS:
 - TV SCREENS: Handle according to the TV style instructions provided below.
 - MIRRORS: Remove any photographer reflections in mirrors or glass.
 - LENS FLARES: Remove any light flares or sun spots.
-- EXTERIOR SHOTS: Replace dull sky with blue sky and light clouds. Make grass lush and green.
+- EXTERIOR SHOTS: Handle sky according to the sky style instructions provided below. Make grass lush and green.
 - Keep the image photorealistic. No AI artifacts, no blur, no warping.
 
 Output the edited image.`,
@@ -37,7 +37,7 @@ WINDOWS (WINDOW PULL):
 - Bright sky visible, no blown-out white rectangles.
 
 EXTERIOR SHOTS:
-- SKY: Bright blue sky with soft clouds.
+- SKY: Handle according to the sky style instructions provided below.
 - GRASS: Lush, vibrant green. Remove dead patches.
 
 OBJECT EDITS:
@@ -68,7 +68,7 @@ WINDOWS (WINDOW PULL):
 - Dramatic sky visible - golden hour or blue hour feel.
 
 EXTERIOR SHOTS:
-- SKY: Dramatic sky - deep blue or golden sunset tones.
+- SKY: Handle according to the sky style instructions provided below.
 - GRASS: Manicured, deep green, estate-quality landscaping.
 
 OBJECT EDITS:

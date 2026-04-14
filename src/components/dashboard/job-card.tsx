@@ -80,6 +80,7 @@ export function JobCard({ job }: JobCardProps) {
         {job.status === "review" && (
           <>
             <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <DeleteJobButton jobId={job.id} />
             <span className="text-graphite-300 text-base">›</span>
           </>
         )}

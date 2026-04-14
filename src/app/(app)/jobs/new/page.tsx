@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
@@ -22,29 +22,30 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
-const presets = [
-  {
-    slug: "standard",
-    name: "Standard",
-    description: "Window-pulled HDR, natural + magazine style",
-  },
-  {
-    slug: "bright-airy",
-    name: "Bright & Airy",
-    description: "Light, warm, lifted shadows",
-  },
-  {
-    slug: "luxury",
-    name: "Luxury",
-    description: "Rich contrast, dramatic, moody",
-  },
-];
-
 export default function NewJobPage() {
   const router = useRouter();
   const [address, setAddress] = useState("");
   const [dropboxUrl, setDropboxUrl] = useState("");
   const [preset, setPreset] = useState("standard");
+  const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
+    { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
+  ]);
+  const [presetsLoading, setPresetsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/presets")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setPresets(data);
+          // Default to first preset or the one marked as default
+          const defaultPreset = data.find((p: any) => p.isDefault) || data[0];
+          setPreset(defaultPreset.slug);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setPresetsLoading(false));
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [isCheckingDropbox, setIsCheckingDropbox] = useState(false);
@@ -229,7 +230,7 @@ export default function NewJobPage() {
                 <PaintBrushIcon className="w-4 h-4 text-graphite-500" />
                 Editing Preset
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className={`grid gap-3 ${presets.length > 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-3'}`}>
                 {presets.map((p) => (
                   <button
                     key={p.slug}

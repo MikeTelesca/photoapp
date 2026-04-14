@@ -4,48 +4,72 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
 // Editing prompts per preset
 const presetPrompts: Record<string, string> = {
-  standard: `You are a professional real estate photo editor. Edit this real estate photo with these requirements:
-- Window-pulled HDR: Balance interior exposure with exterior views through windows. No blown-out windows.
-- Rich but natural colors with a slight magazine quality
-- Straighten any tilted verticals or horizontals
-- Clean, professional look suitable for MLS listings
-- If there's a TV visible, replace the screen with a lifestyle beach/nature scene
-- If there's a mirror with a photographer reflection, remove the photographer
-- Remove any lens flares from lights or sun
-- If this is an exterior shot: enhance the sky to be blue with light clouds, enhance the grass to look green and healthy
-- If there are visible power lines or trash cans, remove them
-- Keep the image photorealistic — no AI artifacts, no blur, no over-processing`,
+  standard: `You are an expert real estate photo editor. DRAMATICALLY improve this photo for an MLS listing:
 
-  "bright-airy": `You are a professional real estate photo editor. Edit this real estate photo with these requirements:
-- Bright and airy style: light, warm tones throughout
-- Lifted shadows, soft natural light feel
-- Clean and spacious atmosphere
-- Straighten any tilted verticals or horizontals
-- If there's a TV visible, replace the screen with a lifestyle scene
-- If there's a mirror with a photographer reflection, remove the photographer
-- Remove any lens flares
-- If exterior: bright blue sky, lush green grass
-- Keep photorealistic — no AI artifacts`,
+CRITICAL EDITS (do ALL of these):
+1. BRIGHTEN THE ENTIRE IMAGE SIGNIFICANTLY - make it look light, airy, and inviting. Real estate photos should be MUCH brighter than normal photos.
+2. WINDOWS: Make the view through ALL windows clearly visible. Pull the exterior view - show blue sky, trees, buildings. NO blown-out white windows.
+3. WHITE BALANCE: Correct to neutral/warm. Remove any yellow/green color casts.
+4. SHADOWS: Lift all shadows dramatically. No dark corners or underexposed areas.
+5. COLORS: Make colors rich and vibrant but natural. Wood floors should look warm, whites should be bright white.
+6. STRAIGHTEN: Fix any tilted verticals or horizontals.
+7. TV SCREENS: If there's a TV, replace the screen with a beach/nature scene.
+8. MIRRORS: If you see a photographer's reflection in any mirror or glass, remove them completely.
+9. LENS FLARES: Remove any light flares or sun spots.
+10. CLEAN UP: Remove any clutter, personal items, or distracting objects if possible.
 
-  luxury: `You are a professional real estate photo editor. Edit this real estate photo with these requirements:
-- Luxury magazine style: rich contrast, dramatic but inviting lighting
-- Deep shadows with warm highlights
-- High-end editorial feel
-- Straighten any tilted verticals or horizontals
-- If there's a TV visible, replace the screen with an elegant scene
-- If there's a mirror with a photographer reflection, remove the photographer
-- Remove any lens flares
-- If exterior: dramatic sky, manicured-looking grass
-- Keep photorealistic — no AI artifacts`,
+The final image should look like it belongs in a luxury real estate magazine. BRIGHT, CLEAN, PROFESSIONAL.
+Output the edited image.`,
+
+  "bright-airy": `You are an expert real estate photo editor. Create a BRIGHT AND AIRY look:
+
+CRITICAL EDITS:
+1. EXTREMELY BRIGHT - push brightness way up. The image should feel flooded with natural light.
+2. WARM TONES - slight warm color temperature, golden light feel.
+3. LIFTED SHADOWS - no shadows at all, everything should be visible and light.
+4. WINDOWS: Show the view clearly, bright sky visible.
+5. WHITE BALANCE: Warm and clean.
+6. WHITES: All white surfaces should glow bright white.
+7. TV SCREENS: Replace with lifestyle scene.
+8. MIRRORS: Remove photographer reflections.
+9. LENS FLARES: Remove.
+10. Make it feel spacious, clean, and magazine-quality.
+
+Think: Restoration Hardware catalog. Light, airy, dreamy, but still realistic.
+Output the edited image.`,
+
+  luxury: `You are an expert real estate photo editor. Create a LUXURY MAGAZINE look:
+
+CRITICAL EDITS:
+1. DRAMATIC LIGHTING - rich contrast but still well-exposed. Deep, moody shadows with warm highlights.
+2. RICH COLORS - saturated but natural. Deep wood tones, rich fabrics, warm metals.
+3. WINDOWS: Show exterior view clearly with dramatic sky.
+4. HIGH-END FEEL - make the space look like a luxury hotel or high-end condo.
+5. WARM HIGHLIGHTS - golden hour warmth in the highlights.
+6. TV SCREENS: Replace with elegant scene.
+7. MIRRORS: Remove photographer reflections.
+8. LENS FLARES: Remove.
+9. STRAIGHTEN all verticals.
+10. CLEAN UP any clutter.
+
+Think: Architectural Digest. Rich, dramatic, inviting, premium.
+Output the edited image.`,
 };
 
-const twilightPrompt = `You are a professional real estate photo editor. Convert this daytime exterior photo into a stunning twilight/dusk shot:
-- Sky should transition from deep blue to warm orange/pink near the horizon
-- All interior lights should be glowing warmly through windows
-- Exterior landscape lighting should be on (path lights, garden lights)
-- The overall mood should be warm and inviting
-- Keep the image photorealistic
-- Maintain all architectural details`;
+const twilightPrompt = `You are an expert real estate photo editor. Convert this daytime exterior into a STUNNING TWILIGHT/DUSK shot:
+
+CRITICAL EDITS:
+1. SKY: Replace with a beautiful twilight sky - deep blue to warm orange/pink gradient near the horizon. Stars optional.
+2. INTERIOR LIGHTS: All windows should glow with warm golden/amber light from inside.
+3. EXTERIOR LIGHTS: Turn on ALL exterior lighting - landscape lights, path lights, porch lights, sconces, pot lights.
+4. WARM ATMOSPHERE: Overall warm, inviting mood.
+5. GRASS/LANDSCAPING: Should still be visible but darker, lit by landscape lighting.
+6. DRIVEWAY: Slightly wet/reflective look optional for drama.
+7. Keep all architectural details sharp and clear.
+8. The image should look like it was actually photographed at dusk by a professional.
+
+Make it look STUNNING - this is the hero shot for the listing.
+Output the edited image.`;
 
 export interface EnhanceResult {
   success: boolean;
@@ -71,9 +95,19 @@ export async function enhancePhoto(
       } as Record<string, unknown>,
     });
 
-    const prompt = customInstructions
-      ? `${presetPrompts[preset] || presetPrompts.standard}\n\nAdditional instructions: ${customInstructions}`
-      : presetPrompts[preset] || presetPrompts.standard;
+    // Use preset prompt, or fall back to standard
+    let basePrompt = presetPrompts[preset] || presetPrompts.standard;
+    let extraInstructions = customInstructions;
+
+    // If it's a custom preset not in our hardcoded list, use the custom instructions as the base
+    if (!presetPrompts[preset] && customInstructions) {
+      basePrompt = customInstructions;
+      extraInstructions = null; // Don't append it twice
+    }
+
+    const prompt = extraInstructions
+      ? `${basePrompt}\n\nADDITIONAL INSTRUCTIONS: ${extraInstructions}`
+      : basePrompt;
 
     const imageBase64 = imageBuffer.toString("base64");
 

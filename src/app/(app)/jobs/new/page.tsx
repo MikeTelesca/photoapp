@@ -10,7 +10,17 @@ import {
   LinkIcon,
   PaintBrushIcon,
   CheckIcon,
+  ArrowPathIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
 
 const presets = [
   {
@@ -37,6 +47,36 @@ export default function NewJobPage() {
   const [preset, setPreset] = useState("standard");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [isCheckingDropbox, setIsCheckingDropbox] = useState(false);
+  const [dropboxFiles, setDropboxFiles] = useState<Array<{ name: string; path: string; size: number }>>([]);
+  const [dropboxError, setDropboxError] = useState("");
+
+  async function checkDropboxLink(url: string) {
+    if (!url.trim() || !url.includes("dropbox.com")) return;
+    setIsCheckingDropbox(true);
+    setDropboxError("");
+    setDropboxFiles([]);
+
+    try {
+      const res = await fetch("/api/dropbox/list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to list files");
+
+      setDropboxFiles(data.files || []);
+      if (data.files.length === 0) {
+        setDropboxError("No image files found in this Dropbox folder");
+      }
+    } catch (err: any) {
+      setDropboxError(err.message || "Failed to check Dropbox link");
+    } finally {
+      setIsCheckingDropbox(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -120,12 +160,75 @@ export default function NewJobPage() {
                 type="url"
                 value={dropboxUrl}
                 onChange={(e) => setDropboxUrl(e.target.value)}
+                onBlur={() => checkDropboxLink(dropboxUrl)}
                 placeholder="https://www.dropbox.com/sh/..."
                 className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
               />
               <p className="text-xs text-graphite-400 mt-1.5">
                 Paste the shared Dropbox folder link containing the bracketed photos. We&apos;ll pull them automatically.
               </p>
+
+              {isCheckingDropbox && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-cyan">
+                  <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                  Checking Dropbox folder...
+                </div>
+              )}
+
+              {dropboxError && (
+                <div className="mt-3 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                  {dropboxError}
+                </div>
+              )}
+
+              {dropboxFiles.length > 0 && !isCheckingDropbox && (
+                <div className="mt-3 bg-graphite-50 border border-graphite-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm font-semibold text-graphite-900">
+                        {dropboxFiles.length} files found
+                      </span>
+                    </div>
+                    <span className="text-xs text-graphite-400">
+                      {formatFileSize(dropboxFiles.reduce((sum, f) => sum + f.size, 0))}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+                    <div className="bg-white rounded-lg p-2 border border-graphite-200">
+                      <div className="text-lg font-bold text-graphite-900">{dropboxFiles.length}</div>
+                      <div className="text-[10px] text-graphite-400 uppercase">Source Files</div>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 border border-graphite-200">
+                      <div className="text-lg font-bold text-cyan">
+                        {dropboxFiles.length % 5 === 0 ? 5 : 3}
+                      </div>
+                      <div className="text-[10px] text-graphite-400 uppercase">Brackets</div>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 border border-graphite-200">
+                      <div className="text-lg font-bold text-emerald-600">
+                        {Math.ceil(dropboxFiles.length / (dropboxFiles.length % 5 === 0 ? 5 : 3))}
+                      </div>
+                      <div className="text-[10px] text-graphite-400 uppercase">Final Photos</div>
+                    </div>
+                  </div>
+
+                  <div className="max-h-[120px] overflow-y-auto">
+                    {dropboxFiles.slice(0, 30).map((file, i) => (
+                      <div key={i} className="flex items-center justify-between py-1 text-xs">
+                        <span className="text-graphite-600 truncate mr-2">{file.name}</span>
+                        <span className="text-graphite-400 flex-shrink-0">{formatFileSize(file.size)}</span>
+                      </div>
+                    ))}
+                    {dropboxFiles.length > 30 && (
+                      <div className="text-xs text-graphite-400 mt-1">
+                        +{dropboxFiles.length - 30} more files...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Preset */}

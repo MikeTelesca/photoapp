@@ -7,7 +7,7 @@ const presetPrompts: Record<string, string> = {
   standard: `Enhance this image to look like a professionally shot real estate photo with perfect, balanced lighting—bright natural window light, clean white tones, even exposure, and sharp detail throughout. Maintain the original composition, angles, and structure exactly as is.
 
 ADDITIONAL REQUIRED EDITS:
-- WINDOW PULL: Make the view through ALL windows clearly visible. Show blue sky, trees, or cityscape. No blown-out white windows.
+- WINDOW PULL: For EXISTING windows ONLY — make the outdoor view visible through them. Show blue sky, trees, or cityscape. No blown-out white windows. IMPORTANT: Do NOT add new windows or openings where none exist. Only enhance windows that are already in the photo.
 - STRAIGHTEN all vertical lines. Fix any lens distortion. Perspective correction.
 - TV SCREENS: If there's a TV, replace the screen with a Netflix home screen showing movie thumbnails and the Netflix UI (red logo, rows of movie posters, dark background).
 - MIRRORS: Remove any photographer reflections in mirrors or glass.

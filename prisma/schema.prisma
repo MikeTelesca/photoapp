@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("photographer") // "admin" or "photographer"
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  jobs      Job[]
+}
+
+model Job {
+  id               String   @id @default(cuid())
+  address          String
+  dropboxUrl       String?
+  preset           String   @default("standard") // "standard", "bright-airy", "luxury", "custom"
+  status           String   @default("pending") // "pending", "processing", "review", "approved", "rejected"
+  totalPhotos      Int      @default(0)
+  processedPhotos  Int      @default(0)
+  approvedPhotos   Int      @default(0)
+  rejectedPhotos   Int      @default(0)
+  twilightCount    Int      @default(0)
+  cost             Float    @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  photographer     User     @relation(fields: [photographerId], references: [id])
+  photographerId   String
+  photos           Photo[]
+}
+
+model Photo {
+  id                   String   @id @default(cuid())
+  jobId                String
+  job                  Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  orderIndex           Int      @default(0)
+  status               String   @default("pending") // "pending", "processing", "edited", "approved", "rejected", "regenerating"
+  originalUrl          String?
+  editedUrl            String?
+  thumbnailUrl         String?
+  isExterior           Boolean  @default(false)
+  isTwilight           Boolean  @default(false)
+  twilightInstructions String?
+  customInstructions   String?
+  detections           String   @default("[]") // JSON array stored as string
+  bracketGroup         Int?     // which bracket group this belongs to
+  bracketIndex         Int?     // position within bracket group (0, 1, 2 for 3-bracket)
+  exifData             String?  // JSON string of relevant EXIF fields
+  fileSizeBytes        Int?
+  widthPx              Int?
+  heightPx             Int?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Preset {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  description     String   @default("")
+  promptModifiers String   @default("")
+  isDefault       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

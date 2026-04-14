@@ -153,7 +153,7 @@ export default async function DashboardPage() {
       <Topbar title="Dashboard" subtitle="Manage your photo editing jobs" />
       <div className="p-6">
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <StatCard
             label="Total Jobs"
             value={stats.totalJobs}
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Grid: Jobs + Right Panel */}
-        <div className="grid grid-cols-[1fr_340px] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
           <JobList jobs={jobs} />
           <div className="flex flex-col gap-4">
             <QuickActions />

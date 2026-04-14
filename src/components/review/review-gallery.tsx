@@ -257,26 +257,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   return (
     <div className="flex flex-col h-screen">
       {/* Top Bar */}
-      <div className="sticky top-0 z-20 bg-white/92 backdrop-blur-xl border-b border-graphite-200 px-7 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-20 bg-white/92 backdrop-blur-xl border-b border-graphite-200 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3.5">
           <Link
             href="/dashboard"
             className="flex items-center gap-1 text-sm font-medium text-cyan hover:opacity-70 transition-opacity"
           >
             <ChevronLeftIcon className="w-4 h-4" />
-            Dashboard
+            <span className="hidden sm:inline">Dashboard</span>
           </Link>
           <div>
-            <div className="text-base font-bold text-graphite-900">{job.address}</div>
+            <div className="text-sm md:text-base font-bold text-graphite-900">{job.address}</div>
             <div className="text-xs text-graphite-400 flex gap-3">
               <span>{job.photographer.name}</span>
               <span>{photos.length} photos</span>
-              <span className="capitalize">{job.preset} preset</span>
+              <span className="capitalize hidden sm:inline">{job.preset} preset</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2.5">
-          <div className="text-right mr-2">
+          <div className="text-right mr-2 hidden sm:block">
             <div className="text-xs font-semibold text-graphite-700">
               {approvedCount} / {photos.length} approved
             </div>
@@ -289,19 +289,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
           <Button variant="approve" onClick={handleApproveAll} disabled={isUpdating}>
             <CheckCircleIcon className="w-4 h-4" />
-            Approve All
+            <span className="hidden sm:inline">Approve All</span>
           </Button>
           <Button onClick={handleDownload}>
             <ArrowDownTrayIcon className="w-4 h-4" />
-            Download
+            <span className="hidden sm:inline">Download</span>
           </Button>
         </div>
       </div>
 
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Thumbnail Strip */}
-        <div className="w-[100px] bg-white border-r border-graphite-200 overflow-y-auto p-2 flex flex-col gap-1 flex-shrink-0">
+        {/* Thumbnail Strip - hidden on mobile */}
+        <div className="hidden md:flex w-[100px] bg-white border-r border-graphite-200 overflow-y-auto p-2 flex-col gap-1 flex-shrink-0">
           {photos.map((photo, idx) => (
             <button
               key={photo.id}
@@ -349,7 +349,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         {/* Viewer */}
         <div className="flex-1 flex flex-col">
           {/* Before / After Compare */}
-          <div className="flex-1 bg-graphite-900 flex gap-0.5 p-4 min-h-0">
+          <div className="flex-1 bg-graphite-900 flex flex-col md:flex-row gap-0.5 p-2 md:p-4 min-h-0">
             {/* Before */}
             <div className="flex-1 rounded-lg overflow-hidden relative flex items-center justify-center bg-graphite-800">
               <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10">
@@ -403,7 +403,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
 
           {/* Action Bar */}
-          <div className="bg-white border-t border-graphite-200 px-6 py-3 flex items-center justify-between">
+          <div className="bg-white border-t border-graphite-200 px-3 md:px-6 py-3 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-4">
               <div className="flex gap-1">
                 <button
@@ -466,7 +466,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </button>
             </div>
 
-            <div className="flex gap-1.5 text-[10px] text-graphite-400">
+            <div className="hidden md:flex gap-1.5 text-[10px] text-graphite-400">
               <span className="px-2 py-1 bg-graphite-100 rounded">A = Approve</span>
               <span className="px-2 py-1 bg-graphite-100 rounded">R = Reject</span>
               <span className="px-2 py-1 bg-graphite-100 rounded">&larr; &rarr; Navigate</span>

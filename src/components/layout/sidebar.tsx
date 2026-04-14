@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -12,6 +13,8 @@ import {
   UsersIcon,
   Cog6ToothIcon,
   CameraIcon,
+  Bars3Icon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 const menuItems = [
@@ -30,14 +33,22 @@ const settingsItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [isOpen, setIsOpen] = useState(false);
 
-  return (
-    <aside className="w-[230px] bg-white border-r border-graphite-200 flex flex-col fixed top-0 left-0 bottom-0 z-20">
+  const sidebarContent = (
+    <>
       <div className="px-6 py-6 mb-2 flex items-center gap-2.5">
         <div className="w-[34px] h-[34px] bg-gradient-to-br from-graphite-900 to-graphite-700 rounded-[10px] flex items-center justify-center shadow-md">
           <CameraIcon className="w-[18px] h-[18px] text-white" />
         </div>
         <span className="text-[17px] font-bold text-graphite-900 tracking-tight">PhotoApp</span>
+        {/* Close button on mobile */}
+        <button
+          onClick={() => setIsOpen(false)}
+          className="ml-auto md:hidden p-1 text-graphite-400 hover:text-graphite-600"
+        >
+          <XMarkIcon className="w-5 h-5" />
+        </button>
       </div>
 
       <nav className="mb-7">
@@ -50,6 +61,7 @@ export function Sidebar() {
             <Link
               key={item.label}
               href={item.href}
+              onClick={() => setIsOpen(false)}
               className={`flex items-center gap-2.5 px-6 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
@@ -76,6 +88,7 @@ export function Sidebar() {
             <Link
               key={item.label}
               href={item.href}
+              onClick={() => setIsOpen(false)}
               className={`flex items-center gap-2.5 px-6 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
@@ -113,6 +126,40 @@ export function Sidebar() {
           </svg>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile header - shows only on small screens */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-graphite-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsOpen(true)} className="p-1">
+            <Bars3Icon className="w-6 h-6 text-graphite-700" />
+          </button>
+          <span className="text-base font-bold text-graphite-900">PhotoApp</span>
+        </div>
+      </div>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex md:w-[230px] md:fixed md:top-0 md:left-0 md:bottom-0 bg-white border-r border-graphite-200 flex-col z-20">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile sidebar overlay */}
+      {isOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40"
+            onClick={() => setIsOpen(false)}
+          />
+          {/* Sidebar panel */}
+          <aside className="relative w-[270px] bg-white flex flex-col z-10 shadow-xl">
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

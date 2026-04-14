@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,16 @@ const dotColors: Record<string, string> = {
 export function JobCard({ job }: JobCardProps) {
   const progress = job.totalPhotos > 0 ? Math.round((job.processedPhotos / job.totalPhotos) * 100) : 0;
 
+  const Wrapper = job.status === "review"
+    ? ({ children, className }: { children: React.ReactNode; className: string }) => (
+        <Link href={`/review/${job.id}`} className={className}>{children}</Link>
+      )
+    : ({ children, className }: { children: React.ReactNode; className: string }) => (
+        <div className={className}>{children}</div>
+      );
+
   return (
-    <div className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 border-b border-graphite-50 last:border-b-0">
+    <Wrapper className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 border-b border-graphite-50 last:border-b-0">
       <div className="flex items-center gap-3">
         <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
         <div>
@@ -53,7 +62,7 @@ export function JobCard({ job }: JobCardProps) {
           </>
         )}
       </div>
-    </div>
+    </Wrapper>
   );
 }
 

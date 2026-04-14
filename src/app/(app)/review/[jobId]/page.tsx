@@ -1,15 +1,38 @@
-import { Topbar } from "@/components/layout/topbar";
+import { prisma } from "@/lib/db";
+import { notFound } from "next/navigation";
+import { ReviewGallery } from "@/components/review/review-gallery";
 
-export default async function ReviewPage({ params }: { params: Promise<{ jobId: string }> }) {
+export const dynamic = "force-dynamic";
+
+export default async function ReviewPage({
+  params,
+}: {
+  params: Promise<{ jobId: string }>;
+}) {
   const { jobId } = await params;
-  return (
-    <>
-      <Topbar title="Review Gallery" subtitle={`Job ${jobId}`} />
-      <div className="p-6">
-        <div className="bg-white rounded-card border border-graphite-200 p-12 text-center">
-          <p className="text-graphite-400">Review gallery — coming in Phase 5</p>
-        </div>
-      </div>
-    </>
-  );
+
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: {
+      photographer: { select: { name: true } },
+      photos: { orderBy: { orderIndex: "asc" } },
+    },
+  });
+
+  if (!job) notFound();
+
+  // Serialize dates for client component
+  const serializedJob = {
+    ...job,
+    createdAt: job.createdAt.toISOString(),
+    updatedAt: job.updatedAt.toISOString(),
+    photographer: job.photographer,
+    photos: job.photos.map((p) => ({
+      ...p,
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+    })),
+  };
+
+  return <ReviewGallery job={serializedJob} />;
 }

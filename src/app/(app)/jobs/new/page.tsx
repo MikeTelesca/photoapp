@@ -65,6 +65,16 @@ export default function NewJobPage() {
         throw new Error(data.error || "Failed to create job");
       }
 
+      // After creating the job, trigger ingestion if Dropbox URL was provided
+      const jobData = await res.json();
+
+      if (dropboxUrl.trim()) {
+        // Trigger ingestion in the background
+        fetch(`/api/jobs/${jobData.id}/ingest`, { method: "POST" }).catch(
+          console.error
+        );
+      }
+
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

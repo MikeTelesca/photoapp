@@ -1,11 +1,21 @@
 import { PrismaClient } from "../generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-function createPrismaClient() {
+function createPrismaClient(): PrismaClient {
+  const isProduction = process.env.NODE_ENV === "production" || process.env.DATABASE_URL?.startsWith("postgres");
+
+  if (isProduction && process.env.DATABASE_URL?.startsWith("postgres")) {
+    // Use Neon serverless adapter for Postgres (Pool-based, supports transactions)
+    const { PrismaNeon } = require("@prisma/adapter-neon");
+    const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
+    return new PrismaClient({ adapter });
+  }
+
+  // Fallback to better-sqlite3 for local dev
+  const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
   const adapter = new PrismaBetterSqlite3({
     url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
   });

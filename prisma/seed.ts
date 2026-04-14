@@ -1,9 +1,23 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client.js";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
+function createPrismaClient(): PrismaClient {
+  const dbUrl = process.env.DATABASE_URL;
+
+  if (dbUrl?.startsWith("postgres")) {
+    const { PrismaNeon } = require("@prisma/adapter-neon");
+    const adapter = new PrismaNeon({ connectionString: dbUrl });
+    return new PrismaClient({ adapter });
+  }
+
+  const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+  const adapter = new PrismaBetterSqlite3({
+    url: dbUrl ?? "file:./prisma/dev.db",
+  });
+  return new PrismaClient({ adapter });
+}
+
+const prisma = createPrismaClient();
 
 async function main() {
   // Create admin user

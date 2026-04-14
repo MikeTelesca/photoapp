@@ -14,7 +14,9 @@ interface JobListProps {
 export function JobList({ jobs }: JobListProps) {
   const [activeFilter, setActiveFilter] = useState<string>("All");
 
-  const filtered = activeFilter === "All" ? jobs : jobs.filter((j) => j.status === activeFilter.toLowerCase());
+  const filtered = activeFilter === "All"
+    ? jobs.filter((j) => j.status !== "deleted")
+    : jobs.filter((j) => j.status === activeFilter.toLowerCase());
 
   return (
     <Card>

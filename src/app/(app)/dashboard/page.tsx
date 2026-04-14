@@ -25,12 +25,13 @@ async function getStats(where: object) {
 
     const [totalJobs, processingJobs, reviewJobs, approvedToday, monthlyCost, totalImages] =
       await Promise.all([
-        prisma.job.count({ where }),
+        prisma.job.count({ where: { ...where, status: { not: "deleted" } } }),
         prisma.job.count({ where: { ...where, status: "processing" } }),
         prisma.job.count({ where: { ...where, status: "review" } }),
         prisma.job.count({
           where: { ...where, status: "approved", updatedAt: { gte: startOfDay } },
         }),
+        // Keep cost aggregation INCLUDING deleted jobs so monthly cost is preserved
         prisma.job.aggregate({
           where: { ...where, createdAt: { gte: startOfMonth } },
           _sum: { cost: true },
@@ -64,7 +65,7 @@ async function getStats(where: object) {
 async function getJobs(where: object): Promise<Job[]> {
   try {
     const dbJobs = await prisma.job.findMany({
-      where,
+      where: { ...where, status: { not: "deleted" } },
       include: {
         photographer: {
           select: { name: true },

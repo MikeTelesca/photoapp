@@ -72,7 +72,11 @@ export async function DELETE(
   try {
     const { jobId } = await params;
 
-    await prisma.job.delete({ where: { id: jobId } });
+    // Soft delete - preserve cost data
+    await prisma.job.update({
+      where: { id: jobId },
+      data: { status: "deleted" },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

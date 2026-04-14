@@ -52,9 +52,35 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
     }
 
     const data = await response.json();
+    let allEntries = [...data.entries];
+
+    // Check for subfolders and list their contents
+    const folders = data.entries.filter((e: any) => e[".tag"] === "folder");
+    for (const folder of folders) {
+      try {
+        const subResponse = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            path: folder.path_lower || folder.path_display,
+            shared_link: { url: job.dropboxUrl },
+            limit: 2000,
+          }),
+        });
+        if (subResponse.ok) {
+          const subData = await subResponse.json();
+          allEntries.push(...subData.entries);
+        }
+      } catch (err) {
+        console.error(`[ingest] Failed to list subfolder ${folder.name}:`, err);
+      }
+    }
 
     // Filter to image files and sort by name
-    const imageFiles = data.entries
+    const imageFiles = allEntries
       .filter((entry: any) => {
         if (entry[".tag"] !== "file") return false;
         const ext = entry.name.toLowerCase().slice(entry.name.lastIndexOf("."));

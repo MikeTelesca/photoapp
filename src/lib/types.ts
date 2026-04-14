@@ -1,4 +1,4 @@
-export type JobStatus = "pending" | "processing" | "review" | "approved" | "rejected";
+export type JobStatus = "pending" | "processing" | "review" | "approved" | "rejected" | "deleted";
 export type PhotoStatus = "pending" | "processing" | "edited" | "approved" | "rejected" | "regenerating";
 export type UserRole = "admin" | "photographer";
 export type PresetName = "standard" | "bright-airy" | "luxury" | "custom";

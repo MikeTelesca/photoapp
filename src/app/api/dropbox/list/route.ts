@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf"];
 
-// POST /api/dropbox/list - list files from a shared Dropbox link
-// Uses raw Dropbox API to avoid SDK compatibility issues on Vercel
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
@@ -17,8 +15,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Dropbox not configured" }, { status: 500 });
     }
 
-    // Call Dropbox API directly
-    const dbxResponse = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
+    // List top-level folder
+    const response = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -31,14 +29,41 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    if (!dbxResponse.ok) {
-      const errText = await dbxResponse.text();
+    if (!response.ok) {
+      const errText = await response.text();
       return NextResponse.json({ error: `Dropbox API error: ${errText}` }, { status: 500 });
     }
 
-    const data = await dbxResponse.json();
+    const data = await response.json();
+    let allEntries = [...data.entries];
 
-    const files = data.entries
+    // Check for subfolders and list their contents
+    const folders = data.entries.filter((e: any) => e[".tag"] === "folder");
+    for (const folder of folders) {
+      try {
+        const subResponse = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            path: folder.path_lower || folder.path_display,
+            shared_link: { url },
+            limit: 2000,
+          }),
+        });
+        if (subResponse.ok) {
+          const subData = await subResponse.json();
+          allEntries.push(...subData.entries);
+        }
+      } catch (err) {
+        console.error(`Failed to list subfolder ${folder.name}:`, err);
+      }
+    }
+
+    // Filter to image files
+    const files = allEntries
       .filter((entry: any) => {
         if (entry[".tag"] !== "file") return false;
         const ext = entry.name.toLowerCase().slice(entry.name.lastIndexOf("."));

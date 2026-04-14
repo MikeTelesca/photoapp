@@ -8,7 +8,9 @@ export interface IngestResult {
   photosCreated: number;
 }
 
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf"];
+// Only JPEG/PNG supported by AI - RAW formats (DNG, CR2, etc.) require conversion which isn't available on serverless
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+const RAW_EXTENSIONS = [".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf", ".tif", ".tiff"];
 
 /**
  * Ingest photos from a Dropbox shared link.
@@ -79,7 +81,14 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
       }
     }
 
-    // Filter to image files and sort by name
+    // Count RAW files for error messaging
+    const rawFileCount = allEntries.filter((entry: any) => {
+      if (entry[".tag"] !== "file") return false;
+      const ext = entry.name.toLowerCase().slice(entry.name.lastIndexOf("."));
+      return RAW_EXTENSIONS.includes(ext);
+    }).length;
+
+    // Filter to JPEG/PNG image files and sort by name
     const imageFiles = allEntries
       .filter((entry: any) => {
         if (entry[".tag"] !== "file") return false;
@@ -91,8 +100,11 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
     if (imageFiles.length === 0) {
       await prisma.job.update({
         where: { id: jobId },
-        data: { status: "review", totalPhotos: 0 },
+        data: { status: "pending", totalPhotos: 0 },
       });
+      if (rawFileCount > 0) {
+        throw new Error(`Found ${rawFileCount} RAW files (DNG/CR2/ARW/NEF) but no JPEGs. RAW formats aren't supported — please export as JPEG and try again.`);
+      }
       return { jobId, totalFiles: 0, bracketGroups: 0, bracketCount: 0, photosCreated: 0 };
     }
 

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf"];
+// Supported formats (JPEG/PNG can be sent to AI directly)
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+// RAW formats - detected but NOT processed (flagged to user)
+const RAW_EXTENSIONS = [".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf", ".tif", ".tiff"];
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,7 +65,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Filter to image files
+    // Count RAW files (not supported)
+    const rawFileCount = allEntries.filter((entry: any) => {
+      if (entry[".tag"] !== "file") return false;
+      const ext = entry.name.toLowerCase().slice(entry.name.lastIndexOf("."));
+      return RAW_EXTENSIONS.includes(ext);
+    }).length;
+
+    // Filter to supported image files
     const files = allEntries
       .filter((entry: any) => {
         if (entry[".tag"] !== "file") return false;
@@ -77,7 +87,7 @@ export async function POST(request: NextRequest) {
       }))
       .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-    return NextResponse.json({ fileCount: files.length, files });
+    return NextResponse.json({ fileCount: files.length, files, rawFileCount });
   } catch (error: any) {
     console.error("Dropbox list error:", error);
     return NextResponse.json({ error: error.message || "Failed to list files" }, { status: 500 });

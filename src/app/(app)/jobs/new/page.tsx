@@ -72,6 +72,7 @@ export default function NewJobPage() {
   const [isCheckingDropbox, setIsCheckingDropbox] = useState(false);
   const [dropboxFiles, setDropboxFiles] = useState<Array<{ name: string; path: string; size: number }>>([]);
   const [dropboxError, setDropboxError] = useState("");
+  const [rawFileCount, setRawFileCount] = useState(0);
 
   async function checkDropboxLink(url: string) {
     if (!url.trim() || !url.includes("dropbox.com")) return;
@@ -90,7 +91,10 @@ export default function NewJobPage() {
       if (!res.ok) throw new Error(data.error || "Failed to list files");
 
       setDropboxFiles(data.files || []);
-      if (data.files.length === 0) {
+      setRawFileCount(data.rawFileCount || 0);
+      if (data.files.length === 0 && (data.rawFileCount || 0) > 0) {
+        setDropboxError(`Found ${data.rawFileCount} RAW files (DNG/CR2/ARW/NEF/TIFF) but no JPEGs. RAW formats aren't supported — please export as JPEG and try again.`);
+      } else if (data.files.length === 0) {
         setDropboxError("No image files found in this Dropbox folder");
       }
     } catch (err: any) {
@@ -210,6 +214,12 @@ export default function NewJobPage() {
                       {formatFileSize(dropboxFiles.reduce((sum, f) => sum + f.size, 0))}
                     </span>
                   </div>
+
+                  {rawFileCount > 0 && (
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                      <strong>{rawFileCount} RAW files</strong> (DNG/CR2/ARW/NEF/TIFF) in this folder will be skipped. RAW formats aren&apos;t supported — only JPEGs will be processed. Please export as JPEG if you need those photos edited.
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-3 gap-2 mb-3 text-center">
                     <div className="bg-white rounded-lg p-2 border border-graphite-200">

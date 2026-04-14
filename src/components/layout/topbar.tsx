@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 
@@ -19,10 +20,12 @@ export function Topbar({ title, subtitle }: TopbarProps) {
           Search jobs...
         </div>
         <Button variant="outline">Import</Button>
-        <Button>
-          <PlusIcon className="w-3.5 h-3.5" />
-          New Job
-        </Button>
+        <Link href="/jobs/new">
+          <Button>
+            <PlusIcon className="w-3.5 h-3.5" />
+            New Job
+          </Button>
+        </Link>
       </div>
     </div>
   );

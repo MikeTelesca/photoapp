@@ -1,6 +1,3 @@
-import { listFilesFromSharedLink, downloadFileFromSharedLink } from "./dropbox";
-import { readExif, ExifInfo } from "./exif";
-import { groupBrackets, detectBracketCount } from "./bracket-grouping";
 import { prisma } from "./db";
 
 export interface IngestResult {
@@ -11,34 +8,58 @@ export interface IngestResult {
   photosCreated: number;
 }
 
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf"];
+
 /**
- * Ingest photos from a Dropbox shared link for a job.
- *
- * 1. List files from Dropbox
- * 2. Download each file and read EXIF
- * 3. Group into brackets
- * 4. Create Photo records in DB
- * 5. Update Job status and counts
+ * Ingest photos from a Dropbox shared link.
+ * This is lightweight — just lists files and creates Photo records.
+ * Actual downloading and AI enhancement happens separately per-photo.
  */
 export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
-  // Get the job
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) throw new Error(`Job ${jobId} not found`);
   if (!job.dropboxUrl) throw new Error(`Job ${jobId} has no Dropbox URL`);
 
-  // Update status to processing
   await prisma.job.update({
     where: { id: jobId },
     data: { status: "processing" },
   });
 
   try {
-    // 1. List files from Dropbox
-    console.log(`[ingest] Listing files from Dropbox for job ${jobId}...`);
-    const files = await listFilesFromSharedLink(job.dropboxUrl);
-    console.log(`[ingest] Found ${files.length} image files`);
+    // List files from Dropbox using raw API (fast, no downloads)
+    const token = process.env.DROPBOX_ACCESS_TOKEN;
+    if (!token) throw new Error("No Dropbox access token");
 
-    if (files.length === 0) {
+    const response = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        path: "",
+        shared_link: { url: job.dropboxUrl },
+        limit: 2000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Dropbox API error: ${errText}`);
+    }
+
+    const data = await response.json();
+
+    // Filter to image files and sort by name
+    const imageFiles = data.entries
+      .filter((entry: any) => {
+        if (entry[".tag"] !== "file") return false;
+        const ext = entry.name.toLowerCase().slice(entry.name.lastIndexOf("."));
+        return IMAGE_EXTENSIONS.includes(ext);
+      })
+      .sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+    if (imageFiles.length === 0) {
       await prisma.job.update({
         where: { id: jobId },
         data: { status: "review", totalPhotos: 0 },
@@ -46,92 +67,59 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
       return { jobId, totalFiles: 0, bracketGroups: 0, bracketCount: 0, photosCreated: 0 };
     }
 
-    // 2. Download files and read EXIF (process in batches to avoid memory issues)
-    const BATCH_SIZE = 10;
-    const allExifData: ExifInfo[] = [];
+    // Detect bracket count (3 or 5) from total file count
+    const bracketCount = imageFiles.length % 5 === 0 ? 5 : 3;
+    const groupCount = Math.ceil(imageFiles.length / bracketCount);
 
-    for (let i = 0; i < files.length; i += BATCH_SIZE) {
-      const batch = files.slice(i, i + BATCH_SIZE);
-      const batchResults = await Promise.all(
-        batch.map(async (file) => {
-          try {
-            console.log(`[ingest] Downloading ${file.name} (${i + batch.indexOf(file) + 1}/${files.length})...`);
-            const buffer = await downloadFileFromSharedLink(job.dropboxUrl!, file.path);
-            const exif = await readExif(buffer, file.name);
-            return exif;
-          } catch (error) {
-            console.warn(`[ingest] Failed to process ${file.name}:`, error);
-            return null;
-          }
-        })
-      );
+    // Create Photo records — one per bracket group (final output image)
+    const photoRecords = [];
+    for (let g = 0; g < groupCount; g++) {
+      const startIdx = g * bracketCount;
+      const groupFiles = imageFiles.slice(startIdx, startIdx + bracketCount);
 
-      allExifData.push(...batchResults.filter((r): r is ExifInfo => r !== null));
-
-      // Update progress
-      await prisma.job.update({
-        where: { id: jobId },
-        data: { processedPhotos: allExifData.length },
+      photoRecords.push({
+        jobId,
+        orderIndex: g,
+        status: "pending",
+        bracketGroup: g,
+        bracketIndex: groupFiles.length,
+        exifData: JSON.stringify({
+          bracketCount: groupFiles.length,
+          photos: groupFiles.map((f: any) => ({
+            fileName: f.name,
+            path: f.path_lower || f.path_display || "",
+            size: f.size || 0,
+          })),
+        }),
+        isExterior: false,
+        isTwilight: false,
       });
     }
 
-    // 3. Detect bracket count and group
-    const bracketCount = detectBracketCount(allExifData);
-    console.log(`[ingest] Detected ${bracketCount}-bracket shooting`);
-
-    const groups = groupBrackets(allExifData, bracketCount);
-    console.log(`[ingest] Grouped into ${groups.length} bracket sets`);
-
-    // 4. Create Photo records — one per bracket GROUP (the merged result)
-    const photoRecords = groups.map((group, index) => ({
-      jobId,
-      orderIndex: index,
-      status: "pending" as const,
-      bracketGroup: group.groupIndex,
-      bracketIndex: group.bracketCount,
-      exifData: JSON.stringify({
-        bracketCount: group.bracketCount,
-        photos: group.photos.map((p) => ({
-          fileName: p.fileName,
-          exposureCompensation: p.exposureCompensation,
-          exposureTime: p.exposureTime,
-          iso: p.iso,
-        })),
-        avgTimestamp: group.avgTimestamp?.toISOString(),
-      }),
-      isExterior: false, // Will be detected by AI later
-      isTwilight: false,
-      widthPx: group.photos[0]?.width,
-      heightPx: group.photos[0]?.height,
-    }));
-
-    // Batch create photos
     await prisma.photo.createMany({ data: photoRecords });
 
-    // 5. Update job
+    // Set to "review" for now — enhance will be triggered separately
     await prisma.job.update({
       where: { id: jobId },
       data: {
-        status: "processing", // Photos still need AI enhancement before review
-        totalPhotos: groups.length,
-        processedPhotos: groups.length,
+        status: "review",
+        totalPhotos: groupCount,
+        processedPhotos: 0,
       },
     });
 
-    console.log(`[ingest] Job ${jobId} ingested: ${groups.length} photos from ${files.length} files`);
-
     return {
       jobId,
-      totalFiles: files.length,
-      bracketGroups: groups.length,
+      totalFiles: imageFiles.length,
+      bracketGroups: groupCount,
       bracketCount,
-      photosCreated: groups.length,
+      photosCreated: groupCount,
     };
   } catch (error) {
-    console.error(`[ingest] Error processing job ${jobId}:`, error);
+    console.error(`[ingest] Error:`, error);
     await prisma.job.update({
       where: { id: jobId },
-      data: { status: "pending" }, // Reset to pending on error
+      data: { status: "pending" },
     });
     throw error;
   }

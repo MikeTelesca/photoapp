@@ -51,6 +51,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [customInstruction, setCustomInstruction] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isEnhancingAll, setIsEnhancingAll] = useState(false);
+  const [enhanceProgress, setEnhanceProgress] = useState(0);
 
   const photos = job.photos;
   const currentPhoto = photos[currentIndex];
@@ -183,6 +185,43 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     setCustomInstruction("");
   }, [currentPhoto, job.id, customInstruction]);
 
+  const handleEnhanceAll = useCallback(async () => {
+    const pending = photos.filter(p => p.status === "pending");
+    if (pending.length === 0) return;
+
+    setIsEnhancingAll(true);
+    let completed = 0;
+
+    for (const photo of pending) {
+      try {
+        setEnhanceProgress(Math.round((completed / pending.length) * 100));
+
+        const res = await fetch(`/api/jobs/${job.id}/photos/${photo.id}/enhance`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setJob(prev => ({
+            ...prev,
+            photos: prev.photos.map(p =>
+              p.id === photo.id ? { ...p, status: "edited", editedUrl: data.editedUrl } : p
+            ),
+          }));
+        }
+        completed++;
+      } catch (err) {
+        console.error(`Failed to enhance photo ${photo.id}:`, err);
+        completed++;
+      }
+    }
+
+    setIsEnhancingAll(false);
+    setEnhanceProgress(100);
+  }, [photos, job.id]);
+
   const handleDownload = useCallback(async () => {
     const approvedPhotos = photos.filter(
       (p) => p.status === "approved" && p.editedUrl
@@ -287,6 +326,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               />
             </div>
           </div>
+          {photos.some(p => p.status === "pending") && (
+            <Button onClick={handleEnhanceAll} disabled={isEnhancingAll}>
+              <ArrowPathIcon className={`w-4 h-4 ${isEnhancingAll ? 'animate-spin' : ''}`} />
+              {isEnhancingAll ? `Enhancing ${enhanceProgress}%` : `Enhance All (${photos.filter(p => p.status === "pending").length})`}
+            </Button>
+          )}
           <Button variant="approve" onClick={handleApproveAll} disabled={isUpdating}>
             <CheckCircleIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Approve All</span>
@@ -432,6 +477,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </div>
 
             <div className="flex items-center gap-2">
+              {currentPhoto?.status === "pending" && (
+                <button
+                  onClick={handleRegenerate}
+                  disabled={isUpdating}
+                  className="flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-semibold bg-gradient-to-br from-graphite-900 to-graphite-700 text-white shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                >
+                  <ArrowPathIcon className="w-4 h-4" />
+                  Enhance with AI
+                </button>
+              )}
               <button
                 onClick={handleApprove}
                 disabled={isUpdating}

@@ -25,20 +25,22 @@ export function JobCard({ job }: JobCardProps) {
   const [isStarting, setIsStarting] = useState(false);
   const progress = job.totalPhotos > 0 ? Math.round((job.processedPhotos / job.totalPhotos) * 100) : 0;
 
-  function handleStartProcessing(e: React.MouseEvent) {
+  async function handleStartProcessing(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     setIsStarting(true);
-    fetch(`/api/jobs/${job.id}/ingest`, { method: "POST" })
-      .then((res) => {
-        if (res.ok) {
-          return fetch(`/api/jobs/${job.id}/enhance`, { method: "POST" });
-        }
-      })
-      .catch(console.error)
-      .finally(() => {
-        window.location.reload();
-      });
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/ingest`, { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to start processing");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsStarting(false);
+      window.location.reload();
+    }
   }
 
   const isLinkable = job.status === "review" || job.status === "approved";

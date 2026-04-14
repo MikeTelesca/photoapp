@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         path: "",
         shared_link: { url },
-        recursive: true,
         limit: 2000,
       }),
     });

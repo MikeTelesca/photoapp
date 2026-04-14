@@ -70,7 +70,6 @@ export async function listFilesFromSharedLink(
       response = await getDbx().filesListFolder({
         path: "",
         shared_link: { url: sharedLink },
-        recursive: true,
         limit: 2000,
       });
     }

@@ -20,7 +20,10 @@ export async function GET(
     let filePath = "";
     try {
       const exif = JSON.parse(photo.exifData || "{}");
-      filePath = exif?.photos?.[0]?.path || `/${exif?.photos?.[0]?.fileName}`;
+      // Use just the filename with leading slash — path is relative to the shared folder
+      const fileName = exif?.photos?.[0]?.fileName;
+      if (!fileName) throw new Error("No filename");
+      filePath = `/${fileName.toLowerCase()}`;
     } catch {
       return NextResponse.json({ error: "No file path" }, { status: 400 });
     }

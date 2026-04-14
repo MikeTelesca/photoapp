@@ -20,6 +20,9 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
   if (!job) throw new Error(`Job ${jobId} not found`);
   if (!job.dropboxUrl) throw new Error(`Job ${jobId} has no Dropbox URL`);
 
+  // Clear any existing photos from a previous ingest attempt
+  await prisma.photo.deleteMany({ where: { jobId } });
+
   await prisma.job.update({
     where: { id: jobId },
     data: { status: "processing" },

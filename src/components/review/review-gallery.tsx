@@ -400,11 +400,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10">
                 Before
               </div>
-              {currentPhoto?.originalUrl ? (
+              {currentPhoto ? (
                 <img
-                  src={currentPhoto.originalUrl}
+                  src={currentPhoto.originalUrl || `/api/jobs/${job.id}/photos/${currentPhoto.id}/original`}
                   alt="Original"
                   className="max-w-full max-h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="text-graphite-500 text-sm">Original HDR Merge</div>

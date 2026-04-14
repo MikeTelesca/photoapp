@@ -1,0 +1,63 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+// GET /api/jobs/:jobId/photos/:photoId/original - serve original photo from Dropbox
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ jobId: string; photoId: string }> }
+) {
+  const { jobId, photoId } = await params;
+
+  try {
+    const photo = await prisma.photo.findUnique({ where: { id: photoId } });
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+
+    if (!photo || !job || !job.dropboxUrl) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Get the first file path from the bracket group
+    let filePath = "";
+    try {
+      const exif = JSON.parse(photo.exifData || "{}");
+      filePath = exif?.photos?.[0]?.path || `/${exif?.photos?.[0]?.fileName}`;
+    } catch {
+      return NextResponse.json({ error: "No file path" }, { status: 400 });
+    }
+
+    const token = process.env.DROPBOX_ACCESS_TOKEN;
+    if (!token) {
+      return NextResponse.json({ error: "Dropbox not configured" }, { status: 500 });
+    }
+
+    // Download from Dropbox using sharing API
+    const response = await fetch("https://content.dropboxapi.com/2/sharing/get_shared_link_file", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Dropbox-API-Arg": JSON.stringify({
+          url: job.dropboxUrl,
+          path: filePath,
+        }),
+      },
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Dropbox download error:", errText);
+      return NextResponse.json({ error: "Failed to download from Dropbox" }, { status: 500 });
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+
+    return new NextResponse(Buffer.from(imageBuffer), {
+      headers: {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  } catch (error: any) {
+    console.error("Original photo error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

@@ -4,39 +4,18 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
 // Editing prompts per preset
 const presetPrompts: Record<string, string> = {
-  standard: `You are an expert real estate photo editor. DRAMATICALLY improve this photo for an MLS listing.
+  standard: `Enhance this image to look like a professionally shot real estate photo with perfect, balanced lighting—bright natural window light, clean white tones, even exposure, and sharp detail throughout. Maintain the original composition, angles, and structure exactly as is.
 
-MANDATORY EDITS - DO EVERY SINGLE ONE:
+ADDITIONAL REQUIRED EDITS:
+- WINDOW PULL: Make the view through ALL windows clearly visible. Show blue sky, trees, or cityscape. No blown-out white windows.
+- STRAIGHTEN all vertical lines. Fix any lens distortion. Perspective correction.
+- TV SCREENS: If there's a TV, replace the screen with a beach or nature scene.
+- MIRRORS: Remove any photographer reflections in mirrors or glass.
+- LENS FLARES: Remove any light flares or sun spots.
+- EXTERIOR SHOTS: Replace dull sky with blue sky and light clouds. Make grass lush and green.
+- Keep the image photorealistic. No AI artifacts, no blur, no warping.
 
-EXPOSURE & COLOR:
-- BRIGHTEN significantly. Real estate photos must be bright, airy, inviting. Increase exposure by at least 1-2 stops.
-- Lift ALL shadows. No dark corners, no underexposed areas. Every part of the room should be clearly visible.
-- White balance: correct to neutral/slightly warm. Remove yellow/green casts.
-- Colors: rich and vibrant but natural. Wood floors warm, whites bright white, countertops clean.
-
-GEOMETRY:
-- STRAIGHTEN all vertical lines. Walls, door frames, and columns must be perfectly vertical.
-- PERSPECTIVE CORRECTION: Fix any lens distortion. Correct converging verticals. Make the room look architecturally correct.
-- LEVEL the horizon line.
-
-WINDOWS (CRITICAL - WINDOW PULL):
-- Make the view through ALL windows clearly visible. This is called a "window pull."
-- Show blue sky, clouds, trees, or cityscape through every window.
-- NO blown-out white windows. NO pure white rectangles. The exterior MUST be visible.
-- Balance interior brightness with exterior view.
-
-EXTERIOR SHOTS:
-- SKY REPLACEMENT: Replace overcast/dull sky with beautiful blue sky with light white clouds.
-- GRASS: Make all grass look lush, green, and healthy. Remove brown patches, dead spots, or weeds.
-- Landscaping should look manicured and vibrant.
-
-OBJECT EDITS:
-- TV SCREENS: Replace any visible TV screen with a beach, nature, or lifestyle scene.
-- MIRRORS/REFLECTIONS: Remove any photographer reflections in mirrors, glass, or reflective surfaces.
-- LENS FLARES: Remove all light flares, sun spots, or glare.
-- Remove visible photographer equipment (tripods, bags, etc).
-
-The result must be photorealistic - no AI artifacts, no blur, no warping. Output the edited image.`,
+Output the edited image.`,
 
   "bright-airy": `You are an expert real estate photo editor. Create a BRIGHT AND AIRY style edit.
 

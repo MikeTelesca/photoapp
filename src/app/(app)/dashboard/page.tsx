@@ -1,3 +1,4 @@
+import { AutoRefresh } from "@/components/dashboard/auto-refresh";
 import { Topbar } from "@/components/layout/topbar";
 import { StatCard } from "@/components/ui/stat-card";
 import { JobList } from "@/components/dashboard/job-list";
@@ -148,6 +149,7 @@ export default async function DashboardPage() {
 
   return (
     <>
+      <AutoRefresh enabled={stats.processingJobs > 0} />
       <Topbar title="Dashboard" subtitle="Manage your photo editing jobs" />
       <div className="p-6">
         {/* Stats */}

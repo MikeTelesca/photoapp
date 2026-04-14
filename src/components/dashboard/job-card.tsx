@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
+import { DownloadButton } from "@/components/dashboard/download-button";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -39,7 +40,9 @@ export function JobCard({ job }: JobCardProps) {
       });
   }
 
-  const Wrapper = job.status === "review"
+  const isLinkable = job.status === "review" || job.status === "approved";
+
+  const Wrapper = isLinkable
     ? ({ children, className }: { children: React.ReactNode; className: string }) => (
         <Link href={`/review/${job.id}`} className={className}>{children}</Link>
       )
@@ -89,7 +92,8 @@ export function JobCard({ job }: JobCardProps) {
         {job.status === "approved" && (
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
-            <Button variant="text" className="text-xs">Download</Button>
+            <DownloadButton jobId={job.id} />
+            <span className="text-graphite-300 text-base">›</span>
           </>
         )}
       </div>

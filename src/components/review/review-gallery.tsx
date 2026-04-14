@@ -108,23 +108,80 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const handleRegenerate = useCallback(() => {
     if (!currentPhoto) return;
     const instruction = customInstruction.trim() || null;
-    updatePhoto(currentPhoto.id, {
-      status: "regenerating",
-      customInstructions: instruction,
-    });
+
+    // Update status optimistically
+    setJob((prev) => ({
+      ...prev,
+      photos: prev.photos.map((p) =>
+        p.id === currentPhoto.id ? { ...p, status: "regenerating" } : p
+      ),
+    }));
+
+    // Call enhance API
+    fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customInstructions: instruction }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setJob((prev) => ({
+            ...prev,
+            photos: prev.photos.map((p) =>
+              p.id === currentPhoto.id
+                ? { ...p, status: "edited", editedUrl: data.editedUrl }
+                : p
+            ),
+          }));
+        } else {
+          setJob((prev) => ({
+            ...prev,
+            photos: prev.photos.map((p) =>
+              p.id === currentPhoto.id ? { ...p, status: "pending" } : p
+            ),
+          }));
+          console.error("Enhancement failed:", data.error);
+        }
+      })
+      .catch(console.error);
+
     setCustomInstruction("");
-  }, [currentPhoto, updatePhoto, customInstruction]);
+  }, [currentPhoto, job.id, customInstruction]);
 
   const handleTwilight = useCallback(() => {
     if (!currentPhoto) return;
     const instruction = customInstruction.trim() || "Convert to twilight with warm lighting";
-    updatePhoto(currentPhoto.id, {
-      isTwilight: true,
-      twilightInstructions: instruction,
-      status: "regenerating",
-    });
+
+    setJob((prev) => ({
+      ...prev,
+      photos: prev.photos.map((p) =>
+        p.id === currentPhoto.id ? { ...p, status: "regenerating", isTwilight: true } : p
+      ),
+    }));
+
+    fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customInstructions: instruction, makeTwilight: true }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setJob((prev) => ({
+            ...prev,
+            photos: prev.photos.map((p) =>
+              p.id === currentPhoto.id
+                ? { ...p, status: "edited", editedUrl: data.editedUrl, isTwilight: true }
+                : p
+            ),
+          }));
+        }
+      })
+      .catch(console.error);
+
     setCustomInstruction("");
-  }, [currentPhoto, updatePhoto, customInstruction]);
+  }, [currentPhoto, job.id, customInstruction]);
 
   const handleApproveAll = useCallback(async () => {
     const pending = photos.filter(

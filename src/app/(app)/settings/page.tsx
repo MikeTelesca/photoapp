@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 export default async function SettingsPage() {
   const session = await auth();
 
-  const dropboxConnected = !!process.env.DROPBOX_ACCESS_TOKEN;
+  const dropboxRefreshToken = !!process.env.DROPBOX_REFRESH_TOKEN;
+  const dropboxConnected = dropboxRefreshToken || !!process.env.DROPBOX_ACCESS_TOKEN;
   const geminiConnected = !!process.env.GOOGLE_AI_API_KEY;
 
   return (
@@ -61,9 +62,14 @@ export default async function SettingsPage() {
                   <span className="text-xs font-semibold">Connected</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 text-red-500">
-                  <ExclamationCircleIcon className="w-4 h-4" />
-                  <span className="text-xs font-semibold">Not configured</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-red-500">
+                    <ExclamationCircleIcon className="w-4 h-4" />
+                    <span className="text-xs font-semibold">Not configured</span>
+                  </div>
+                  <a href="/api/auth/dropbox" className="text-xs font-semibold text-cyan-600 hover:underline">
+                    Connect Dropbox
+                  </a>
                 </div>
               )}
             </div>

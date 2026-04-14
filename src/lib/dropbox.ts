@@ -1,9 +1,31 @@
 import { Dropbox } from "dropbox";
 
-const dbx = new Dropbox({
-  accessToken: process.env.DROPBOX_ACCESS_TOKEN,
-  fetch: globalThis.fetch,
-});
+function getDropboxClient(): Dropbox {
+  // If we have a refresh token, use it (auto-refreshes)
+  if (process.env.DROPBOX_REFRESH_TOKEN) {
+    return new Dropbox({
+      clientId: process.env.DROPBOX_APP_KEY,
+      clientSecret: process.env.DROPBOX_APP_SECRET,
+      refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
+      fetch: globalThis.fetch,
+    });
+  }
+
+  // Fallback to static access token (short-lived, for development)
+  if (process.env.DROPBOX_ACCESS_TOKEN) {
+    return new Dropbox({
+      accessToken: process.env.DROPBOX_ACCESS_TOKEN,
+      fetch: globalThis.fetch,
+    });
+  }
+
+  throw new Error("No Dropbox credentials configured. Set DROPBOX_REFRESH_TOKEN or DROPBOX_ACCESS_TOKEN.");
+}
+
+// Use a function to get fresh client each time (refresh token may rotate)
+function getDbx(): Dropbox {
+  return getDropboxClient();
+}
 
 export interface DropboxFile {
   name: string;
@@ -43,9 +65,9 @@ export async function listFilesFromSharedLink(
   while (hasMore) {
     let response;
     if (cursor) {
-      response = await dbx.filesListFolderContinue({ cursor });
+      response = await getDbx().filesListFolderContinue({ cursor });
     } else {
-      response = await dbx.filesListFolder({
+      response = await getDbx().filesListFolder({
         path: "",
         shared_link: { url: sharedLink },
         recursive: true,
@@ -89,7 +111,7 @@ export async function downloadFileFromSharedLink(
   sharedLink: string,
   filePath: string
 ): Promise<Buffer> {
-  const response = await dbx.sharingGetSharedLinkFile({
+  const response = await getDbx().sharingGetSharedLinkFile({
     url: sharedLink,
     path: filePath,
   });
@@ -132,7 +154,7 @@ export async function uploadToDropbox(
   path: string
 ): Promise<string> {
   // Upload the file
-  const uploadResponse = await dbx.filesUpload({
+  const uploadResponse = await getDbx().filesUpload({
     path,
     contents: buffer,
     mode: { ".tag": "overwrite" },
@@ -140,7 +162,7 @@ export async function uploadToDropbox(
 
   // Create a shared link
   try {
-    const linkResponse = await dbx.sharingCreateSharedLinkWithSettings({
+    const linkResponse = await getDbx().sharingCreateSharedLinkWithSettings({
       path: uploadResponse.result.path_display || path,
       settings: {
         requested_visibility: { ".tag": "public" },
@@ -153,7 +175,7 @@ export async function uploadToDropbox(
   } catch (error: any) {
     // If link already exists, get the existing one
     if (error?.error?.error?.[".tag"] === "shared_link_already_exists") {
-      const links = await dbx.sharingListSharedLinks({
+      const links = await getDbx().sharingListSharedLinks({
         path: uploadResponse.result.path_display || path,
         direct_only: true,
       });
@@ -172,7 +194,7 @@ export async function testConnection(): Promise<{
   name: string;
   email: string;
 }> {
-  const response = await dbx.usersGetCurrentAccount();
+  const response = await getDbx().usersGetCurrentAccount();
   return {
     name: response.result.name.display_name,
     email: response.result.email,

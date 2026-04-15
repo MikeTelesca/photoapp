@@ -59,14 +59,14 @@ function LoginPageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-graphite-50 via-white to-cyan-50/40 dark:from-graphite-950 dark:via-graphite-950 dark:to-cyan-950/20 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-gradient-to-br from-graphite-900 to-graphite-700 rounded-xl flex items-center justify-center shadow-lg mb-4">
-            <CameraIcon className="w-6 h-6 text-white" />
+          <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-cyan-700 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20 mb-4">
+            <CameraIcon className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-graphite-900 tracking-tight">PhotoApp</h1>
-          <p className="text-sm text-graphite-400 mt-1">AI-powered real estate photo editing</p>
+          <h1 className="text-2xl font-bold text-graphite-900 dark:text-white tracking-tight">ATH AI Editor</h1>
+          <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-1">Real estate photo editing, automated.</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-graphite-200 p-6 shadow-sm">
@@ -79,7 +79,7 @@ function LoginPageInner() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@photoapp.com"
+                placeholder="you@yourstudio.com"
                 className="w-full px-3.5 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
                 required
                 disabled={show2FA}
@@ -158,9 +158,6 @@ function LoginPageInner() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-graphite-400 mt-4">
-          Default: admin@photoapp.com / admin123
-        </p>
       </div>
     </div>
   );

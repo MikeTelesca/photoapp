@@ -153,9 +153,11 @@ export async function enhancePhoto(
       },
     };
 
-    // Try Nano Banana Pro (4K) first, fall back to Flash Image (2K) if overloaded
+    // Cascade through models, preferring 4K-capable ones first
     const models = [
       { name: "gemini-3-pro-image-preview", config: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { imageSize: "4K" } } },
+      { name: "gemini-3.1-flash-image-preview", config: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { imageSize: "4K" } } },
+      { name: "gemini-3.1-flash-image-preview", config: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { imageSize: "2K" } } },
       { name: "gemini-2.5-flash-image", config: { responseModalities: ["IMAGE", "TEXT"] } },
     ];
 

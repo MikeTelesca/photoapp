@@ -141,8 +141,26 @@ export async function POST(
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
-    // Store edited image - Nano Banana Pro returns 4K natively
-    const outputBuffer = Buffer.from(result.imageBase64!, "base64");
+    // Store edited image - upscale to 4K if AI returned smaller
+    const aiOutputBuffer = Buffer.from(result.imageBase64!, "base64");
+
+    const sharp = (await import("sharp")).default;
+    const aiMeta = await sharp(aiOutputBuffer).metadata();
+    const aiWidth = aiMeta.width || 1024;
+    const TARGET_WIDTH = 3840;
+
+    let outputBuffer: Buffer;
+    if (aiWidth >= TARGET_WIDTH) {
+      outputBuffer = await sharp(aiOutputBuffer).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
+    } else {
+      const aspectRatio = (aiMeta.height || 768) / aiWidth;
+      const targetHeight = Math.round(TARGET_WIDTH * aspectRatio);
+      outputBuffer = await sharp(aiOutputBuffer)
+        .resize(TARGET_WIDTH, targetHeight, { kernel: "lanczos3", fit: "fill" })
+        .jpeg({ quality: 92, mozjpeg: true })
+        .toBuffer();
+    }
+
     const sanitizedAddress = job.address.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 40);
     const editedFileName = `photo_${photo.orderIndex + 1}.jpg`;
     const dropboxPath = `/PhotoApp/edited/${sanitizedAddress}_${job.id.substring(0, 8)}/${editedFileName}`;

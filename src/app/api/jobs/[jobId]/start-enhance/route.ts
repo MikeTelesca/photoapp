@@ -160,8 +160,30 @@ export async function POST(
       return NextResponse.json({ error: result.error, photoId: photo.id });
     }
 
-    // Upload edited image to Dropbox - Nano Banana Pro returns 4K natively
-    const outputBuffer = Buffer.from(result.imageBase64!, "base64");
+    // Upload edited image to Dropbox
+    const aiOutputBuffer = Buffer.from(result.imageBase64!, "base64");
+
+    // Upscale to 4K if AI returned smaller (e.g. fallback to 2.5 Flash)
+    const sharp = (await import("sharp")).default;
+    const aiMeta = await sharp(aiOutputBuffer).metadata();
+    const aiWidth = aiMeta.width || 1024;
+    const TARGET_WIDTH = 3840; // 4K width
+
+    let outputBuffer: Buffer;
+    if (aiWidth >= TARGET_WIDTH) {
+      // Already 4K or larger — re-encode as JPEG for size
+      outputBuffer = await sharp(aiOutputBuffer).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
+    } else {
+      // Upscale with lanczos (high quality)
+      const aspectRatio = (aiMeta.height || 768) / aiWidth;
+      const targetHeight = Math.round(TARGET_WIDTH * aspectRatio);
+      outputBuffer = await sharp(aiOutputBuffer)
+        .resize(TARGET_WIDTH, targetHeight, { kernel: "lanczos3", fit: "fill" })
+        .jpeg({ quality: 92, mozjpeg: true })
+        .toBuffer();
+      console.log(`[enhance] Upscaled from ${aiWidth}x${aiMeta.height} to ${TARGET_WIDTH}x${targetHeight}`);
+    }
+
     const sanitizedAddress = job.address.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 40);
     const editedFileName = `photo_${photo.orderIndex + 1}.jpg`;
     const dropboxPath = `/PhotoApp/edited/${sanitizedAddress}_${job.id.substring(0, 8)}/${editedFileName}`;

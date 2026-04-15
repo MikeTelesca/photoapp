@@ -70,11 +70,21 @@ function NewJobPageInner() {
   const [tags, setTags] = useState("");
   const [draftSaved, setDraftSaved] = useState(false);
   const [urlPrefilled, setUrlPrefilled] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);
   const [presetsLoading, setPresetsLoading] = useState(true);
   const [presetSuggested, setPresetSuggested] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/jobs/addresses")
+      .then(res => res.json())
+      .then(data => {
+        setAddressSuggestions(data.addresses || []);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -425,9 +435,13 @@ function NewJobPageInner() {
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                list="address-suggestions"
                 placeholder="e.g. 123 Main Street, Toronto"
                 className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
               />
+              <datalist id="address-suggestions">
+                {addressSuggestions.map(a => <option key={a} value={a} />)}
+              </datalist>
               <div className="mt-2">
                 <DuplicateWarning address={address} dropboxUrl={dropboxUrl} />
               </div>

@@ -144,15 +144,27 @@ export async function enhancePhoto(
 
     const imageBase64 = imageBuffer.toString("base64");
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: mimeType,
-          data: imageBase64,
-        },
-      },
-      prompt,
-    ]);
+    // Retry on 503/overload errors with exponential backoff
+    let result;
+    let lastErr: any;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        result = await model.generateContent([
+          { inlineData: { mimeType, data: imageBase64 } },
+          prompt,
+        ]);
+        break;
+      } catch (err: any) {
+        lastErr = err;
+        const msg = err?.message || "";
+        const isRetryable = msg.includes("503") || msg.includes("overload") || msg.includes("UNAVAILABLE") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("429");
+        if (!isRetryable || attempt === 3) throw err;
+        const waitMs = 2000 * Math.pow(2, attempt);
+        console.log(`[gemini] Retryable error (attempt ${attempt + 1}/4), waiting ${waitMs}ms: ${msg.substring(0, 100)}`);
+        await new Promise(r => setTimeout(r, waitMs));
+      }
+    }
+    if (!result) throw lastErr;
 
     const response = result.response;
     const candidates = response.candidates;
@@ -224,15 +236,27 @@ export async function convertToTwilight(
 
     const imageBase64 = imageBuffer.toString("base64");
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: mimeType,
-          data: imageBase64,
-        },
-      },
-      prompt,
-    ]);
+    // Retry on 503/overload errors with exponential backoff
+    let result;
+    let lastErr: any;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        result = await model.generateContent([
+          { inlineData: { mimeType, data: imageBase64 } },
+          prompt,
+        ]);
+        break;
+      } catch (err: any) {
+        lastErr = err;
+        const msg = err?.message || "";
+        const isRetryable = msg.includes("503") || msg.includes("overload") || msg.includes("UNAVAILABLE") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("429");
+        if (!isRetryable || attempt === 3) throw err;
+        const waitMs = 2000 * Math.pow(2, attempt);
+        console.log(`[gemini] Retryable error (attempt ${attempt + 1}/4), waiting ${waitMs}ms: ${msg.substring(0, 100)}`);
+        await new Promise(r => setTimeout(r, waitMs));
+      }
+    }
+    if (!result) throw lastErr;
 
     const response = result.response;
     const candidates = response.candidates;

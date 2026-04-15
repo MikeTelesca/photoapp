@@ -54,6 +54,55 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [isEnhancingAll, setIsEnhancingAll] = useState(false);
   const [enhanceProgress, setEnhanceProgress] = useState(0);
 
+  // Preset switcher
+  const [presets, setPresets] = useState<Array<{ slug: string; name: string; promptModifiers: string }>>([]);
+  const [currentPreset, setCurrentPreset] = useState<string>((initialJob as any).preset || "standard");
+  const [editedPrompt, setEditedPrompt] = useState<string>("");
+  const [showPromptEditor, setShowPromptEditor] = useState(false);
+  const [savingPreset, setSavingPreset] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/presets")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setPresets(data);
+          const active = data.find((p: any) => p.slug === currentPreset);
+          if (active) setEditedPrompt(active.promptModifiers || "");
+        }
+      })
+      .catch(console.error);
+  }, [currentPreset]);
+
+  async function changePreset(slug: string) {
+    setCurrentPreset(slug);
+    const preset = presets.find(p => p.slug === slug);
+    if (preset) setEditedPrompt(preset.promptModifiers || "");
+    // Update job
+    await fetch(`/api/jobs/${job.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ preset: slug }),
+    });
+  }
+
+  async function savePromptChanges() {
+    const preset = presets.find(p => p.slug === currentPreset);
+    if (!preset) return;
+    setSavingPreset(true);
+    try {
+      await fetch(`/api/presets/${preset.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ promptModifiers: editedPrompt }),
+      });
+      setPresets(prev => prev.map(p => p.slug === currentPreset ? { ...p, promptModifiers: editedPrompt } : p));
+      setShowPromptEditor(false);
+    } finally {
+      setSavingPreset(false);
+    }
+  }
+
   const photos = job.photos;
   const currentPhoto = photos[currentIndex];
   const approvedCount = photos.filter((p) => p.status === "approved").length;
@@ -387,6 +436,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
         </div>
         <div className="flex items-center gap-2.5">
+          {/* Preset selector + edit prompt */}
+          <div className="flex items-center gap-1.5 hidden md:flex">
+            <select
+              value={currentPreset}
+              onChange={(e) => changePreset(e.target.value)}
+              className="text-xs border border-graphite-200 rounded-md px-2 py-1.5 bg-white text-graphite-900 focus:outline-none focus:border-cyan"
+              title="Editing preset (changes apply to next regenerate)"
+            >
+              {presets.map(p => (
+                <option key={p.slug} value={p.slug}>{p.name}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowPromptEditor(!showPromptEditor)}
+              className="text-xs px-2 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 hover:bg-graphite-50"
+              title="Edit prompt"
+            >
+              {showPromptEditor ? "Close" : "Edit Prompt"}
+            </button>
+          </div>
           <div className="text-right mr-2 hidden sm:block">
             <div className="text-xs font-semibold text-graphite-700">
               {approvedCount} / {photos.length} approved
@@ -414,6 +483,43 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </Button>
         </div>
       </div>
+
+      {/* Inline prompt editor */}
+      {showPromptEditor && (
+        <div className="bg-amber-50 border-b border-amber-200 px-7 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-amber-800">
+              Editing prompt for &ldquo;{presets.find(p => p.slug === currentPreset)?.name}&rdquo; preset
+            </span>
+            <span className="text-[11px] text-amber-600">Changes apply to all future regenerates on this preset</span>
+          </div>
+          <textarea
+            value={editedPrompt}
+            onChange={(e) => setEditedPrompt(e.target.value)}
+            rows={6}
+            className="w-full px-3 py-2 rounded-lg border border-amber-300 text-xs font-mono bg-white text-graphite-900 focus:outline-none focus:border-amber-500"
+            placeholder="AI prompt instructions..."
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={savePromptChanges}
+              disabled={savingPreset}
+              className="px-3 py-1.5 rounded-md bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 disabled:opacity-50"
+            >
+              {savingPreset ? "Saving..." : "Save Prompt"}
+            </button>
+            <button
+              onClick={() => {
+                const preset = presets.find(p => p.slug === currentPreset);
+                if (preset) setEditedPrompt(preset.promptModifiers || "");
+              }}
+              className="px-3 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 text-xs hover:bg-graphite-50"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">

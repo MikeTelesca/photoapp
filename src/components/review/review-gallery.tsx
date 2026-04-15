@@ -1831,6 +1831,72 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
         </div>
       )}
+
+      {/* Preset A/B Compare Modal */}
+      {compareOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+          onClick={() => setCompareOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-graphite-900 rounded-lg p-4 max-w-6xl w-full"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold dark:text-white">Compare presets</h2>
+              <button onClick={() => setCompareOpen(false)} className="text-graphite-500 hover:text-graphite-800 dark:hover:text-white text-xl leading-none">✕</button>
+            </div>
+            <div className="flex gap-2 mb-3 items-center flex-wrap">
+              <span className="text-xs dark:text-white">Compare with:</span>
+              <select
+                value={compareTarget}
+                onChange={(e) => { setCompareTarget(e.target.value); setCompareResult(null); }}
+                className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
+              >
+                {presets.map(p => (
+                  <option key={p.slug} value={p.slug}>{p.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={runCompare}
+                disabled={comparing}
+                className="text-xs px-3 py-1 rounded bg-cyan-500 text-white font-semibold disabled:opacity-50"
+              >
+                {comparing ? "Generating..." : "Run"}
+              </button>
+              {compareResult && (
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Done</span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <div className="text-xs font-semibold text-center mb-1 dark:text-white">
+                  Current ({job.preset})
+                </div>
+                {currentPhoto?.editedUrl ? (
+                  <img src={currentPhoto.editedUrl} className="w-full rounded" alt="Current" />
+                ) : (
+                  <div className="aspect-[3/2] bg-graphite-100 dark:bg-graphite-800 rounded flex items-center justify-center text-xs text-graphite-400">
+                    No edited version yet
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-center mb-1 dark:text-white">
+                  Compare ({compareTarget})
+                </div>
+                {compareResult ? (
+                  <img src={compareResult} className="w-full rounded" alt="Compare result" />
+                ) : (
+                  <div className="aspect-[3/2] bg-graphite-100 dark:bg-graphite-800 rounded flex items-center justify-center text-xs text-graphite-400">
+                    {comparing ? "Generating..." : "Click Run to generate"}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

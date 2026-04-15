@@ -358,6 +358,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [showZoomHint, setShowZoomHint] = useState(true);
   const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
   const twilightMenuRef = useRef<HTMLDivElement>(null);
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
   const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
   const [colorLabelFilter, setColorLabelFilter] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"order" | "name" | "date" | "flagged" | "rejected">("order");
@@ -1956,6 +1958,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       return () => document.removeEventListener("mousedown", handleClick);
     }
   }, [twilightMenuOpen]);
+
+  // Close download menu when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target as Node)) {
+        setDownloadMenuOpen(false);
+      }
+    }
+    if (downloadMenuOpen) {
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }
+  }, [downloadMenuOpen]);
 
   // Poll for photo updates when job is processing or enhancing.
   // This lets the UI recover state after a page refresh or navigation.
@@ -3876,15 +3891,81 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <span className="hidden sm:inline">{currentPhoto?.flagged ? "Flagged" : "Flag"}</span>
               </button>
               {currentPhoto && (
-                <a
-                  href={`/api/jobs/${job.id}/photos/${currentPhoto.id}/download`}
-                  download
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-graphite-100 text-graphite-700 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-200 dark:hover:bg-graphite-700 transition-colors"
-                  title="Download this photo"
-                >
-                  <span>⬇</span>
-                  <span className="hidden sm:inline">Save</span>
-                </a>
+                <div className="relative" ref={downloadMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setDownloadMenuOpen((v) => !v)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-graphite-100 text-graphite-700 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-200 dark:hover:bg-graphite-700 transition-colors"
+                    title="Download this photo"
+                    aria-haspopup="menu"
+                    aria-expanded={downloadMenuOpen}
+                  >
+                    <span>⬇</span>
+                    <span className="hidden sm:inline">Download</span>
+                    <span className="text-xs opacity-70">▾</span>
+                  </button>
+                  {downloadMenuOpen && (
+                    <div
+                      role="menu"
+                      className="absolute right-0 mt-1 w-40 rounded-lg border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 shadow-lg z-20 overflow-hidden"
+                    >
+                      <a
+                        role="menuitem"
+                        href={`/api/photos/${currentPhoto.id}/download?variant=edited`}
+                        download
+                        onClick={() => setDownloadMenuOpen(false)}
+                        className={`block px-3 py-2 text-sm ${
+                          currentPhoto.editedUrl
+                            ? "text-graphite-800 dark:text-graphite-100 hover:bg-graphite-100 dark:hover:bg-graphite-800"
+                            : "text-graphite-400 dark:text-graphite-600 pointer-events-none"
+                        }`}
+                        aria-disabled={!currentPhoto.editedUrl}
+                      >
+                        Edited
+                      </a>
+                      {(() => {
+                        const hasEdited = !!currentPhoto.editedUrl;
+                        const hasOriginal = !!currentPhoto.originalUrl;
+                        const differs =
+                          hasEdited &&
+                          hasOriginal &&
+                          currentPhoto.editedUrl !== currentPhoto.originalUrl;
+                        const enabled = hasOriginal && hasEdited && differs;
+                        return (
+                          <a
+                            role="menuitem"
+                            href={
+                              enabled
+                                ? `/api/photos/${currentPhoto.id}/download?variant=original`
+                                : undefined
+                            }
+                            download={enabled ? true : undefined}
+                            onClick={(e) => {
+                              if (!enabled) {
+                                e.preventDefault();
+                                return;
+                              }
+                              setDownloadMenuOpen(false);
+                            }}
+                            className={`block px-3 py-2 text-sm ${
+                              enabled
+                                ? "text-graphite-800 dark:text-graphite-100 hover:bg-graphite-100 dark:hover:bg-graphite-800"
+                                : "text-graphite-400 dark:text-graphite-600 cursor-not-allowed"
+                            }`}
+                            aria-disabled={!enabled}
+                            title={
+                              enabled
+                                ? "Download the unedited original"
+                                : "Original unavailable (only edited version exists)"
+                            }
+                          >
+                            Original
+                          </a>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
               )}
               <button
                 onClick={copyPhotoLink}

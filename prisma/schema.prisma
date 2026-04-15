@@ -80,9 +80,21 @@ model Photo {
   rejectionReason      String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+  comments             PhotoComment[]
 
   @@index([jobId, status])
   @@index([jobId, orderIndex])
+}
+
+model PhotoComment {
+  id          String   @id @default(cuid())
+  photoId     String
+  photo       Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  authorName  String
+  message     String
+  createdAt   DateTime @default(now())
+
+  @@index([photoId])
 }
 
 model JobTemplate {

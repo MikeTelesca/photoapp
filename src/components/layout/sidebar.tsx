@@ -22,6 +22,7 @@ import {
   QuestionMarkCircleIcon,
   BookmarkIcon,
   CreditCardIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -37,6 +38,7 @@ const menuItems = [
 
 const settingsItems = [
   { label: "Analytics", href: "/analytics", icon: ChartBarIcon },
+  { label: "Activity", href: "/activity", icon: ClockIcon },
   { label: "Billing", href: "/billing", icon: CreditCardIcon },
   { label: "Users", href: "/admin/users", icon: UsersIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },

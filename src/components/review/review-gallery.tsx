@@ -28,6 +28,7 @@ import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
 import { ExifPanel } from "./exif-panel";
 import { JobTimeline } from "./job-timeline";
+import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { playApproveSound, playRejectSound, playFavoriteSound } from "@/lib/sounds";
 import { useSwipe } from "@/hooks/use-swipe";
 import { getActionForKey } from "@/lib/keyboard-shortcuts";
@@ -151,6 +152,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEnhancingAll, setIsEnhancingAll] = useState(false);
   const [enhanceProgress, setEnhanceProgress] = useState(0);
+  const [invoicePreviewOpen, setInvoicePreviewOpen] = useState(false);
 
   // Preset switcher
   const [presets, setPresets] = useState<Array<{ id: string; slug: string; name: string; promptModifiers: string }>>([]);
@@ -1254,13 +1256,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </button>
           )}
           {job.status === "approved" && (
-            <a
-              href={`/api/jobs/${job.id}/invoice`}
-              download
+            <button
+              onClick={() => setInvoicePreviewOpen(true)}
               className="text-xs px-2 py-1.5 rounded border border-graphite-200 hover:bg-graphite-50 dark:border-graphite-700 dark:hover:bg-graphite-800"
             >
               Invoice
-            </a>
+            </button>
           )}
           {job.status === "approved" && (
             <a
@@ -2433,6 +2434,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           onClose={() => setSlideshowOpen(false)}
         />
       )}
+
+      <InvoicePreviewModal jobId={job.id} open={invoicePreviewOpen} onClose={() => setInvoicePreviewOpen(false)} />
     </div>
   );
 }

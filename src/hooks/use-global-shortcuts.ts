@@ -18,6 +18,12 @@ export function useGlobalShortcuts() {
         e.preventDefault();
         router.push("/jobs/new");
       }
+
+      // Cmd/Ctrl + , → settings
+      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+        e.preventDefault();
+        router.push("/settings");
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

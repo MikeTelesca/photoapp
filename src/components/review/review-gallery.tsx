@@ -40,6 +40,7 @@ interface Photo {
   errorMessage: string | null;
   errorAttempts: number;
   qualityFlags?: string | null;
+  rejectionReason?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +94,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const twilightMenuRef = useRef<HTMLDivElement>(null);
   const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
+  const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/presets")
@@ -221,9 +223,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   const handleReject = useCallback(() => {
     if (!currentPhoto) return;
-    updatePhoto(currentPhoto.id, { status: "rejected" });
+    updatePhoto(currentPhoto.id, {
+      status: "rejected",
+      ...(rejectionReasonDefault && { rejectionReason: rejectionReasonDefault })
+    });
     setTimeout(() => goNext(), 300);
-  }, [currentPhoto, updatePhoto, goNext]);
+  }, [currentPhoto, updatePhoto, goNext, rejectionReasonDefault]);
 
   const handleFavorite = useCallback(async () => {
     if (!currentPhoto) return;
@@ -938,6 +943,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                     {photo.status === "rejected" && (
                       <div className="absolute inset-0 ring-2 ring-red-500 rounded bg-red-500/30">
                         <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✗</div>
+                        {photo.rejectionReason && (
+                          <div className="absolute bottom-1 left-1 right-1 text-[8px] text-red-600 bg-white/80 rounded px-1 py-0.5 truncate font-medium">
+                            {photo.rejectionReason}
+                          </div>
+                        )}
                       </div>
                     )}
                     {photo.status === "edited" && (
@@ -1161,14 +1171,30 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <CheckIcon className="w-4 h-4" />
                 <span className="hidden sm:inline">Approve</span>
               </button>
-              <button
-                onClick={handleReject}
-                disabled={isUpdating || enhanceLoading}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-red-100 text-red-600 hover:bg-red-200 transition-colors disabled:opacity-50"
-              >
-                <XMarkIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Reject</span>
-              </button>
+              <div className="flex gap-1 items-center">
+                <select
+                  value={rejectionReasonDefault}
+                  onChange={(e) => setRejectionReasonDefault(e.target.value)}
+                  disabled={isUpdating || enhanceLoading}
+                  className="text-xs px-2 py-2 rounded border border-graphite-200 bg-white text-graphite-900 hover:border-graphite-300 disabled:opacity-50"
+                >
+                  <option value="">No reason</option>
+                  <option value="blurry">Blurry</option>
+                  <option value="dark">Too dark</option>
+                  <option value="blown">Too bright</option>
+                  <option value="colors">Wrong colors</option>
+                  <option value="hallucination">AI hallucination</option>
+                  <option value="straighten">Not straightened</option>
+                </select>
+                <button
+                  onClick={handleReject}
+                  disabled={isUpdating || enhanceLoading}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-red-100 text-red-600 hover:bg-red-200 transition-colors disabled:opacity-50"
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">Reject</span>
+                </button>
+              </div>
               <button
                 onClick={handleRegenerate}
                 disabled={isUpdating || enhanceLoading}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { CommentForm } from "@/components/share/comment-form";
+import { StarRating } from "@/components/share/star-rating";
 import { PasswordGate } from "@/components/share/password-gate";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,10 @@ export default async function SharePage({
       photos: {
         where: { status: "approved" },
         orderBy: { orderIndex: "asc" },
-        include: { comments: { orderBy: { createdAt: "asc" } } },
+        include: {
+            comments: { orderBy: { createdAt: "asc" } },
+            ratings: { orderBy: { createdAt: "asc" } },
+          },
       },
     },
   });
@@ -92,6 +96,18 @@ export default async function SharePage({
                       loading="lazy"
                     />
                   </a>
+                  <div className="px-3 pt-2 pb-1">
+                    <StarRating
+                      token={token}
+                      photoId={photo.id}
+                      initialRatings={photo.ratings.map(r => ({
+                        id: r.id,
+                        authorName: r.authorName,
+                        rating: r.rating,
+                        createdAt: r.createdAt.toISOString(),
+                      }))}
+                    />
+                  </div>
                   <div className="px-3 pb-3">
                     <CommentForm
                       token={token}

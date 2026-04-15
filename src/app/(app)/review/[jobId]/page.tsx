@@ -15,7 +15,10 @@ export default async function ReviewPage({
     where: { id: jobId },
     include: {
       photographer: { select: { name: true } },
-      photos: { orderBy: { orderIndex: "asc" } },
+      photos: {
+        orderBy: { orderIndex: "asc" },
+        include: { ratings: { orderBy: { createdAt: "asc" } } },
+      },
     },
   });
 
@@ -33,6 +36,12 @@ export default async function ReviewPage({
       ...p,
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
+      ratings: p.ratings.map((r) => ({
+        id: r.id,
+        authorName: r.authorName,
+        rating: r.rating,
+        createdAt: r.createdAt.toISOString(),
+      })),
     })),
   };
 

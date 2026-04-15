@@ -53,6 +53,7 @@ interface Photo {
   autoTags?: string | null;
   rejectionReason?: string | null;
   note?: string | null;
+  ratings?: { id: string; authorName: string; rating: number; createdAt: string }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -1994,6 +1995,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <PhotoNote jobId={job.id} photoId={currentPhoto.id} initialNote={currentPhoto.note} />
             </div>
           )}
+
+          {/* Client Ratings */}
+          {currentPhoto && currentPhoto.ratings && currentPhoto.ratings.length > 0 && (() => {
+            const ratings = currentPhoto.ratings!;
+            const avg = ratings.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / ratings.length;
+            return (
+              <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
+                <div className="text-xs text-amber-600 font-semibold">
+                  ★ {avg.toFixed(1)} client rating ({ratings.length})
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Action Bar */}
           <div className="bg-white dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-3 flex items-center justify-between flex-wrap gap-2">

@@ -77,6 +77,7 @@ model Job {
   preset           String   @default("standard") // "standard", "bright-airy", "luxury", "custom"
   tvStyle          String   @default("netflix") // "netflix", "black", "beach", "mountains", "fireplace", "art", "off"
   skyStyle         String   @default("blue-clouds") // "blue-clouds", "clear-blue", "golden-hour", "dramatic", "overcast-soft", "as-is"
+  seasonalStyle    String?  // "spring" | "summer" | "autumn" | "winter" | "twilight" | null
   status           String   @default("pending") // "pending", "processing", "review", "approved", "rejected"
   totalPhotos      Int      @default(0)
   processedPhotos  Int      @default(0)

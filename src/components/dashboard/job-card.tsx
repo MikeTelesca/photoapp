@@ -11,6 +11,7 @@ import { DuplicateJobButton } from "@/components/dashboard/duplicate-job-button"
 import { SaveTemplateButton } from "@/components/dashboard/save-template-button";
 import { EditTagsButton } from "@/components/dashboard/edit-tags-button";
 import { ArchiveButton } from "@/components/dashboard/archive-button";
+import { EtaBadge } from "@/components/dashboard/eta-badge";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -100,6 +101,7 @@ function JobCardInternal({ job }: JobCardProps) {
           <div>
             <div className="text-xs font-semibold text-amber-600">Processing {job.processedPhotos}/{job.totalPhotos}</div>
             <ProgressBar value={progress} color="amber" />
+            <EtaBadge jobId={job.id} />
           </div>
         )}
         {job.status === "review" && (

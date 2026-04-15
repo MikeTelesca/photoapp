@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
+import { DropboxStatus } from "./dropbox-status";
 
 interface TopbarProps {
   title: string;
@@ -56,6 +57,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
             {aiStatus.processing} processing
           </div>
         )}
+        <DropboxStatus />
         <form onSubmit={handleSearch}>
           <div className="flex items-center gap-2 bg-white dark:bg-graphite-900 border border-graphite-200 dark:border-graphite-700 rounded-[10px] px-3.5 py-2 w-[200px] text-[13px] hover:border-graphite-300 dark:hover:border-graphite-600 transition-colors focus-within:border-cyan focus-within:ring-1 focus-within:ring-cyan">
             <MagnifyingGlassIcon className="w-[15px] h-[15px] text-graphite-400 flex-shrink-0" />

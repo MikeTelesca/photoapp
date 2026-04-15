@@ -113,7 +113,7 @@ export interface EnhanceResult {
  * Enhance a real estate photo using Gemini's image editing.
  */
 export async function enhancePhoto(
-  imageBuffer: Buffer,
+  imageInput: Buffer | Buffer[],
   mimeType: string,
   preset: string,
   customInstructions?: string | null
@@ -132,16 +132,19 @@ export async function enhancePhoto(
       ? `${basePrompt}\n\nADDITIONAL INSTRUCTIONS: ${extraInstructions}`
       : basePrompt;
 
-    const imageBase64 = imageBuffer.toString("base64");
+    // Support single image or array of brackets (for HDR merge)
+    const imageBuffers = Array.isArray(imageInput) ? imageInput : [imageInput];
+    const imageParts = imageBuffers.map((buf) => ({
+      inlineData: { mimeType, data: buf.toString("base64") },
+    }));
 
-    // Direct API call to ensure imageConfig.imageSize is sent (SDK strips it)
     const apiKey = process.env.GOOGLE_AI_API_KEY;
     if (!apiKey) throw new Error("GOOGLE_AI_API_KEY not set");
 
     const requestBody = {
       contents: [{
         parts: [
-          { inlineData: { mimeType, data: imageBase64 } },
+          ...imageParts,
           { text: prompt },
         ],
       }],

@@ -69,20 +69,43 @@ export async function POST(
       data: { status: "processing" },
     });
 
-    // Get original image from Dropbox
-    let imageBuffer: Buffer;
+    // Get all bracket exposures for HDR merge
+    let imageBuffer: Buffer; // Single image used for analyzePhoto
+    let bracketBuffers: Buffer[] = []; // All brackets sent to Gemini for HDR merge
     const mimeType = "image/jpeg";
+    const sharp = (await import("sharp")).default;
 
-    if (photo.originalUrl && photo.originalUrl.startsWith("http")) {
+    if (job.dropboxUrl && photo.exifData) {
+      const exif = JSON.parse(photo.exifData);
+      const allBracketFiles: Array<{ fileName: string }> = exif?.photos || [];
+      if (allBracketFiles.length === 0) {
+        return NextResponse.json({ error: "No bracket files" }, { status: 400 });
+      }
+
+      const downloaded = await Promise.all(
+        allBracketFiles.map(async (f) => {
+          try {
+            const buf = await downloadFromDropbox(job.dropboxUrl!, f.fileName);
+            return await sharp(buf)
+              .resize(1536, 1536, { fit: "inside", withoutEnlargement: true })
+              .jpeg({ quality: 88 })
+              .toBuffer();
+          } catch {
+            return null;
+          }
+        })
+      );
+      bracketBuffers = downloaded.filter((b): b is Buffer => b !== null);
+
+      if (bracketBuffers.length === 0) {
+        return NextResponse.json({ error: "Failed to download brackets" }, { status: 500 });
+      }
+
+      imageBuffer = bracketBuffers[Math.floor(bracketBuffers.length / 2)];
+    } else if (photo.originalUrl && photo.originalUrl.startsWith("http")) {
       const response = await fetch(photo.originalUrl);
       imageBuffer = Buffer.from(await response.arrayBuffer());
-    } else if (job.dropboxUrl && photo.exifData) {
-      const exif = JSON.parse(photo.exifData);
-      const fileName = exif?.photos?.[0]?.fileName;
-      if (!fileName) {
-        return NextResponse.json({ error: "No source filename" }, { status: 400 });
-      }
-      imageBuffer = await downloadFromDropbox(job.dropboxUrl, fileName);
+      bracketBuffers = [imageBuffer];
     } else {
       return NextResponse.json({ error: "No source image" }, { status: 400 });
     }
@@ -131,11 +154,15 @@ export async function POST(
         ? (skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"])
         : "INTERIOR PHOTO: Do NOT replace, modify, or add anything to windows, sky areas, or anything visible through glass. Do NOT add clouds, sky, grass, trees, or scenery. Keep all windows EXACTLY as they appear.";
 
-      const additionalInstructions = [tvInstruction, skyInstruction];
+      const hdrInstruction = bracketBuffers.length > 1
+        ? `HDR MERGE: The ${bracketBuffers.length} input images above are bracketed exposures of the SAME scene. Merge them into a single HDR image — recover highlights from under-exposed bracket, recover shadows from over-exposed bracket, use middle as tonal foundation. Output a SINGLE merged photo, not a collage. Same camera angle, framing, and content.`
+        : "";
+
+      const additionalInstructions = [hdrInstruction, tvInstruction, skyInstruction].filter(Boolean);
       if (customInstructions) additionalInstructions.push(customInstructions);
       const combinedInstructions = additionalInstructions.join("\n");
 
-      result = await enhancePhoto(imageBuffer, mimeType, job.preset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions);
+      result = await enhancePhoto(bracketBuffers, mimeType, job.preset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions);
     }
 
     if (!result.success) {

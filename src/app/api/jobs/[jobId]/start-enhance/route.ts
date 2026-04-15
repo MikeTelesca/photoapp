@@ -97,14 +97,43 @@ export async function POST(
     }
 
     const exif = JSON.parse(photo.exifData);
-    const fileName = exif?.photos?.[0]?.fileName;
-    if (!fileName) {
+    const allBracketFiles: Array<{ fileName: string }> = exif?.photos || [];
+    if (allBracketFiles.length === 0) {
       await prisma.photo.update({ where: { id: photo.id }, data: { status: "pending" } });
-      return NextResponse.json({ error: "No filename in exif", skipped: true });
+      return NextResponse.json({ error: "No bracket files in exif", skipped: true });
     }
 
-    const imageBuffer = await downloadFromDropbox(job.dropboxUrl, fileName);
+    // Download ALL brackets in parallel for HDR merge
+    const sharp = (await import("sharp")).default;
+    const bracketBuffers = await Promise.all(
+      allBracketFiles.map(async (f) => {
+        try {
+          const buf = await downloadFromDropbox(job.dropboxUrl!, f.fileName);
+          // Resize each bracket to ~1536px on long side to keep prompt size manageable
+          // (Gemini accepts large images but cost/latency scales with input size)
+          return await sharp(buf)
+            .resize(1536, 1536, { fit: "inside", withoutEnlargement: true })
+            .jpeg({ quality: 88 })
+            .toBuffer();
+        } catch (err) {
+          console.error(`[hdr] Failed to download bracket ${f.fileName}:`, err);
+          return null;
+        }
+      })
+    );
+    const validBrackets = bracketBuffers.filter((b): b is Buffer => b !== null);
+
+    if (validBrackets.length === 0) {
+      await prisma.photo.update({ where: { id: photo.id }, data: { status: "pending" } });
+      return NextResponse.json({ error: "Could not download any brackets", skipped: true });
+    }
+
+    // Use middle bracket for analysis (it's typically the best-exposed for scene detection)
+    const middleIdx = Math.floor(validBrackets.length / 2);
+    const imageBuffer = validBrackets[middleIdx];
     const mimeType = "image/jpeg";
+
+    console.log(`[hdr] Downloaded ${validBrackets.length}/${allBracketFiles.length} brackets for HDR merge`);
 
     // Analyze photo for detections
     const analysis = await analyzePhoto(imageBuffer, mimeType);
@@ -151,13 +180,23 @@ export async function POST(
       ? (skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"])
       : "INTERIOR PHOTO DETECTED: Do NOT replace, modify, or add anything to windows, sky areas, or anything visible through glass. Do NOT add clouds, sky, grass, trees, or scenery anywhere. Keep all windows and views EXACTLY as they appear in the original.";
 
-    const combinedInstructions = [tvInstruction, skyInstruction].join("\n");
+    // HDR merge instruction - tells Gemini to fuse the multiple bracket exposures
+    const hdrInstruction = validBrackets.length > 1
+      ? `\n\nHDR MERGE: The ${validBrackets.length} input images above are bracketed exposures of the SAME scene at different exposure levels (under-exposed, normal, over-exposed). Merge them into a single high-dynamic-range image:
+- Use the UNDER-exposed image to recover detail in BRIGHT areas (windows, lights, sky)
+- Use the OVER-exposed image to recover detail in DARK areas (shadows, corners, dim rooms)
+- Use the MIDDLE exposure as your tonal foundation
+- The output must be a SINGLE merged photo, not a collage. Same composition as the brackets.
+- Maintain the EXACT same camera angle, framing, and content as the brackets.`
+      : "";
+
+    const combinedInstructions = [hdrInstruction, tvInstruction, skyInstruction].filter(Boolean).join("\n");
     const fullPrompt = customPresetPrompt
       ? `${customPresetPrompt}\n\n${combinedInstructions}`
       : combinedInstructions;
 
-    // Enhance the photo
-    const result = await enhancePhoto(imageBuffer, mimeType, job.preset, fullPrompt);
+    // Enhance the photo - pass ALL brackets for HDR merge
+    const result = await enhancePhoto(validBrackets, mimeType, job.preset, fullPrompt);
 
     if (!result.success) {
       await prisma.photo.update({ where: { id: photo.id }, data: { status: "pending" } });

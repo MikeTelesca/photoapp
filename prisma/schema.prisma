@@ -166,6 +166,7 @@ model Job {
   shareEmailLogs   ShareEmailLog[]
   jobComments      JobComment[]
   shareRequests    ShareRequest[]
+  shareViews       ShareView[]
 
   @@index([photographerId, createdAt(sort: Desc)])
   @@index([status])
@@ -497,6 +498,18 @@ model ShareRequest {
   createdAt   DateTime @default(now())
 
   @@index([jobId, createdAt])
+}
+
+model ShareView {
+  id         String   @id @default(cuid())
+  jobId      String
+  ip         String?
+  userAgent  String?
+  referrer   String?
+  viewedAt   DateTime @default(now())
+  job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, viewedAt])
 }
 
 model CommentReaction {

@@ -412,3 +412,23 @@ ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "presetOverride" TEXT;
 -- Share link expiry timestamp
 -- ---------------------------------------------------------------------------
 ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "shareExpiresAt" TIMESTAMP(3);
+
+-- ---------------------------------------------------------------------------
+-- Wave 112: Per-viewer tracking for share links
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "ShareView" (
+    "id"        TEXT NOT NULL,
+    "jobId"     TEXT NOT NULL,
+    "ip"        TEXT,
+    "userAgent" TEXT,
+    "referrer"  TEXT,
+    "viewedAt"  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ShareView_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "ShareView_jobId_viewedAt_idx" ON "ShareView"("jobId", "viewedAt");
+
+DO $$ BEGIN
+  ALTER TABLE "ShareView" ADD CONSTRAINT "ShareView_jobId_fkey"
+    FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

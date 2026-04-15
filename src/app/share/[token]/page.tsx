@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import crypto from "crypto";
 import { auth } from "@/lib/auth";
 import { CommentForm } from "@/components/share/comment-form";
@@ -89,6 +89,27 @@ export default async function SharePage({
       shareLastViewedAt: new Date(),
     },
   }).catch(err => console.error("share view track:", err));
+
+  // Per-viewer tracking (fire-and-forget) — skip for owner in preview mode
+  if (!(isPreview && isOwner)) {
+    try {
+      const hdrs = await headers();
+      const xff = hdrs.get("x-forwarded-for");
+      const ip = xff ? xff.split(",")[0].trim() : (hdrs.get("x-real-ip") || null);
+      const userAgent = hdrs.get("user-agent");
+      const referrer = hdrs.get("referer");
+      prisma.shareView.create({
+        data: {
+          jobId: job.id,
+          ip: ip || null,
+          userAgent: userAgent || null,
+          referrer: referrer || null,
+        },
+      }).catch(err => console.error("share view record:", err));
+    } catch (e) {
+      console.error("share view headers:", e);
+    }
+  }
 
   const approvedPhotos = job.photos;
 

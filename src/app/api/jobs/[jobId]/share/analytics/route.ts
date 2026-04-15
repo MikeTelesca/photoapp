@@ -7,7 +7,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
 
-  const [job, emailLogs, comments, ratings, requests] = await Promise.all([
+  const [job, emailLogs, comments, ratings, requests, shareViews] = await Promise.all([
     prisma.job.findUnique({ where: { id: jobId } }),
     prisma.shareEmailLog.findMany({
       where: { jobId },
@@ -29,6 +29,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       where: { jobId },
       orderBy: { createdAt: "desc" },
     }).catch(() => []),
+    prisma.shareView.findMany({
+      where: { jobId },
+      orderBy: { viewedAt: "desc" },
+      take: 10,
+    }).catch(() => [] as Array<{ id: string; ip: string | null; userAgent: string | null; referrer: string | null; viewedAt: Date }>),
   ]);
 
   const opens = emailLogs.filter(l => l.openedAt).length;
@@ -77,6 +82,13 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       message: r.message,
       createdAt: r.createdAt,
       resolvedAt: r.resolvedAt,
+    })),
+    shareViews: (shareViews as any[]).map(v => ({
+      id: v.id,
+      ip: v.ip,
+      userAgent: v.userAgent,
+      referrer: v.referrer,
+      viewedAt: v.viewedAt,
     })),
   });
 }

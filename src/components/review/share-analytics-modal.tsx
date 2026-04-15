@@ -71,6 +71,24 @@ export function ShareAnalyticsModal({ jobId, open, onClose }: Props) {
               </Section>
             )}
 
+            {data.shareViews?.length > 0 && (
+              <Section title={`Recent views (${data.shareViews.length})`}>
+                {data.shareViews.map((v: any) => {
+                  const ua = parseUserAgent(v.userAgent || "");
+                  const ref = truncateReferrer(v.referrer);
+                  return (
+                    <div key={v.id} className="text-xs py-1 border-b border-graphite-100 dark:border-graphite-800 last:border-b-0">
+                      <div className="flex justify-between">
+                        <div className="font-semibold dark:text-white">{ua.browser} on {ua.os}</div>
+                        <div className="text-[10px] text-graphite-400">{new Date(v.viewedAt).toLocaleString()}</div>
+                      </div>
+                      {ref && <div className="text-[10px] text-graphite-400 truncate">from {ref}</div>}
+                    </div>
+                  );
+                })}
+              </Section>
+            )}
+
             {data.emailLogs?.length > 0 && (
               <Section title={`Recipients (${data.emailLogs.length})`}>
                 {data.emailLogs.map((l: any) => (
@@ -100,6 +118,36 @@ function Stat({ label, value }: { label: string; value: any }) {
       <div className="text-xl font-bold text-graphite-900 dark:text-white">{value}</div>
     </div>
   );
+}
+
+function parseUserAgent(ua: string): { browser: string; os: string } {
+  if (!ua) return { browser: "Unknown", os: "Unknown" };
+  let browser = "Unknown";
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/OPR\/|Opera/.test(ua)) browser = "Opera";
+  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = "Chrome";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = "Safari";
+  else if (/MSIE |Trident\//.test(ua)) browser = "IE";
+
+  let os = "Unknown";
+  if (/Windows NT/.test(ua)) os = "Windows";
+  else if (/Android/.test(ua)) os = "Android";
+  else if (/iPhone|iPad|iPod/.test(ua)) os = "iOS";
+  else if (/Mac OS X/.test(ua)) os = "macOS";
+  else if (/Linux/.test(ua)) os = "Linux";
+  return { browser, os };
+}
+
+function truncateReferrer(ref: string | null | undefined): string | null {
+  if (!ref) return null;
+  try {
+    const u = new URL(ref);
+    const path = u.pathname.length > 20 ? u.pathname.slice(0, 20) + "…" : u.pathname;
+    return u.hostname + path;
+  } catch {
+    return ref.length > 40 ? ref.slice(0, 40) + "…" : ref;
+  }
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

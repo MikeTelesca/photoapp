@@ -2701,6 +2701,36 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       >
                         📤 Move/Copy
                       </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(
+                              `/api/photos/${currentPhoto.id}/public-url`,
+                              { method: "POST" }
+                            );
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok || !data?.url) {
+                              addToast("error", data?.error || "Could not create link");
+                              return;
+                            }
+                            try {
+                              await navigator.clipboard.writeText(data.url);
+                              addToast("success", "Public link copied to clipboard");
+                            } catch {
+                              // Fallback for browsers blocking clipboard API
+                              window.prompt("Copy this link:", data.url);
+                              addToast("info", "Link ready — copy from the dialog");
+                            }
+                          } catch (e) {
+                            addToast("error", (e as Error).message || "Copy failed");
+                          }
+                        }}
+                        className="text-[11px] px-1.5 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800"
+                        title="Copy a public link to just this photo"
+                      >
+                        🔗 Copy Link
+                      </button>
                     </>
                   )}
                 </span>

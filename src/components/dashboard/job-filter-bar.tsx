@@ -38,6 +38,7 @@ export function JobFilterBar({ jobs }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [bulkTag, setBulkTag] = useState("");
   const [bulkPriority, setBulkPriority] = useState("medium");
+  const [bulkPreset, setBulkPreset] = useState("standard");
   const [groupByDate, setGroupByDate] = useState(true);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
@@ -263,6 +264,33 @@ export function JobFilterBar({ jobs }: Props) {
     }
   };
 
+  const bulkSetPreset = async () => {
+    if (!confirm(`Set ${selected.size} pending jobs to ${bulkPreset} preset?`)) return;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/jobs/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "setPreset", ids: Array.from(selected), preset: bulkPreset }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Updated ${data.count} jobs`);
+        setSelected(new Set());
+        window.location.reload();
+      } else {
+        alert("Failed to set preset");
+      }
+    } catch (error) {
+      console.error("Error setting preset:", error);
+      alert("Error setting preset");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   function applyFilter(f: SavedFilter) {
     setSearch(f.search || "");
     setStatus(f.status || "all");
@@ -353,6 +381,23 @@ export function JobFilterBar({ jobs }: Props) {
               disabled={isLoading}
               className="text-xs px-2 py-1 rounded bg-graphite-600 text-white font-semibold hover:bg-graphite-700 disabled:opacity-50">
               Set Priority
+            </button>
+          </div>
+
+          <div className="flex gap-1 items-center">
+            <select value={bulkPreset} onChange={(e) => setBulkPreset(e.target.value)}
+              disabled={isLoading}
+              className="text-xs px-1 py-1 rounded border border-cyan-300 dark:border-cyan-700 dark:bg-graphite-800 dark:text-white">
+              <option value="mls-standard">MLS Std</option>
+              <option value="standard">Standard</option>
+              <option value="bright">Bright</option>
+              <option value="luxury">Luxury</option>
+              <option value="flambient">Flambient</option>
+            </select>
+            <button onClick={bulkSetPreset}
+              disabled={isLoading}
+              className="text-xs px-2 py-1 rounded bg-graphite-600 text-white font-semibold hover:bg-graphite-700 disabled:opacity-50">
+              Apply preset
             </button>
           </div>
 

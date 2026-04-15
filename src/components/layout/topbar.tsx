@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DropboxStatus } from "./dropbox-status";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { TodayCountChip } from "./today-count-chip";
+import { DarkModeToggle } from "./dark-mode-toggle";
 
 interface TopbarProps {
   title: string;
@@ -63,6 +64,7 @@ export function Topbar({ title, subtitle, actions }: TopbarProps) {
         <TodayCountChip />
         <DropboxStatus />
         <NotificationBell />
+        <DarkModeToggle />
         <button
           type="button"
           onClick={() => window.dispatchEvent(new Event("open-command-palette"))}

@@ -158,6 +158,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ count: res.count });
     }
 
+    if (action === "setPreset") {
+      const body = await req.json();
+      const { preset } = body;
+      const allowed = ["mls-standard", "standard", "bright", "luxury", "flambient"];
+      if (!allowed.includes(preset)) {
+        return NextResponse.json({ error: "Invalid preset" }, { status: 400 });
+      }
+      const res = await prisma.job.updateMany({
+        where: { id: { in: ids }, photographerId: userId, status: "pending" },
+        data: { preset },
+      });
+      return NextResponse.json({ count: res.count, message: "Only pending jobs were updated" });
+    }
+
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (error) {
     console.error("Failed to perform bulk action:", error);

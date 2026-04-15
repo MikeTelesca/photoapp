@@ -165,6 +165,7 @@ model Photo {
   twilightInstructions String?
   twilightStyle        String?  // "warm-dusk", "blue-hour", "deep-night"
   customInstructions   String?
+  customPromptOverride String?  // per-photo custom prompt override (overrides job-level on re-enhance)
   detections           String   @default("[]") // JSON array stored as string
   bracketGroup         Int?     // which bracket group this belongs to
   bracketIndex         Int?     // position within bracket group (0, 1, 2 for 3-bracket)

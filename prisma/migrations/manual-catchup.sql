@@ -346,8 +346,18 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "tagsInheritFromJob" BOOLEAN NOT NUL
 ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "retouchRequest" TEXT;
 
 -- ---------------------------------------------------------------------------
--- Announcement: add level + expiresAt for broadcast banner system
+-- Announcement: admin broadcast banner (base table + later-added fields)
 -- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "Announcement" (
+    "id"        TEXT NOT NULL,
+    "message"   TEXT NOT NULL,
+    "type"      TEXT NOT NULL DEFAULT 'info',
+    "active"    BOOLEAN NOT NULL DEFAULT true,
+    "createdBy" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Announcement_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "Announcement_active_createdAt_idx" ON "Announcement"("active", "createdAt");
 ALTER TABLE "Announcement" ADD COLUMN IF NOT EXISTS "level" TEXT NOT NULL DEFAULT 'info';
 ALTER TABLE "Announcement" ADD COLUMN IF NOT EXISTS "expiresAt" TIMESTAMP(3);
 CREATE INDEX IF NOT EXISTS "Announcement_active_expiresAt_idx" ON "Announcement"("active", "expiresAt");
@@ -464,3 +474,5 @@ DO $$ BEGIN
   ALTER TABLE "JobWatch" ADD CONSTRAINT "JobWatch_jobId_fkey"
     FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ---------------------------------------------------------------------------

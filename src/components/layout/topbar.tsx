@@ -6,7 +6,6 @@ import Link from "next/link";
 import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { DropboxStatus } from "./dropbox-status";
-import { NotificationBell } from "@/components/notifications/notification-bell";
 import { TodayCountChip } from "./today-count-chip";
 import { DarkModeToggle } from "./dark-mode-toggle";
 
@@ -63,7 +62,6 @@ export function Topbar({ title, subtitle, actions }: TopbarProps) {
         )}
         <TodayCountChip />
         <DropboxStatus />
-        <NotificationBell />
         <DarkModeToggle />
         <button
           type="button"

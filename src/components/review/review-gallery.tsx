@@ -2761,6 +2761,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <Bars3Icon className="w-4 h-4" />
             {currentIndex + 1} / {photos.length}
           </button>
+          <button
+            type="button"
+            onClick={toggleMoreActions}
+            aria-expanded={showMoreActions}
+            className={`text-xs px-2 py-1.5 rounded-md border transition-colors ${showMoreActions ? "border-cyan bg-cyan-50 dark:bg-cyan-900/20 text-cyan" : "border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-600 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"}`}
+            title="Show advanced tools (preset, watermark, timeline, etc.)"
+          >
+            {showMoreActions ? "⋯ Hide tools" : "⋯ Tools"}
+          </button>
+          {showMoreActions && (<>
           {/* Focus mode toggle */}
           <button
             onClick={() => setFocusMode(v => !v)}
@@ -3095,6 +3105,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           )}
           <SaveTemplateButton jobId={job.id} />
           <ReminderButton jobId={job.id} reminderAt={job.reminderAt} reminderNote={job.reminderNote} />
+          </>)}
           <ShareButton
             jobId={job.id}
             initialToken={job.shareToken ?? null}
@@ -3104,6 +3115,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             initialPasswordSet={job.sharePasswordSet ?? false}
             initialExpiresAt={job.shareExpiresAt ?? null}
           />
+          {showMoreActions && (<>
           <JobTimeline jobId={job.id} />
           <button
             type="button"
@@ -3200,6 +3212,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               {batching ? "Running..." : "Re-enhance batch"}
             </button>
           </div>
+          </>)}
           {selectMode && selectedPhotoIds.size > 0 && (
             <div className="flex flex-wrap gap-1 items-center">
               <span className="text-xs font-semibold text-cyan">{selectedPhotoIds.size} selected</span>
@@ -3460,6 +3473,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       )}
 
       {/* Per-job custom prompt override */}
+      {showMoreActions && (<>
       <details className="text-sm bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-700 px-7 py-3">
         <summary className="cursor-pointer text-xs text-graphite-500 dark:text-graphite-400 hover:text-cyan font-semibold">
           🎯 Per-job custom instructions {customOverride ? "(set)" : ""}
@@ -3506,6 +3520,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
         </div>
       </details>
+      </>)}
 
       {/* Watermark Settings Panel */}
       {showWatermarkPanel && (

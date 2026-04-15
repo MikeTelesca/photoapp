@@ -19,7 +19,6 @@ import { TwoFactorForm } from "@/components/settings/two-factor-form";
 import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload";
 import { InvoiceLogoUpload } from "@/components/settings/invoice-logo-upload";
 import { AccentPicker } from "@/components/settings/accent-picker";
-import { BackgroundPicker } from "@/components/settings/background-picker";
 import { NotificationPrefs } from "@/components/settings/notification-prefs";
 import { TagsInheritToggle } from "@/components/settings/tags-inherit-toggle";
 import { TimezonePicker } from "@/components/settings/timezone-picker";
@@ -183,10 +182,6 @@ export default async function SettingsPage() {
             <h2 className="text-xs font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wide mb-3 mt-2">Admin</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
               <NavCard href="/admin/users" title="Users" desc="User management" icon="👤" />
-              <NavCard href="/admin/health" title="System health" desc="Dropbox, AI, DB status" icon="❤️" />
-              <NavCard href="/admin/errors" title="Error log" desc="Recent failures" icon="⚠️" />
-              <NavCard href="/admin/announcements" title="Announcements" desc="Site-wide banners" icon="📣" />
-              <NavCard href="/admin/flags" title="Feature flags" desc="Toggle features" icon="🚩" />
               <NavCard href="/admin/preset-stats" title="Preset stats" desc="Usage metrics by preset" icon="📊" />
               <NavCard href="/admin/downloads" title="Downloads" desc="Download audit log" icon="📥" />
               <NavCard href="/admin/feedback" title="Feedback" desc="User-submitted reports" icon="💬" />
@@ -230,7 +225,6 @@ export default async function SettingsPage() {
             </div>
             <div>
               <h2 className="text-sm font-semibold mb-3 dark:text-white">Dashboard background</h2>
-              <BackgroundPicker />
             </div>
           </div>
         </Card>

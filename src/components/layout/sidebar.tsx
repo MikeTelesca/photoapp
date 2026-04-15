@@ -58,17 +58,9 @@ const settingsItems = [
   { label: "Activity", href: "/activity", icon: ClockIcon },
   { label: "Billing", href: "/billing", icon: CreditCardIcon },
   { label: "Users", href: "/admin/users", icon: UsersIcon },
-  { label: "📊 System Stats", href: "/admin/stats", icon: ChartBarIcon },
-  { label: "⚡ Rate Limits", href: "/admin/rate-limits", icon: AdjustmentsHorizontalIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
-  { label: "Feature Flags", href: "/admin/flags", icon: AdjustmentsHorizontalIcon },
-  { label: "📢 Announcements", href: "/admin/announcements", icon: MegaphoneIcon },
-  { label: "Errors", href: "/admin/errors", icon: ExclamationTriangleIcon },
-  { label: "Health", href: "/admin/health", icon: HeartIcon },
-  { label: "Maintenance", href: "/admin/maintenance", icon: WrenchScrewdriverIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },
-  { label: "🎨 Portfolio", href: "/settings/portfolio", icon: Cog6ToothIcon },
 ];
 
 const helpItems = [

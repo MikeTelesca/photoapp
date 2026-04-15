@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { KeyboardHint } from "./keyboard-hint";
 import { NotesPopover } from "./notes-popover";
+import { BeforeAfterSlider } from "./before-after-slider";
 
 interface Photo {
   id: string;
@@ -65,6 +66,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [editedPrompt, setEditedPrompt] = useState<string>("");
   const [showPromptEditor, setShowPromptEditor] = useState(false);
   const [savingPreset, setSavingPreset] = useState(false);
+  const [compareMode, setCompareMode] = useState<"split" | "slider">("split");
 
   useEffect(() => {
     fetch("/api/presets")
@@ -522,6 +524,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             >
               {showPromptEditor ? "Close" : "Edit Prompt"}
             </button>
+            <button
+              onClick={() => setCompareMode(m => m === "split" ? "slider" : "split")}
+              className="text-xs px-2 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 hover:bg-graphite-50"
+              title="Toggle compare mode"
+            >
+              {compareMode === "split" ? "Slider View" : "Split View"}
+            </button>
           </div>
           <NotesPopover jobId={job.id} initialNotes={(job as any).notes ?? null} />
           <div className="text-right mr-2 hidden sm:block">
@@ -652,75 +661,88 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         {/* Viewer */}
         <div className="flex-1 flex flex-col">
           {/* Before / After Compare */}
-          <div className="flex-1 bg-graphite-900 flex flex-col md:flex-row gap-0.5 p-2 md:p-4 min-h-0">
-            {/* Before */}
-            <div className="flex-1 rounded-lg overflow-hidden relative flex items-center justify-center bg-graphite-800">
-              <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10">
-                Before
-              </div>
-              {currentPhoto ? (
-                <img
-                  src={currentPhoto.originalUrl || `/api/jobs/${job.id}/photos/${currentPhoto.id}/original`}
-                  alt="Original"
-                  className="max-w-full max-h-full object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
+          <div className="flex-1 bg-graphite-900 min-h-0 p-2 md:p-4">
+            {compareMode === "slider" && currentPhoto ? (
+              <div className="w-full h-full rounded-lg overflow-hidden">
+                <BeforeAfterSlider
+                  beforeUrl={currentPhoto.originalUrl || `/api/jobs/${job.id}/photos/${currentPhoto.id}/original`}
+                  afterUrl={currentPhoto.editedUrl}
+                  isLoading={enhanceLoading}
+                  loadingText={`Enhancing Photo ${currentIndex + 1} with AI...`}
                 />
-              ) : (
-                <div className="text-graphite-500 text-sm">Original HDR Merge</div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col md:flex-row gap-0.5 w-full h-full">
+                {/* Before */}
+                <div className="flex-1 rounded-lg overflow-hidden relative flex items-center justify-center bg-graphite-800">
+                  <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10">
+                    Before
+                  </div>
+                  {currentPhoto ? (
+                    <img
+                      src={currentPhoto.originalUrl || `/api/jobs/${job.id}/photos/${currentPhoto.id}/original`}
+                      alt="Original"
+                      className="max-w-full max-h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="text-graphite-500 text-sm">Original HDR Merge</div>
+                  )}
+                </div>
 
-            {/* After */}
-            <div className="flex-1 rounded-lg overflow-hidden relative flex items-center justify-center bg-graphite-800">
-              <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10">
-                After
+                {/* After */}
+                <div className="flex-1 rounded-lg overflow-hidden relative flex items-center justify-center bg-graphite-800">
+                  <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10">
+                    After
+                  </div>
+                  {currentPhoto?.editedUrl ? (
+                    <img
+                      src={currentPhoto.editedUrl}
+                      alt="Edited"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  ) : enhanceLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <ArrowPathIcon className="w-8 h-8 text-cyan animate-spin" />
+                      <div className="text-cyan text-sm font-medium">Enhancing Photo {currentIndex + 1} with AI...</div>
+                      <div className="text-graphite-500 text-xs">This may take 15-30 seconds</div>
+                    </div>
+                  ) : enhanceError ? (
+                    <div className="flex flex-col items-center gap-2 max-w-sm text-center px-4">
+                      <div className="text-red-400 text-sm font-medium">Enhancement failed</div>
+                      <div className="text-graphite-500 text-xs">{enhanceError}</div>
+                      <button
+                        onClick={handleRegenerate}
+                        className="mt-2 px-4 py-1.5 rounded-lg bg-cyan/20 text-cyan text-xs font-semibold hover:bg-cyan/30 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-graphite-500 text-sm">
+                      {currentPhoto?.status === "regenerating"
+                        ? "Regenerating..."
+                        : "Click 'Enhance with AI' to edit this photo"}
+                    </div>
+                  )}
+                  {/* Detection badges */}
+                  {detections.length > 0 && (
+                    <div className="absolute bottom-2.5 right-2.5 flex gap-1 z-10">
+                      {detections.map((d: string, i: number) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 rounded text-[10px] font-semibold backdrop-blur-sm bg-cyan/80 text-white"
+                        >
+                          {d.replace(/_/g, " ")}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              {currentPhoto?.editedUrl ? (
-                <img
-                  src={currentPhoto.editedUrl}
-                  alt="Edited"
-                  className="max-w-full max-h-full object-contain"
-                />
-              ) : enhanceLoading ? (
-                <div className="flex flex-col items-center gap-3">
-                  <ArrowPathIcon className="w-8 h-8 text-cyan animate-spin" />
-                  <div className="text-cyan text-sm font-medium">Enhancing Photo {currentIndex + 1} with AI...</div>
-                  <div className="text-graphite-500 text-xs">This may take 15-30 seconds</div>
-                </div>
-              ) : enhanceError ? (
-                <div className="flex flex-col items-center gap-2 max-w-sm text-center px-4">
-                  <div className="text-red-400 text-sm font-medium">Enhancement failed</div>
-                  <div className="text-graphite-500 text-xs">{enhanceError}</div>
-                  <button
-                    onClick={handleRegenerate}
-                    className="mt-2 px-4 py-1.5 rounded-lg bg-cyan/20 text-cyan text-xs font-semibold hover:bg-cyan/30 transition-colors"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              ) : (
-                <div className="text-graphite-500 text-sm">
-                  {currentPhoto?.status === "regenerating"
-                    ? "Regenerating..."
-                    : "Click 'Enhance with AI' to edit this photo"}
-                </div>
-              )}
-              {/* Detection badges */}
-              {detections.length > 0 && (
-                <div className="absolute bottom-2.5 right-2.5 flex gap-1 z-10">
-                  {detections.map((d: string, i: number) => (
-                    <span
-                      key={i}
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold backdrop-blur-sm bg-cyan/80 text-white"
-                    >
-                      {d.replace(/_/g, " ")}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Action Bar */}

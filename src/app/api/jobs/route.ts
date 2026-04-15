@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const { userId: sessionUserId, role: sessionUserRole } = authResult;
 
     const body = await request.json();
-    const { address, dropboxUrl, preset, photographerId, tvStyle, skyStyle } = body;
+    const { address, dropboxUrl, preset, photographerId, tvStyle, skyStyle, watermarkText } = body;
 
     if (!address) {
       return NextResponse.json({ error: "Address is required" }, { status: 400 });
@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
         preset: preset || "standard",
         tvStyle: tvStyle || "netflix",
         skyStyle: skyStyle || "blue-clouds",
+        watermarkText: watermarkText?.trim() || null,
         status: dropboxUrl ? "pending" : "pending",
         photographerId: userId,
       },

@@ -44,6 +44,12 @@ export async function GET(
         .replace(/[^a-zA-Z0-9]/g, "_")
         .substring(0, 40);
 
+      const watermarkText = (job as any).watermarkText as string | null;
+      let sharpLib: any = null;
+      if (watermarkText && watermarkText.trim().length > 0) {
+        sharpLib = (await import("sharp")).default;
+      }
+
       for (const photo of job.photos) {
         if (!photo.editedUrl) continue;
 
@@ -58,6 +64,29 @@ export async function GET(
           buffer = Buffer.from(base64, "base64");
         } else {
           continue;
+        }
+
+        // Apply watermark if configured
+        if (sharpLib && watermarkText && watermarkText.trim().length > 0) {
+          const meta = await sharpLib(buffer).metadata();
+          const w = meta.width || 1920;
+          const h = meta.height || 1080;
+
+          const fontSize = Math.round(w / 40);
+          const svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+            <text x="${w - 20}" y="${h - 20}" text-anchor="end"
+                  font-family="Helvetica, Arial, sans-serif"
+                  font-size="${fontSize}"
+                  font-weight="600"
+                  fill="rgba(255,255,255,0.85)"
+                  stroke="rgba(0,0,0,0.5)"
+                  stroke-width="1">${watermarkText.replace(/[<>&"']/g, '')}</text>
+          </svg>`;
+
+          buffer = await sharpLib(buffer)
+            .composite([{ input: Buffer.from(svg), gravity: "southeast" }])
+            .jpeg({ quality: 92 })
+            .toBuffer();
         }
 
         const fileName = `${sanitizedAddress}_${String(photo.orderIndex + 1).padStart(3, "0")}.jpg`;

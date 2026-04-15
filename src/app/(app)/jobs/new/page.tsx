@@ -29,6 +29,7 @@ export default function NewJobPage() {
   const [preset, setPreset] = useState("standard");
   const [tvStyle, setTvStyle] = useState("off");
   const [skyStyle, setSkyStyle] = useState("as-is");
+  const [watermarkText, setWatermarkText] = useState("");
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);
@@ -125,6 +126,7 @@ export default function NewJobPage() {
           preset,
           tvStyle,
           skyStyle,
+          watermarkText: watermarkText.trim() || null,
         }),
       });
 
@@ -353,6 +355,28 @@ export default function NewJobPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Watermark */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-graphite-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
+                </svg>
+                Watermark
+                <span className="text-xs font-normal text-graphite-400">(optional — applied to downloaded photos)</span>
+              </label>
+              <input
+                type="text"
+                value={watermarkText}
+                onChange={(e) => setWatermarkText(e.target.value)}
+                placeholder="e.g. © 2026 Your Photography Co."
+                className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
+              />
+              <p className="text-xs text-graphite-400 mt-1.5">
+                Text will appear in the bottom-right corner of each downloaded photo.
+              </p>
             </div>
 
             {/* Error */}

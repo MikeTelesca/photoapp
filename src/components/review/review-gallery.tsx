@@ -25,6 +25,7 @@ import { NotesPopover } from "./notes-popover";
 import { BeforeAfterSlider } from "./before-after-slider";
 import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
+import { ExifPanel } from "./exif-panel";
 
 interface Photo {
   id: string;
@@ -113,6 +114,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
   const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
   const [mlsPreset, setMlsPreset] = useState("mls-hi");
+
+  // Batch re-enhance state
+  const [batchPreset, setBatchPreset] = useState(initialJob.preset || "standard");
+  const [batchFilter, setBatchFilter] = useState<"rejected" | "all">("rejected");
+  const [batching, setBatching] = useState(false);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -1170,6 +1176,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </div>
             )}
           </div>
+
+          {/* EXIF Info Panel */}
+          {currentPhoto && (
+            <div className="bg-graphite-50 border-t border-graphite-200 px-3 md:px-6 py-3">
+              <ExifPanel exifData={currentPhoto.exifData} />
+            </div>
+          )}
 
           {/* Action Bar */}
           <div className="bg-white border-t border-graphite-200 px-3 md:px-6 py-3 flex items-center justify-between flex-wrap gap-2">

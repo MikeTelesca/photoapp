@@ -7,6 +7,7 @@ import { AnnouncementsBanner } from "@/components/announcements/banner";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { ShortcutCheatsheet } from "@/components/layout/shortcut-cheatsheet";
 import { LiveProgressIndicator } from "@/components/dashboard/live-progress-indicator";
+import { GlobalShortcuts } from "@/components/layout/global-shortcuts";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,6 +23,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <CommandPalette />
       <ShortcutCheatsheet />
       <LiveProgressIndicator />
+      <GlobalShortcuts />
     </div>
   );
 }

@@ -6,6 +6,7 @@ export interface DashboardWidget {
 
 export const DASHBOARD_WIDGETS: DashboardWidget[] = [
   { key: "stats-cards", label: "Today/Week/Month stats", defaultVisible: true },
+  { key: "photo-stats", label: "Photo throughput (processed)", defaultVisible: true },
   { key: "onboarding", label: "Onboarding checklist", defaultVisible: true },
   { key: "inbox", label: "Inbox (review queue)", defaultVisible: true },
   { key: "quick-actions", label: "Quick actions", defaultVisible: true },

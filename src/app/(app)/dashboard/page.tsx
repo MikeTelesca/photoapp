@@ -16,6 +16,7 @@ import { CustomizeButton } from "@/components/dashboard/customize-button";
 import { GreetingWidget } from "@/components/dashboard/greeting-widget";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { StatsCards } from "@/components/dashboard/stats-cards";
+import { PhotoStatsWidget } from "@/components/dashboard/photo-stats-widget";
 import {
   FolderIcon,
   ArrowPathIcon,
@@ -196,6 +197,11 @@ export default async function DashboardPage({
         {/* Today/Week/Month Stats Cards */}
         <WidgetWrapper widgetKey="stats-cards">
           <StatsCards userId={userId || ""} />
+        </WidgetWrapper>
+
+        {/* Photo throughput widget */}
+        <WidgetWrapper widgetKey="photo-stats">
+          <PhotoStatsWidget />
         </WidgetWrapper>
 
         {/* Onboarding Checklist */}

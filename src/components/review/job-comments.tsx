@@ -15,6 +15,8 @@ export function JobComments({ jobId }: { jobId: string }) {
   const [newBody, setNewBody] = useState("");
   const [open, setOpen] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState("");
 
   async function load() {
     try {
@@ -50,6 +52,20 @@ export function JobComments({ jobId }: { jobId: string }) {
     if (!confirm("Delete this comment?")) return;
     await fetch(`/api/jobs/${jobId}/comments/${id}`, { method: "DELETE" });
     load();
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    const res = await fetch(`/api/jobs/${jobId}/comments/${editingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: editBody }),
+    });
+    if (res.ok) {
+      setEditingId(null);
+      setEditBody("");
+      load();
+    }
   }
 
   function timeAgo(date: string) {
@@ -93,10 +109,24 @@ export function JobComments({ jobId }: { jobId: string }) {
                     </span>
                     <div className="flex gap-2 items-center">
                       <span className="text-[10px] text-graphite-400">{timeAgo(c.createdAt)}</span>
+                      <button onClick={() => { setEditingId(c.id); setEditBody(c.body); }}
+                        className="text-[10px] text-cyan hover:underline">edit</button>
                       <button onClick={() => del(c.id)} className="text-[10px] text-red-500 hover:underline">×</button>
                     </div>
                   </div>
-                  <div className="text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">{renderBody(c.body)}</div>
+                  {editingId === c.id ? (
+                    <div className="flex flex-col gap-1">
+                      <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={2}
+                        className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-900 dark:text-white" />
+                      <div className="flex gap-1">
+                        <button onClick={saveEdit} className="text-[10px] px-2 py-0.5 rounded bg-cyan text-white">Save</button>
+                        <button onClick={() => { setEditingId(null); setEditBody(""); }}
+                          className="text-[10px] px-2 py-0.5 rounded text-graphite-500">Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">{renderBody(c.body)}</div>
+                  )}
                   <Reactions commentId={c.id} commentType="job" initialReactions={c.reactions} />
                 </li>
               ))}

@@ -56,3 +56,9 @@ export function playFavoriteSound() {
   playTone(880, 0.08, "sine");
   setTimeout(() => playTone(1318.51, 0.1, "sine"), 40);
 }
+
+export function playInboxSound() {
+  // Soft "ding" — A4 + C5 chord
+  playTone(440, 0.2);
+  setTimeout(() => playTone(523.25, 0.3), 100);
+}

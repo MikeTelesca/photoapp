@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { auth } from "@/lib/auth";
 import { CommentForm } from "@/components/share/comment-form";
 import { StarRating } from "@/components/share/star-rating";
 import { PasswordGate } from "@/components/share/password-gate";
@@ -11,10 +12,15 @@ export const dynamic = "force-dynamic";
 
 export default async function SharePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }) {
   const { token } = await params;
+  const sp = await searchParams;
+  const isPreview = sp.preview === "1";
+  const session = await auth();
 
   const job = await prisma.job.findFirst({
     where: { shareToken: token, shareEnabled: true },
@@ -32,8 +38,10 @@ export default async function SharePage({
 
   if (!job) notFound();
 
-  // Check if share link has expired
-  if (job.shareExpiresAt && new Date(job.shareExpiresAt) < new Date()) {
+  const isOwner = session?.user?.id === job.photographerId;
+
+  // Check if share link has expired (bypass for owner in preview mode)
+  if (job.shareExpiresAt && new Date(job.shareExpiresAt) < new Date() && !(isPreview && isOwner)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-graphite-50">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
@@ -48,8 +56,8 @@ export default async function SharePage({
     );
   }
 
-  // If password required, check unlock cookie
-  if (job.sharePassword) {
+  // If password required, check unlock cookie (bypass for owner in preview mode)
+  if (job.sharePassword && !(isPreview && isOwner)) {
     const cookieStore = await cookies();
     const cookie = cookieStore.get(`share-unlock-${token}`);
     const expected = crypto
@@ -95,6 +103,12 @@ export default async function SharePage({
 
   return (
     <div className="min-h-screen bg-graphite-50">
+      {/* Preview banner */}
+      {isPreview && isOwner && (
+        <div className="bg-amber-100 dark:bg-amber-900/30 border-b border-amber-300 dark:border-amber-700 px-4 py-2 text-xs text-amber-900 dark:text-amber-100 text-center">
+          👁 Preview mode — you're viewing as your client. {job.sharePassword ? "Password gate bypassed." : ""}
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white border-b border-graphite-200 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { playInboxSound } from "@/lib/sounds";
 
 interface JobProgress {
   id: string;
@@ -14,6 +15,7 @@ interface JobProgress {
 export function useJobProgress(): { jobs: JobProgress[]; connected: boolean } {
   const [jobs, setJobs] = useState<JobProgress[]>([]);
   const [connected, setConnected] = useState(false);
+  const [prevJobIds, setPrevJobIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (typeof window === "undefined") return;

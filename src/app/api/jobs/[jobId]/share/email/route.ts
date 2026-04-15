@@ -36,7 +36,7 @@ export async function POST(
 
   const user = await prisma.user.findUnique({
     where: { id: (job as any).photographerId },
-    select: { name: true, email: true, emailSignature: true, shareEmailSubject: true },
+    select: { name: true, email: true, emailSignature: true, shareEmailSignature: true, shareEmailSubject: true },
   });
   const photographerName = user?.name || user?.email || "ATH Media";
 
@@ -81,7 +81,7 @@ export async function POST(
         shareUrl,
         password: password?.trim() || undefined,
         personalMessage: personalMessage?.trim() || undefined,
-        signature: user?.emailSignature || undefined,
+        signature: (user as any).shareEmailSignature || user?.emailSignature || undefined,
         trackingPixelUrl,
       }),
     });

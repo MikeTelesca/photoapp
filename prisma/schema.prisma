@@ -38,6 +38,7 @@ model User {
   notifyPhotoFailed Boolean  @default(true)
   timezone          String?   // IANA format, e.g. "America/Toronto"
   emailSignature    String?
+  shareEmailSignature String?  // separate signature for client-facing share emails
   autoArchiveDays   Int?      // null = disabled; otherwise days
   promptPrefix      String?   // Custom prompt prefix prepended to all enhance prompts
   filenamePattern   String   @default("{address}-{seq}") // Download filename pattern
@@ -133,6 +134,7 @@ model Job {
   reminderAt          DateTime?
   reminderNote        String?
   reminderSent        Boolean  @default(false)
+  lockedAt            DateTime?
   trackedTimeSeconds  Int      @default(0)
   coverPhotoId        String?
   colorLabel          String?  // null | "red" | "amber" | "emerald" | "blue" | "purple" | "pink"

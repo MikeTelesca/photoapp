@@ -53,6 +53,7 @@ export default async function SettingsPage() {
   let userTimezone: string | null = null;
   let budgetPerJob = 20;
   let emailSignature: string | null = null;
+  let shareEmailSignature: string | null = null;
   let autoArchiveDays: number | null = null;
   let filenamePattern: string | null = null;
   let shareEmailSubject: string | null = null;
@@ -88,6 +89,7 @@ export default async function SettingsPage() {
         timezone: true,
         budgetPerJob: true,
         emailSignature: true,
+        shareEmailSignature: true,
         autoArchiveDays: true,
         filenamePattern: true,
         shareEmailSubject: true,
@@ -107,6 +109,7 @@ export default async function SettingsPage() {
     userTimezone = user?.timezone ?? null;
     budgetPerJob = user?.budgetPerJob ?? 20;
     emailSignature = user?.emailSignature ?? null;
+    shareEmailSignature = user?.shareEmailSignature ?? null;
     autoArchiveDays = user?.autoArchiveDays ?? null;
     filenamePattern = user?.filenamePattern ?? null;
     shareEmailSubject = user?.shareEmailSubject ?? null;
@@ -428,7 +431,7 @@ export default async function SettingsPage() {
             <CardTitle>Email signature</CardTitle>
           </CardHeader>
           <div className="p-4">
-            <EmailSignatureForm initial={emailSignature} />
+            <EmailSignatureForm initial={emailSignature} initialShare={shareEmailSignature} />
           </div>
         </Card>
 

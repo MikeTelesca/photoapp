@@ -29,6 +29,7 @@ export async function PATCH(request: NextRequest) {
     timezone,
     budgetPerJob,
     emailSignature,
+    shareEmailSignature,
     autoArchiveDays,
     promptPrefix,
     filenamePattern,
@@ -83,6 +84,7 @@ export async function PATCH(request: NextRequest) {
   if (timezone !== undefined) updateData.timezone = timezone?.trim() || null;
   if (budgetPerJob !== undefined) updateData.budgetPerJob = parseFloat(budgetPerJob) || 20;
   if (emailSignature !== undefined) updateData.emailSignature = emailSignature?.trim() || null;
+  if (shareEmailSignature !== undefined) updateData.shareEmailSignature = shareEmailSignature?.trim() || null;
   if (autoArchiveDays !== undefined) {
     updateData.autoArchiveDays = autoArchiveDays === null ? null : (parseInt(autoArchiveDays) || null);
   }

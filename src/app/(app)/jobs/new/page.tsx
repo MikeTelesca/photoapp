@@ -74,6 +74,7 @@ function NewJobPageInner() {
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);
   const [presetsLoading, setPresetsLoading] = useState(true);
+  const [presetSuggested, setPresetSuggested] = useState(false);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -190,6 +191,24 @@ function NewJobPageInner() {
     }
 
     if (any) setUrlPrefilled(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch and apply suggested preset based on history
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Don't override if URL or draft already set a non-standard preset
+    if (preset && preset !== "standard") return;
+
+    fetch("/api/user/suggested-preset")
+      .then(r => r.json())
+      .then(data => {
+        if (data.preset && data.source === "history" && !preset) {
+          setPreset(data.preset);
+          setPresetSuggested(true);
+        }
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -665,6 +684,11 @@ function NewJobPageInner() {
                   </button>
                 ))}
               </div>
+              {presetSuggested && (
+                <span className="text-xs text-cyan italic mt-2 block">
+                  ← suggested from your history
+                </span>
+              )}
             </div>
 
             {/* TV Screen Style */}

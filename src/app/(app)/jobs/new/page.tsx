@@ -29,7 +29,7 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
-const DRAFT_KEY = "new-job-draft";
+const DRAFT_KEY = "ath-new-job-draft";
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 interface Draft {
@@ -70,6 +70,7 @@ function NewJobPageInner() {
   const [tags, setTags] = useState("");
   const [draftSaved, setDraftSaved] = useState(false);
   const [urlPrefilled, setUrlPrefilled] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<Draft | null>(null);
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
@@ -101,7 +102,7 @@ function NewJobPageInner() {
       .finally(() => setPresetsLoading(false));
   }, []);
 
-  // Load draft on mount
+  // Load draft on mount - show banner instead of confirm dialog
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -114,31 +115,37 @@ function NewJobPageInner() {
       }
       // Only offer restore if draft has at least an address or dropboxUrl
       if (!draft.address && !draft.dropboxUrl) return;
-
-      const restore = window.confirm(
-        `You have an unsaved draft from ${new Date(draft.savedAt).toLocaleString()}.\n\nRestore it?`
-      );
-      if (restore) {
-        if (draft.address) setAddress(draft.address);
-        if (draft.dropboxUrl) setDropboxUrl(draft.dropboxUrl);
-        if (draft.clientName) setClientName(draft.clientName);
-        if (draft.clientId !== undefined) setClientId(draft.clientId);
-        if (draft.preset) setPreset(draft.preset);
-        if (draft.tvStyle) setTvStyle(draft.tvStyle);
-        if (draft.skyStyle) setSkyStyle(draft.skyStyle);
-        if (draft.priority) setPriority(draft.priority);
-        if (draft.watermarkText) setWatermarkText(draft.watermarkText);
-        if (draft.watermarkPosition) setWatermarkPosition(draft.watermarkPosition);
-        if (draft.watermarkSize !== undefined) setWatermarkSize(draft.watermarkSize);
-        if (draft.watermarkOpacity !== undefined) setWatermarkOpacity(draft.watermarkOpacity);
-        if (draft.tags) setTags(draft.tags);
-        if (draft.seasonalStyle !== undefined) setSeasonalStyle(draft.seasonalStyle);
-      } else {
-        localStorage.removeItem(DRAFT_KEY);
-      }
+      setPendingDraft(draft);
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function restoreDraft() {
+    if (!pendingDraft) return;
+    const draft = pendingDraft;
+    if (draft.address) setAddress(draft.address);
+    if (draft.dropboxUrl) setDropboxUrl(draft.dropboxUrl);
+    if (draft.clientName) setClientName(draft.clientName);
+    if (draft.clientId !== undefined) setClientId(draft.clientId);
+    if (draft.preset) setPreset(draft.preset);
+    if (draft.tvStyle) setTvStyle(draft.tvStyle);
+    if (draft.skyStyle) setSkyStyle(draft.skyStyle);
+    if (draft.priority) setPriority(draft.priority);
+    if (draft.watermarkText) setWatermarkText(draft.watermarkText);
+    if (draft.watermarkPosition) setWatermarkPosition(draft.watermarkPosition);
+    if (draft.watermarkSize !== undefined) setWatermarkSize(draft.watermarkSize);
+    if (draft.watermarkOpacity !== undefined) setWatermarkOpacity(draft.watermarkOpacity);
+    if (draft.tags) setTags(draft.tags);
+    if (draft.seasonalStyle !== undefined) setSeasonalStyle(draft.seasonalStyle);
+    setPendingDraft(null);
+  }
+
+  function discardDraft() {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+    setPendingDraft(null);
+  }
 
   // Load URL parameters on mount (after draft effect, so URL params win)
   useEffect(() => {
@@ -238,7 +245,7 @@ function NewJobPageInner() {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
       setDraftSaved(true);
       setTimeout(() => setDraftSaved(false), 2000);
-    }, 1000);
+    }, 500);
     return () => clearTimeout(timer);
   }, [address, dropboxUrl, clientName, clientId, preset, tvStyle, skyStyle, priority, watermarkText, watermarkPosition, watermarkSize, watermarkOpacity, tags, seasonalStyle]);
   const tvOptions = [
@@ -410,6 +417,29 @@ function NewJobPageInner() {
                   Paste a Dropbox shared folder link below OR switch to upload files directly. You can also click "Try Demo Job" on the dashboard if you just want to see how it works.
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+        {pendingDraft && pendingDraft.savedAt && (
+          <div className="mb-4 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 flex items-center justify-between gap-3">
+            <div className="text-sm text-yellow-800 dark:text-yellow-200">
+              📝 Draft found from {new Date(pendingDraft.savedAt).toLocaleString()}.
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={restoreDraft}
+                className="px-3 py-1.5 text-xs font-medium rounded bg-yellow-600 text-white hover:bg-yellow-700 transition-colors"
+              >
+                Restore
+              </button>
+              <button
+                type="button"
+                onClick={discardDraft}
+                className="px-3 py-1.5 text-xs font-medium rounded bg-white dark:bg-graphite-800 text-graphite-700 dark:text-graphite-200 border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-50 dark:hover:bg-graphite-700 transition-colors"
+              >
+                Discard
+              </button>
             </div>
           </div>
         )}

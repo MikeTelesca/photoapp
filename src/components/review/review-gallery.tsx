@@ -797,6 +797,42 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function bulkUpdatePhotos(action: string, value?: string) {
+    const selectedIds = Array.from(selectedPhotoIds);
+    if (selectedIds.length === 0) {
+      addToast("error", "No photos selected");
+      return;
+    }
+
+    const actionLabels: Record<string, string> = {
+      approve: "Approve",
+      reject: "Reject",
+      favorite: "Favorite",
+      unfavorite: "Unfavorite",
+      clearStatus: "Clear status",
+    };
+
+    if (!confirm(`${actionLabels[action]} ${selectedIds.length} selected photos?`)) return;
+
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds, action, value }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Update failed");
+        return;
+      }
+      addToast("success", `${actionLabels[action]} ${data.count} photos`);
+      setSelectedPhotoIds(new Set());
+      window.location.reload();
+    } catch (err: any) {
+      addToast("error", err.message || "Update failed");
+    }
+  }
+
   const handleDownload = useCallback(async () => {
     const approvedPhotos = photos.filter(
       (p) => p.status === "approved" && p.editedUrl
@@ -1379,14 +1415,63 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </button>
           </div>
           {selectMode && selectedPhotoIds.size > 0 && (
-            <button
-              onClick={runSelectedPhotosEnhance}
-              disabled={batching}
-              className="text-xs px-3 py-1 rounded bg-cyan text-white font-semibold hover:bg-cyan/90 disabled:opacity-60 whitespace-nowrap"
-              title={`Re-enhance ${selectedPhotoIds.size} selected photo${selectedPhotoIds.size === 1 ? '' : 's'} with the selected preset`}
-            >
-              {batching ? "Running..." : `Re-enhance ${selectedPhotoIds.size} selected`}
-            </button>
+            <div className="flex flex-wrap gap-1 items-center">
+              <span className="text-xs font-semibold text-cyan">{selectedPhotoIds.size} selected</span>
+
+              <button
+                onClick={runSelectedPhotosEnhance}
+                disabled={batching}
+                className="text-xs px-3 py-1 rounded bg-cyan text-white font-semibold hover:bg-cyan/90 disabled:opacity-60 whitespace-nowrap"
+                title={`Re-enhance ${selectedPhotoIds.size} selected photo${selectedPhotoIds.size === 1 ? '' : 's'} with the selected preset`}
+              >
+                {batching ? "Running..." : `Re-enhance`}
+              </button>
+
+              <button
+                onClick={() => bulkUpdatePhotos("approve")}
+                disabled={batching}
+                className="text-xs px-2 py-1 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-60 whitespace-nowrap"
+                title="Approve selected photos"
+              >
+                ✓ Approve
+              </button>
+
+              <button
+                onClick={() => bulkUpdatePhotos("reject")}
+                disabled={batching}
+                className="text-xs px-2 py-1 rounded bg-red-500 text-white font-semibold hover:bg-red-600 disabled:opacity-60 whitespace-nowrap"
+                title="Reject selected photos"
+              >
+                ✗ Reject
+              </button>
+
+              <button
+                onClick={() => bulkUpdatePhotos("favorite")}
+                disabled={batching}
+                className="text-xs px-2 py-1 rounded bg-amber-400 text-white font-semibold hover:bg-amber-500 disabled:opacity-60 whitespace-nowrap"
+                title="Favorite selected photos"
+              >
+                ★ Favorite
+              </button>
+
+              <button
+                onClick={() => bulkUpdatePhotos("clearStatus")}
+                disabled={batching}
+                className="text-xs px-2 py-1 rounded bg-graphite-400 text-white font-semibold hover:bg-graphite-500 disabled:opacity-60 whitespace-nowrap"
+                title="Clear status from selected photos"
+              >
+                ✕ Clear
+              </button>
+
+              <button
+                onClick={() => { setSelectedPhotoIds(new Set()); setSelectMode(false); }}
+                disabled={batching}
+                className="text-xs px-2 py-1 rounded text-graphite-600 dark:text-graphite-300 ml-auto hover:bg-graphite-100 dark:hover:bg-graphite-800 disabled:opacity-60"
+                title="Cancel selection"
+              >
+                Cancel
+              </button>
+            </div>
           )}
           <a
             href={`/api/jobs/${job.id}/download-zip`}

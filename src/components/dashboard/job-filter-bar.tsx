@@ -14,6 +14,7 @@ export function JobFilterBar({ jobs }: Props) {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
+  const [bulkTag, setBulkTag] = useState("");
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -109,11 +110,36 @@ export function JobFilterBar({ jobs }: Props) {
     }
   };
 
+  const addBulkTag = async () => {
+    if (!bulkTag.trim() || selected.size === 0) return;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/jobs/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "addTag", ids: Array.from(selected), tag: bulkTag }),
+      });
+
+      if (res.ok) {
+        setBulkTag("");
+        window.location.reload();
+      } else {
+        alert("Failed to add tag");
+      }
+    } catch (error) {
+      console.error("Error adding tag:", error);
+      alert("Error adding tag");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div>
       {selected.size > 0 && (
-        <div className="sticky top-0 z-10 flex items-center gap-2 px-5 py-2 bg-cyan-50 border-b border-cyan-200 text-sm">
-          <span className="font-semibold text-cyan-700">{selected.size} selected</span>
+        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 px-5 py-2 bg-cyan-50 dark:bg-cyan-900/20 border-b border-cyan-200 dark:border-cyan-800 text-sm">
+          <span className="font-semibold text-cyan-700 dark:text-cyan-300">{selected.size} selected</span>
           <button
             onClick={bulkApprove}
             disabled={isLoading}
@@ -128,10 +154,30 @@ export function JobFilterBar({ jobs }: Props) {
           >
             Delete
           </button>
+
+          <div className="flex gap-1 items-center ml-2">
+            <input
+              type="text"
+              value={bulkTag}
+              onChange={(e) => setBulkTag(e.target.value)}
+              placeholder="tag name"
+              className="text-xs px-2 py-1 rounded border border-cyan-300 dark:border-cyan-700 dark:bg-graphite-800 dark:text-white w-24 focus:outline-none focus:border-cyan"
+              onKeyDown={(e) => { if (e.key === "Enter") addBulkTag(); }}
+              disabled={isLoading}
+            />
+            <button
+              onClick={addBulkTag}
+              disabled={!bulkTag.trim() || isLoading}
+              className="px-2 py-1 rounded bg-cyan text-white text-xs font-semibold hover:bg-cyan-600 disabled:opacity-50"
+            >
+              + tag
+            </button>
+          </div>
+
           <button
             onClick={() => setSelected(new Set())}
             disabled={isLoading}
-            className="ml-auto text-graphite-500 text-xs hover:text-graphite-700"
+            className="ml-auto text-graphite-500 dark:text-graphite-400 text-xs hover:text-graphite-700 dark:hover:text-graphite-300"
           >
             Clear
           </button>

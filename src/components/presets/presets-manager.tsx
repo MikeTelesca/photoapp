@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PaintBrushIcon, PlusIcon, TrashIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { ForkPresetButton } from "./fork-preset-button";
 
 interface Preset {
   id: string;
@@ -214,6 +215,7 @@ export function PresetsManager({ initialPresets }: { initialPresets: Preset[] })
                     Edit
                   </Button>
                 )}
+                <ForkPresetButton presetId={preset.id} />
                 <button
                   onClick={async () => {
                     const res = await fetch(`/api/presets/${preset.id}/clone`, { method: "POST" });

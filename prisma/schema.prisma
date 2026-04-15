@@ -32,6 +32,7 @@ model User {
   jobs               Job[]
   jobTemplates       JobTemplate[]
   clients            Client[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Client {
@@ -199,6 +200,19 @@ model ErrorLog {
 
   @@index([source, createdAt(sort: Desc)])
   @@index([jobId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
 }
 
 model Announcement {

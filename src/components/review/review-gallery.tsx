@@ -179,6 +179,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [batchFilter, setBatchFilter] = useState<"rejected" | "all">("rejected");
   const [batching, setBatching] = useState(false);
 
+  // Multi-select state
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+
   // Watermark settings state
   const [showWatermarkPanel, setShowWatermarkPanel] = useState(false);
   const [wmText, setWmText] = useState(initialJob.watermarkText ?? "");
@@ -731,6 +735,34 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function runSelectedPhotosEnhance() {
+    const selectedIds = Array.from(selectedPhotoIds);
+    if (selectedIds.length === 0) {
+      addToast("error", "No photos selected to re-enhance.");
+      return;
+    }
+    if (!confirm(`Re-enhance ${selectedIds.length} selected photos with "${batchPreset}" preset?`)) return;
+    setBatching(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/batch-enhance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filter: "selected", preset: batchPreset, ids: selectedIds }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Batch enhance failed");
+        return;
+      }
+      addToast("info", `Re-enhancing ${data.reset} selected photos with "${batchPreset}" preset. Processing will begin shortly.`);
+      window.location.reload();
+    } catch (err: any) {
+      addToast("error", err.message || "Batch enhance failed");
+    } finally {
+      setBatching(false);
+    }
+  }
+
   const handleDownload = useCallback(async () => {
     const approvedPhotos = photos.filter(
       (p) => p.status === "approved" && p.editedUrl
@@ -1271,6 +1303,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               {batching ? "Running..." : "Re-enhance batch"}
             </button>
           </div>
+          {selectMode && selectedPhotoIds.size > 0 && (
+            <button
+              onClick={runSelectedPhotosEnhance}
+              disabled={batching}
+              className="text-xs px-3 py-1 rounded bg-cyan text-white font-semibold hover:bg-cyan/90 disabled:opacity-60 whitespace-nowrap"
+              title={`Re-enhance ${selectedPhotoIds.size} selected photo${selectedPhotoIds.size === 1 ? '' : 's'} with the selected preset`}
+            >
+              {batching ? "Running..." : `Re-enhance ${selectedPhotoIds.size} selected`}
+            </button>
+          )}
           <a
             href={`/api/jobs/${job.id}/download-zip`}
             className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600"
@@ -1522,6 +1564,25 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <option value="flagged">Quality flagged first</option>
               <option value="rejected">Rejected first</option>
             </select>
+            {/* Select mode toggle */}
+            <button
+              onClick={() => {
+                setSelectMode(!selectMode);
+                if (selectMode) setSelectedPhotoIds(new Set());
+              }}
+              className={`text-[9px] px-1.5 py-1 rounded font-semibold transition-colors ${
+                selectMode
+                  ? "bg-cyan text-white"
+                  : "border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 text-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800"
+              }`}
+            >
+              {selectMode ? "Cancel" : "Select"}
+            </button>
+            {selectMode && selectedPhotoIds.size > 0 && (
+              <div className="text-[9px] font-semibold text-cyan bg-cyan/10 rounded px-2 py-1 text-center">
+                {selectedPhotoIds.size} selected
+              </div>
+            )}
             {/* Room type filter */}
             {allTags.length > 0 && (
               <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}
@@ -1639,6 +1700,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                             return null;
                           }
                         })()}
+                        {/* Multi-select checkbox overlay */}
+                        {selectMode && (
+                          <div
+                            className="absolute top-1 left-1 w-5 h-5 rounded bg-white/90 border-2 border-cyan flex items-center justify-center cursor-pointer hover:bg-white transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newSet = new Set(selectedPhotoIds);
+                              if (newSet.has(photo.id)) {
+                                newSet.delete(photo.id);
+                              } else {
+                                newSet.add(photo.id);
+                              }
+                              setSelectedPhotoIds(newSet);
+                            }}
+                          >
+                            {selectedPhotoIds.has(photo.id) && (
+                              <span className="text-cyan text-sm font-bold">✓</span>
+                            )}
+                          </div>
+                        )}
                         <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500 dark:text-graphite-400">
                           {idx + 1}
                         </span>

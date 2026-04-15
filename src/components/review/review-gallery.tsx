@@ -11,10 +11,12 @@ import {
   MoonIcon,
   ArrowDownTrayIcon,
   CheckCircleIcon,
+  FolderOpenIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { KeyboardHint } from "./keyboard-hint";
+import { NotesPopover } from "./notes-popover";
 
 interface Photo {
   id: string;
@@ -353,22 +355,39 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     );
 
     if (approvedPhotos.length === 0) {
-      alert("No approved photos to download");
+      addToast("error", "No approved photos to download");
       return;
     }
 
-    // Download each approved photo
-    for (const photo of approvedPhotos) {
+    addToast("info", "Preparing ZIP download...");
+    try {
       const link = document.createElement("a");
-      link.href = `/api/jobs/${job.id}/photos/${photo.id}/download`;
-      link.download = `photo_${photo.orderIndex + 1}.jpg`;
+      link.href = `/api/jobs/${job.id}/download?format=zip`;
+      link.download = "photos.zip";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      // Small delay between downloads to avoid browser blocking
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      addToast("success", "Download started");
+    } catch (err: any) {
+      addToast("error", `Download failed: ${err.message}`);
     }
-  }, [photos, job.id]);
+  }, [photos, job.id, addToast]);
+
+  const handleDropboxFolder = useCallback(async () => {
+    addToast("info", "Getting Dropbox folder link...");
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/dropbox-link`);
+      const data = await res.json();
+      if (data.url) {
+        window.open(data.url, "_blank", "noopener,noreferrer");
+        addToast("success", "Dropbox folder opened");
+      } else {
+        addToast("error", data.error || "Could not get Dropbox link");
+      }
+    } catch (err: any) {
+      addToast("error", `Failed: ${err.message}`);
+    }
+  }, [job.id, addToast]);
 
   const handleApproveAll = useCallback(async () => {
     setIsUpdating(true);
@@ -504,6 +523,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               {showPromptEditor ? "Close" : "Edit Prompt"}
             </button>
           </div>
+          <NotesPopover jobId={job.id} initialNotes={(job as any).notes ?? null} />
           <div className="text-right mr-2 hidden sm:block">
             <div className="text-xs font-semibold text-graphite-700">
               {approvedCount} / {photos.length} approved
@@ -528,6 +548,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           <Button onClick={handleDownload}>
             <ArrowDownTrayIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Download</span>
+          </Button>
+          <Button variant="outline" onClick={handleDropboxFolder} title="Open Dropbox folder">
+            <FolderOpenIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Dropbox</span>
           </Button>
         </div>
       </div>

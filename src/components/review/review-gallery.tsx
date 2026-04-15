@@ -66,6 +66,7 @@ interface Photo {
   twilightStyle?: string | null;
   customInstructions: string | null;
   customPromptOverride?: string | null;
+  presetOverride?: string | null;
   detections: string;
   exifData: string | null;
   errorMessage: string | null;
@@ -335,6 +336,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Replace photo source
   const [replacing, setReplacing] = useState(false);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  // Move/Copy to another job
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [moveMode, setMoveMode] = useState<"copy" | "move">("copy");
+  const [moveTargetJobId, setMoveTargetJobId] = useState<string>("");
+  const [moveJobList, setMoveJobList] = useState<Array<{ id: string; address: string; status: string }>>([]);
+  const [moveJobsLoading, setMoveJobsLoading] = useState(false);
+  const [moveSubmitting, setMoveSubmitting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEnhancingAll, setIsEnhancingAll] = useState(false);
   const [enhanceProgress, setEnhanceProgress] = useState(0);
@@ -421,6 +429,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Per-photo custom prompt override state
   const [photoOverride, setPhotoOverride] = useState("");
   const [savingPhotoOverride, setSavingPhotoOverride] = useState(false);
+
+  // Per-photo preset override menu state
+  const [showPresetOverrideMenu, setShowPresetOverrideMenu] = useState(false);
 
   // Swipe hint state
   const [showSwipeHint, setShowSwipeHint] = useState(false);
@@ -774,6 +785,37 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function savePresetOverride(preset: "standard" | "luxury" | null) {
+    if (!currentPhoto) return;
+    const photoId = currentPhoto.id;
+    try {
+      const res = await fetch(`/api/photos/${photoId}/preset-override`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preset }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        addToast("error", data.error || "Failed to save preset override");
+        return;
+      }
+      setJob(prev => ({
+        ...prev,
+        photos: prev.photos.map(p =>
+          p.id === photoId ? { ...p, presetOverride: preset } : p
+        ),
+      }));
+      addToast(
+        "success",
+        preset ? `Preset override set to ${preset}` : "Preset override cleared"
+      );
+    } catch (e: any) {
+      addToast("error", e.message || "Failed to save preset override");
+    } finally {
+      setShowPresetOverrideMenu(false);
+    }
+  }
+
   async function runCompare() {
     if (!currentPhoto) return;
     setComparing(true);
@@ -842,6 +884,75 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       setRenameSaving(false);
     }
   }, [currentPhoto, renamingPhotoId, renameValue, addToast]);
+
+  // ------------------ Move/Copy photo to another job ------------------
+  const openMoveModal = useCallback(async () => {
+    if (!currentPhoto) return;
+    setMoveModalOpen(true);
+    setMoveMode("copy");
+    setMoveTargetJobId("");
+    setMoveJobsLoading(true);
+    try {
+      const res = await fetch(`/api/jobs?limit=20`);
+      if (!res.ok) throw new Error("Failed to load jobs");
+      const data = await res.json();
+      const list = (Array.isArray(data) ? data : [])
+        .filter((j: { id: string }) => j.id !== job.id)
+        .map((j: { id: string; address: string; status: string }) => ({
+          id: j.id,
+          address: j.address,
+          status: j.status,
+        }));
+      setMoveJobList(list);
+    } catch {
+      addToast("error", "Failed to load jobs");
+      setMoveJobList([]);
+    } finally {
+      setMoveJobsLoading(false);
+    }
+  }, [currentPhoto, job.id, addToast]);
+
+  const closeMoveModal = useCallback(() => {
+    if (moveSubmitting) return;
+    setMoveModalOpen(false);
+  }, [moveSubmitting]);
+
+  const confirmMoveCopy = useCallback(async () => {
+    if (!currentPhoto || !moveTargetJobId) return;
+    setMoveSubmitting(true);
+    try {
+      const res = await fetch(`/api/photos/${currentPhoto.id}/move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetJobId: moveTargetJobId, mode: moveMode }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        addToast("error", data?.error || `${moveMode === "copy" ? "Copy" : "Move"} failed`);
+        return;
+      }
+      if (moveMode === "move") {
+        const movedId = currentPhoto.id;
+        setJob((prev) => {
+          const remaining = prev.photos.filter((p) => p.id !== movedId);
+          return { ...prev, photos: remaining };
+        });
+        setCurrentIndex((idx) => {
+          const newLen = job.photos.length - 1;
+          if (newLen <= 0) return 0;
+          return Math.min(idx, newLen - 1);
+        });
+        addToast("success", "Photo moved to other job");
+      } else {
+        addToast("success", "Photo copied to other job");
+      }
+      setMoveModalOpen(false);
+    } catch (e) {
+      addToast("error", (e as Error).message || "Operation failed");
+    } finally {
+      setMoveSubmitting(false);
+    }
+  }, [currentPhoto, moveTargetJobId, moveMode, addToast, job.photos.length]);
 
   // ------------------ Replace photo source ------------------
   const canReplace = job.status === "review" || job.status === "approved";
@@ -2526,6 +2637,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                           </button>
                         </>
                       )}
+                      <button
+                        type="button"
+                        onClick={openMoveModal}
+                        className="text-[11px] px-1.5 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800"
+                        title="Move or copy this photo to another job"
+                      >
+                        📤 Move/Copy
+                      </button>
                     </>
                   )}
                 </span>
@@ -2572,6 +2691,50 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 {suggesting ? "Analyzing..." : "✨ Suggest preset"}
               </button>
               <InfoTooltip text="AI analyzes 3 sample photos and recommends the best preset for this property." position="bottom" />
+            </div>
+            {/* Per-photo preset override */}
+            <div className="relative">
+              <button
+                onClick={() => setShowPresetOverrideMenu(v => !v)}
+                disabled={!currentPhoto}
+                className={`text-xs px-2 py-1.5 rounded-md border disabled:opacity-50 ${
+                  currentPhoto?.presetOverride
+                    ? "border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/30 text-fuchsia-700 dark:text-fuchsia-300"
+                    : "border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+                }`}
+                title="Override the enhancement preset for this photo only"
+              >
+                🎨 Override preset
+                {currentPhoto?.presetOverride ? ` (${currentPhoto.presetOverride})` : ""}
+              </button>
+              {showPresetOverrideMenu && currentPhoto && (
+                <div className="absolute right-0 mt-1 z-50 w-48 rounded-md border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 shadow-lg">
+                  <button
+                    onClick={() => savePresetOverride(null)}
+                    className={`w-full text-left text-xs px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-800 ${
+                      !currentPhoto.presetOverride ? "font-semibold text-cyan" : "text-graphite-800 dark:text-graphite-200"
+                    }`}
+                  >
+                    Use job default ({job.preset})
+                  </button>
+                  <button
+                    onClick={() => savePresetOverride("standard")}
+                    className={`w-full text-left text-xs px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-800 ${
+                      currentPhoto.presetOverride === "standard" ? "font-semibold text-cyan" : "text-graphite-800 dark:text-graphite-200"
+                    }`}
+                  >
+                    Standard
+                  </button>
+                  <button
+                    onClick={() => savePresetOverride("luxury")}
+                    className={`w-full text-left text-xs px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-800 ${
+                      currentPhoto.presetOverride === "luxury" ? "font-semibold text-cyan" : "text-graphite-800 dark:text-graphite-200"
+                    }`}
+                  >
+                    Luxury
+                  </button>
+                </div>
+              )}
             </div>
             <button
               onClick={suggestCrop}
@@ -3559,6 +3722,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                           >
                             ✂
                           </div>
+                        )}
+                        {photo.presetOverride && (
+                          <div
+                            className={`absolute bottom-1 left-1 z-10 w-3 h-3 rounded-sm drop-shadow ring-1 ring-white/80 ${
+                              photo.presetOverride === "luxury"
+                                ? "bg-amber-400"
+                                : "bg-sky-400"
+                            }`}
+                            title={`Preset override: ${photo.presetOverride}`}
+                          />
                         )}
                         {photo.note && (
                           <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-400 drop-shadow" title="Has note" />
@@ -4854,6 +5027,121 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <CheckIcon className="w-5 h-5" />
               <span>Approve</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Move / Copy to another job modal */}
+      {moveModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={closeMoveModal}
+        >
+          <div
+            className="bg-white dark:bg-graphite-900 rounded-lg shadow-xl max-w-md w-full p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-graphite-900 dark:text-white">
+                Move or copy photo to another job
+              </h3>
+              <button
+                type="button"
+                onClick={closeMoveModal}
+                disabled={moveSubmitting}
+                className="text-graphite-400 hover:text-graphite-600 disabled:opacity-50"
+                aria-label="Close"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-4 flex items-center gap-4 text-sm">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="move-mode"
+                  value="copy"
+                  checked={moveMode === "copy"}
+                  onChange={() => setMoveMode("copy")}
+                  disabled={moveSubmitting}
+                />
+                <span className="text-graphite-800 dark:text-graphite-100">Copy</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="move-mode"
+                  value="move"
+                  checked={moveMode === "move"}
+                  onChange={() => setMoveMode("move")}
+                  disabled={moveSubmitting}
+                />
+                <span className="text-graphite-800 dark:text-graphite-100">Move</span>
+              </label>
+            </div>
+
+            <div className="mb-4">
+              <div className="text-xs font-medium text-graphite-600 dark:text-graphite-300 mb-1.5">
+                Select target job
+              </div>
+              <div className="max-h-60 overflow-y-auto border border-graphite-200 dark:border-graphite-700 rounded">
+                {moveJobsLoading ? (
+                  <div className="p-3 text-sm text-graphite-500">Loading jobs…</div>
+                ) : moveJobList.length === 0 ? (
+                  <div className="p-3 text-sm text-graphite-500">No other jobs available.</div>
+                ) : (
+                  <ul className="divide-y divide-graphite-100 dark:divide-graphite-800">
+                    {moveJobList.map((j) => (
+                      <li key={j.id}>
+                        <label className="flex items-start gap-2 p-2 cursor-pointer hover:bg-graphite-50 dark:hover:bg-graphite-800">
+                          <input
+                            type="radio"
+                            name="move-target-job"
+                            value={j.id}
+                            checked={moveTargetJobId === j.id}
+                            onChange={() => setMoveTargetJobId(j.id)}
+                            disabled={moveSubmitting}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm text-graphite-900 dark:text-white truncate">
+                              {j.address || "(no address)"}
+                            </div>
+                            <div className="text-[11px] uppercase tracking-wide text-graphite-500">
+                              {j.status}
+                            </div>
+                          </div>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeMoveModal}
+                disabled={moveSubmitting}
+                className="px-3 py-1.5 text-sm rounded border border-graphite-200 dark:border-graphite-700 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-100 dark:hover:bg-graphite-800 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmMoveCopy}
+                disabled={moveSubmitting || !moveTargetJobId}
+                className="px-3 py-1.5 text-sm rounded bg-cyan text-white hover:bg-cyan/90 disabled:opacity-50"
+              >
+                {moveSubmitting
+                  ? moveMode === "copy"
+                    ? "Copying…"
+                    : "Moving…"
+                  : `Confirm ${moveMode === "copy" ? "Copy" : "Move"}`}
+              </button>
+            </div>
           </div>
         </div>
       )}

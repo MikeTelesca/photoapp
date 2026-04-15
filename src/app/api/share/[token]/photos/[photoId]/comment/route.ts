@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { notify } from "@/lib/notify";
+import { notify, shouldNotify } from "@/lib/notify";
 
 export async function POST(
   request: NextRequest,
@@ -30,14 +30,18 @@ export async function POST(
       data: { photoId, authorName: authorName.trim(), message: message.trim() },
     });
 
-    // In-app notification to the photographer
-    await notify({
-      userId: job.photographerId,
-      type: "client-comment",
-      title: `Client comment on ${job.address}`,
-      body: `${authorName}: ${message.slice(0, 100)}`,
-      href: `/review/${job.id}`,
-    }).catch(() => {});
+    // Check per-event notification preference
+    const allowed = await shouldNotify(job.photographerId, "client-comment");
+    if (allowed) {
+      // In-app notification to the photographer
+      await notify({
+        userId: job.photographerId,
+        type: "client-comment",
+        title: `Client comment on ${job.address}`,
+        body: `${authorName}: ${message.slice(0, 100)}`,
+        href: `/review/${job.id}`,
+      }).catch(() => {});
+    }
 
     return NextResponse.json(comment);
   } catch (err) {

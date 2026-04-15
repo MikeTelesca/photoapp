@@ -13,7 +13,7 @@ import { analyzeImage } from "@/lib/image-quality";
 import { detectPhotoTags } from "@/lib/photo-tags";
 import { sendEmail, jobCompleteTemplate } from "@/lib/email";
 import { sendWebhook } from "@/lib/webhook";
-import { notify } from "@/lib/notify";
+import { notify, shouldNotify } from "@/lib/notify";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -117,7 +117,11 @@ export async function POST(
           data: { status: "review", processedPhotos: totalEdited },
         });
 
-        // Send email notification if enabled
+        // Check per-event notification preference
+        const allowed = await shouldNotify(updatedJob.photographerId, "job-ready");
+
+        if (allowed) {
+          // Send email notification if enabled
         try {
           const user = await prisma.user.findUnique({ where: { id: updatedJob.photographerId } });
           if (user?.email && user?.emailNotifications) {
@@ -160,6 +164,7 @@ export async function POST(
           body: `${updatedJob.totalPhotos} photos at ${updatedJob.address}`,
           href: `/review/${updatedJob.id}`,
         }).catch(() => {});
+        }
 
         return NextResponse.json({ done: true, processed: totalEdited });
       }

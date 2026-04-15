@@ -14,12 +14,16 @@ export async function PATCH(request: NextRequest) {
     emailNotifications,
     weeklyDigest,
     slackWebhookUrl,
+    notifyJobReady,
+    notifyClientComment,
+    notifyPhotoFailed,
     businessName,
     businessEmail,
     businessPhone,
     businessAddress,
     invoiceRate,
     invoicePrefix,
+    timezone,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -39,6 +43,18 @@ export async function PATCH(request: NextRequest) {
     updateData.weeklyDigest = Boolean(weeklyDigest);
   }
 
+  if (notifyJobReady !== undefined) {
+    updateData.notifyJobReady = Boolean(notifyJobReady);
+  }
+
+  if (notifyClientComment !== undefined) {
+    updateData.notifyClientComment = Boolean(notifyClientComment);
+  }
+
+  if (notifyPhotoFailed !== undefined) {
+    updateData.notifyPhotoFailed = Boolean(notifyPhotoFailed);
+  }
+
   if (slackWebhookUrl !== undefined) {
     updateData.slackWebhookUrl = slackWebhookUrl?.trim() || null;
   }
@@ -49,6 +65,7 @@ export async function PATCH(request: NextRequest) {
   if (businessAddress !== undefined) updateData.businessAddress = businessAddress?.trim() || null;
   if (invoiceRate !== undefined) updateData.invoiceRate = parseFloat(invoiceRate) || 50;
   if (invoicePrefix !== undefined) updateData.invoicePrefix = invoicePrefix?.trim() || "INV";
+  if (timezone !== undefined) updateData.timezone = timezone?.trim() || null;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });

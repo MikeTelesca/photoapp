@@ -17,6 +17,7 @@ import { WebhookForm } from "@/components/settings/webhook-form";
 import { TwoFactorForm } from "@/components/settings/two-factor-form";
 import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload";
 import { AccentPicker } from "@/components/settings/accent-picker";
+import { NotificationPrefs } from "@/components/settings/notification-prefs";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,9 @@ export default async function SettingsPage() {
 
   let emailNotificationsEnabled = true;
   let weeklyDigestEnabled = true;
+  let notifyJobReady = true;
+  let notifyClientComment = true;
+  let notifyPhotoFailed = true;
   let slackWebhookUrl: string | null = null;
   let twoFactorEnabled = false;
   let watermarkLogoPath: string | null = null;
@@ -46,6 +50,9 @@ export default async function SettingsPage() {
         slackWebhookUrl: true,
         emailNotifications: true,
         weeklyDigest: true,
+        notifyJobReady: true,
+        notifyClientComment: true,
+        notifyPhotoFailed: true,
         twoFactorEnabled: true,
         businessName: true,
         businessEmail: true,
@@ -59,6 +66,9 @@ export default async function SettingsPage() {
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
     emailNotificationsEnabled = user?.emailNotifications ?? true;
     weeklyDigestEnabled = user?.weeklyDigest ?? true;
+    notifyJobReady = user?.notifyJobReady ?? true;
+    notifyClientComment = user?.notifyClientComment ?? true;
+    notifyPhotoFailed = user?.notifyPhotoFailed ?? true;
     twoFactorEnabled = user?.twoFactorEnabled ?? false;
     watermarkLogoPath = user?.watermarkLogoPath ?? null;
     if (user) {
@@ -133,7 +143,6 @@ export default async function SettingsPage() {
             <AccentPicker />
           </div>
         </Card>
-
         {/* Two-Factor Authentication */}
         <Card>
           <CardHeader>
@@ -245,6 +254,18 @@ export default async function SettingsPage() {
               </div>
               <WeeklyDigestToggle initial={weeklyDigestEnabled} />
             </div>
+          </div>
+        </Card>
+
+        {/* Event-based Notification Preferences */}
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 dark:text-white">Notification preferences</h2>
+            <NotificationPrefs initial={{
+              notifyJobReady,
+              notifyClientComment,
+              notifyPhotoFailed,
+            }} />
           </div>
         </Card>
 

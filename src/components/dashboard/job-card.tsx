@@ -10,6 +10,7 @@ import { DeleteJobButton } from "@/components/dashboard/delete-job-button";
 import { DuplicateJobButton } from "@/components/dashboard/duplicate-job-button";
 import { SaveTemplateButton } from "@/components/dashboard/save-template-button";
 import { EditTagsButton } from "@/components/dashboard/edit-tags-button";
+import { EditAddressButton } from "@/components/dashboard/edit-address-button";
 import { ArchiveButton } from "@/components/dashboard/archive-button";
 import { EtaBadge } from "@/components/dashboard/eta-badge";
 import { PinButton } from "@/components/dashboard/pin-button";
@@ -151,7 +152,10 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             onMouseMove={(e) => canPreview && hover && setHover({ x: e.clientX, y: e.clientY })}
             onMouseLeave={() => setHover(null)}
           >
-            <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{job.address}</div>
+            <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white inline-flex items-center">
+              {job.address}
+              <EditAddressButton jobId={job.id} initial={job.address} />
+            </div>
           </div>
           <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">
             <span>{job.photographerName}</span>

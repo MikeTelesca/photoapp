@@ -3,6 +3,8 @@ import { Topbar } from "@/components/layout/topbar";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { DailyChart } from "@/components/analytics/daily-chart";
+import { PhotographerCostChart } from "@/components/analytics/photographer-cost-chart";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,8 @@ export default async function AnalyticsPage() {
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - 7);
 
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
   const [
     totalJobs,
     monthJobs,
@@ -24,13 +28,21 @@ export default async function AnalyticsPage() {
     monthCostAgg,
     photographers,
     topPhotographers,
+    jobs30d,
   ] = await Promise.all([
     prisma.job.count({ where: { status: { not: "deleted" } } }),
-    prisma.job.count({ where: { status: { not: "deleted" }, createdAt: { gte: startOfMonth } } }),
-    prisma.job.count({ where: { status: { not: "deleted" }, createdAt: { gte: startOfWeek } } }),
+    prisma.job.count({
+      where: { status: { not: "deleted" }, createdAt: { gte: startOfMonth } },
+    }),
+    prisma.job.count({
+      where: { status: { not: "deleted" }, createdAt: { gte: startOfWeek } },
+    }),
     prisma.photo.count(),
     prisma.photo.count({ where: { createdAt: { gte: startOfMonth } } }),
-    prisma.job.aggregate({ _sum: { cost: true }, where: { createdAt: { gte: startOfMonth } } }),
+    prisma.job.aggregate({
+      _sum: { cost: true },
+      where: { createdAt: { gte: startOfMonth } },
+    }),
     prisma.user.count({ where: { role: "photographer" } }),
     prisma.job.groupBy({
       by: ["photographerId"],
@@ -39,6 +51,10 @@ export default async function AnalyticsPage() {
       where: { createdAt: { gte: startOfMonth }, status: { not: "deleted" } },
       orderBy: { _count: { id: "desc" } },
       take: 5,
+    }),
+    prisma.job.findMany({
+      where: { createdAt: { gte: thirtyDaysAgo }, status: { not: "deleted" } },
+      select: { createdAt: true, cost: true },
     }),
   ]);
 
@@ -50,6 +66,29 @@ export default async function AnalyticsPage() {
 
   const monthCost = monthCostAgg._sum.cost || 0;
 
+  // Group jobs by day for last 30 days
+  const dailyData: Array<{ date: string; jobs: number; cost: number }> = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+    d.setHours(0, 0, 0, 0);
+    const next = new Date(d);
+    next.setDate(d.getDate() + 1);
+
+    const dayJobs = jobs30d.filter((j) => j.createdAt >= d && j.createdAt < next);
+    dailyData.push({
+      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      jobs: dayJobs.length,
+      cost: dayJobs.reduce((sum, j) => sum + j.cost, 0),
+    });
+  }
+
+  // Build photographer cost data for bar chart
+  const photographerCostData = topPhotographers.map((p) => ({
+    name: nameMap.get(p.photographerId) ?? "Unknown",
+    cost: p._sum.cost ?? 0,
+    jobs: p._count,
+  }));
+
   return (
     <>
       <Topbar title="Analytics" subtitle="Usage and performance metrics" />
@@ -57,32 +96,72 @@ export default async function AnalyticsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <div className="p-5">
-              <div className="text-xs font-semibold text-graphite-400 uppercase">Total Jobs</div>
-              <div className="text-3xl font-extrabold text-graphite-900 mt-1">{totalJobs}</div>
-              <div className="text-xs text-graphite-400 mt-1">{monthJobs} this month</div>
+              <div className="text-xs font-semibold text-graphite-400 uppercase">
+                Total Jobs
+              </div>
+              <div className="text-3xl font-extrabold text-graphite-900 mt-1">
+                {totalJobs}
+              </div>
+              <div className="text-xs text-graphite-400 mt-1">
+                {monthJobs} this month
+              </div>
             </div>
           </Card>
           <Card>
             <div className="p-5">
-              <div className="text-xs font-semibold text-graphite-400 uppercase">Jobs This Week</div>
-              <div className="text-3xl font-extrabold text-graphite-900 mt-1">{weekJobs}</div>
+              <div className="text-xs font-semibold text-graphite-400 uppercase">
+                Jobs This Week
+              </div>
+              <div className="text-3xl font-extrabold text-graphite-900 mt-1">
+                {weekJobs}
+              </div>
             </div>
           </Card>
           <Card>
             <div className="p-5">
-              <div className="text-xs font-semibold text-graphite-400 uppercase">Photos Processed</div>
-              <div className="text-3xl font-extrabold text-graphite-900 mt-1">{totalPhotos}</div>
-              <div className="text-xs text-graphite-400 mt-1">{monthPhotos} this month</div>
+              <div className="text-xs font-semibold text-graphite-400 uppercase">
+                Photos Processed
+              </div>
+              <div className="text-3xl font-extrabold text-graphite-900 mt-1">
+                {totalPhotos}
+              </div>
+              <div className="text-xs text-graphite-400 mt-1">
+                {monthPhotos} this month
+              </div>
             </div>
           </Card>
           <Card>
             <div className="p-5">
-              <div className="text-xs font-semibold text-graphite-400 uppercase">Cost This Month</div>
-              <div className="text-3xl font-extrabold text-graphite-900 mt-1">${monthCost.toFixed(2)}</div>
-              <div className="text-xs text-graphite-400 mt-1">{photographers} photographers</div>
+              <div className="text-xs font-semibold text-graphite-400 uppercase">
+                Cost This Month
+              </div>
+              <div className="text-3xl font-extrabold text-graphite-900 mt-1">
+                ${monthCost.toFixed(2)}
+              </div>
+              <div className="text-xs text-graphite-400 mt-1">
+                {photographers} photographers
+              </div>
             </div>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Jobs - Last 30 Days</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <DailyChart data={dailyData} />
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Spend by Photographer (This Month)</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <PhotographerCostChart data={photographerCostData} />
+          </div>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -90,15 +169,26 @@ export default async function AnalyticsPage() {
           </CardHeader>
           <div className="p-5">
             {topPhotographers.length === 0 ? (
-              <div className="text-sm text-graphite-400 text-center py-4">No jobs this month yet</div>
+              <div className="text-sm text-graphite-400 text-center py-4">
+                No jobs this month yet
+              </div>
             ) : (
               <div className="space-y-2">
                 {topPhotographers.map((p) => (
-                  <div key={p.photographerId} className="flex items-center justify-between py-2 border-b border-graphite-50 last:border-b-0">
-                    <span className="text-sm font-semibold text-graphite-900">{nameMap.get(p.photographerId) || "Unknown"}</span>
+                  <div
+                    key={p.photographerId}
+                    className="flex items-center justify-between py-2 border-b border-graphite-50 last:border-b-0"
+                  >
+                    <span className="text-sm font-semibold text-graphite-900">
+                      {nameMap.get(p.photographerId) ?? "Unknown"}
+                    </span>
                     <div className="flex items-center gap-4">
-                      <span className="text-xs text-graphite-500">{p._count} jobs</span>
-                      <span className="text-xs text-graphite-700 font-semibold">${(p._sum.cost || 0).toFixed(2)}</span>
+                      <span className="text-xs text-graphite-500">
+                        {p._count} jobs
+                      </span>
+                      <span className="text-xs text-graphite-700 font-semibold">
+                        ${(p._sum.cost ?? 0).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 ))}

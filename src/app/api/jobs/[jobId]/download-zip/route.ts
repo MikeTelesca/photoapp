@@ -52,17 +52,20 @@ export async function GET(
     try {
       const res = await fetch(url);
       if (!res.ok) continue;
-      let buf = Buffer.from(await res.arrayBuffer());
+      const arrayBuf = await res.arrayBuffer();
+      let buf = Buffer.from(arrayBuf);
       idx++;
 
       // Re-encode based on requested format
       let extension = "jpg";
       if (format === "png") {
-        buf = await sharp(buf).png({ quality: 95 }).toBuffer();
+        const encoded = await sharp(buf).png({ quality: 95 }).toBuffer();
+        buf = Buffer.from(encoded);
         extension = "png";
       } else if (format.startsWith("jpeg-")) {
         const quality = parseInt(format.slice(5)) || 90;
-        buf = await sharp(buf).jpeg({ quality, mozjpeg: true }).toBuffer();
+        const encoded = await sharp(buf).jpeg({ quality, mozjpeg: true }).toBuffer();
+        buf = Buffer.from(encoded);
         extension = "jpg";
       }
 

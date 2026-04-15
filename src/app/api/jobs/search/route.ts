@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       { address: { contains: q, mode: "insensitive" } },
       { clientName: { contains: q, mode: "insensitive" } },
       { tags: { contains: q, mode: "insensitive" } },
+      { notes: { contains: q, mode: "insensitive" } },
     ];
   }
   if (from)
@@ -57,7 +58,18 @@ export async function GET(request: NextRequest) {
     where,
     orderBy: { createdAt: "desc" },
     take: 500,
-    include: {
+    select: {
+      id: true,
+      address: true,
+      clientName: true,
+      preset: true,
+      status: true,
+      totalPhotos: true,
+      approvedPhotos: true,
+      cost: true,
+      createdAt: true,
+      tags: true,
+      notes: true,
       photographer: { select: { id: true, name: true } },
     },
   }).catch(() => []);

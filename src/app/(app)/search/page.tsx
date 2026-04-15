@@ -16,6 +16,7 @@ interface Job {
   cost: number;
   createdAt: string | Date;
   tags?: string;
+  notes?: string;
 }
 
 const DATE_PRESETS = [
@@ -27,6 +28,15 @@ const DATE_PRESETS = [
   { label: "Last month", days: -2 },
   { label: "Quarter", days: -3 },
 ];
+
+function highlightSnippet(text: string, q: string): string {
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(q.toLowerCase());
+  if (idx === -1) return text.slice(0, 60);
+  const start = Math.max(0, idx - 20);
+  const end = Math.min(text.length, idx + q.length + 20);
+  return text.slice(start, end);
+}
 
 export default function SearchPage() {
   const [q, setQ] = useState("");
@@ -120,7 +130,7 @@ export default function SearchPage() {
               label="Text search"
               value={q}
               onChange={setQ}
-              placeholder="address, client, tags"
+              placeholder="address, client, photographer, tags, notes"
             />
             <SearchInput
               label="From date"
@@ -258,6 +268,11 @@ export default function SearchPage() {
                           >
                             {job.address}
                           </Link>
+                          {q && job.notes && job.notes.toLowerCase().includes(q.toLowerCase()) && (
+                            <div className="text-[10px] text-graphite-500 dark:text-graphite-400 mt-1 italic truncate">
+                              📝 ...{highlightSnippet(job.notes, q)}...
+                            </div>
+                          )}
                         </td>
                         <td className="text-xs dark:text-graphite-300">
                           {job.clientName || "—"}

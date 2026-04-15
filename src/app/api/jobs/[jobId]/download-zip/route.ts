@@ -4,6 +4,7 @@ import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
 import { applyPattern } from "@/lib/filename-pattern";
 import { logDownload } from "@/lib/download-log";
+import sharp from "sharp";
 
 export const maxDuration = 300;
 
@@ -14,6 +15,9 @@ export async function GET(
   const { jobId } = await params;
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
+
+  const format = request.nextUrl.searchParams.get("format") || "jpeg-90";
+  // Supported formats: jpeg-75, jpeg-85, jpeg-90, jpeg-95, png
 
   const job = await prisma.job.findUnique({
     where: { id: jobId },
@@ -48,9 +52,22 @@ export async function GET(
     try {
       const res = await fetch(url);
       if (!res.ok) continue;
-      const buf = Buffer.from(await res.arrayBuffer());
+      let buf = Buffer.from(await res.arrayBuffer());
       idx++;
-      const filename = applyPattern({
+
+      // Re-encode based on requested format
+      let extension = "jpg";
+      if (format === "png") {
+        buf = await sharp(buf).png({ quality: 95 }).toBuffer();
+        extension = "png";
+      } else if (format.startsWith("jpeg-")) {
+        const quality = parseInt(format.slice(5)) || 90;
+        buf = await sharp(buf).jpeg({ quality, mozjpeg: true }).toBuffer();
+        extension = "jpg";
+      }
+
+      // Apply filename pattern and replace extension
+      let filename = applyPattern({
         pattern,
         address: job.address,
         client: job.clientName || "",
@@ -59,6 +76,9 @@ export async function GET(
         index: idx,
         total: photos.length,
       });
+      // Replace extension in case pattern includes one
+      filename = filename.replace(/\.[^/.]+$/, `.${extension}`);
+
       zip.file(filename, buf);
     } catch (err) {
       console.error("zip fetch error:", err);

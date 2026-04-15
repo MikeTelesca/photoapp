@@ -26,6 +26,7 @@ import { BeforeAfterSlider } from "./before-after-slider";
 import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
 import { ExifPanel } from "./exif-panel";
+import { useSwipe } from "@/hooks/use-swipe";
 
 interface Photo {
   id: string;
@@ -130,6 +131,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [wmSize, setWmSize] = useState(initialJob.watermarkSize ?? 32);
   const [wmOpacity, setWmOpacity] = useState(initialJob.watermarkOpacity ?? 0.7);
   const [savingWatermark, setSavingWatermark] = useState(false);
+
+  // Swipe hint state
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -609,6 +613,33 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const handleQuickTag = (tag: string) => {
     setCustomInstruction(tag);
   };
+
+  // Show swipe hint on touch devices
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("ontouchstart" in window)) return;
+    if (localStorage.getItem("swipe-hint-seen")) return;
+    setShowSwipeHint(true);
+    const timer = setTimeout(() => {
+      setShowSwipeHint(false);
+      localStorage.setItem("swipe-hint-seen", "1");
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Swipe handlers
+  const swipe = useSwipe({
+    onSwipeLeft: goNext,
+    onSwipeRight: goPrev,
+    onSwipeUp: () => {
+      setShowSwipeHint(false);
+      handleApprove();
+    },
+    onSwipeDown: () => {
+      setShowSwipeHint(false);
+      handleReject();
+    },
+  });
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1267,7 +1298,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         </div>
 
         {/* Viewer */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col" {...swipe}>
           {/* Before / After Compare */}
           <div className="flex-1 bg-graphite-900 min-h-0 p-2 md:p-4">
             {compareMode === "slider" && currentPhoto ? (
@@ -1654,6 +1685,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <span>Close overlay</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {showSwipeHint && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-graphite-900 text-white text-xs px-4 py-2 rounded-full shadow-lg z-50 md:hidden">
+          Swipe ← → to navigate · ↑ approve · ↓ reject
         </div>
       )}
 

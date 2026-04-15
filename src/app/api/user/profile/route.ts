@@ -38,6 +38,7 @@ export async function PATCH(request: NextRequest) {
     portfolioSlug,
     portfolioEnabled,
     portfolioBio,
+    statusSnippets,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -134,6 +135,34 @@ export async function PATCH(request: NextRequest) {
 
   if (portfolioBio !== undefined) {
     updateData.portfolioBio = portfolioBio?.toString().trim() || null;
+  }
+
+  if (statusSnippets !== undefined) {
+    if (statusSnippets === null || statusSnippets === "") {
+      updateData.statusSnippets = null;
+    } else if (typeof statusSnippets === "object") {
+      const allowed = ["pending", "processing", "review", "approved", "rejected"] as const;
+      const sanitized: Record<string, string[]> = {};
+      for (const key of allowed) {
+        const raw = (statusSnippets as Record<string, unknown>)[key];
+        if (Array.isArray(raw)) {
+          sanitized[key] = raw
+            .map((s) => (typeof s === "string" ? s.trim() : ""))
+            .filter((s) => s.length > 0 && s.length <= 2000)
+            .slice(0, 50);
+        } else {
+          sanitized[key] = [];
+        }
+      }
+      updateData.statusSnippets = JSON.stringify(sanitized);
+    } else if (typeof statusSnippets === "string") {
+      try {
+        JSON.parse(statusSnippets);
+        updateData.statusSnippets = statusSnippets;
+      } catch {
+        return NextResponse.json({ error: "Invalid statusSnippets JSON" }, { status: 400 });
+      }
+    }
   }
 
   if (Object.keys(updateData).length === 0) {

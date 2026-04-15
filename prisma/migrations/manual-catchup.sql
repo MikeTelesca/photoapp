@@ -306,6 +306,11 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "portfolioEnabled" BOOLEAN NOT NULL 
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "portfolioBio"     TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS "User_portfolioSlug_key" ON "User"("portfolioSlug");
 
+-- ---------------------------------------------------------------------------
+-- Per-status quick note snippets: JSON-encoded map of status -> string[]
+-- ---------------------------------------------------------------------------
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "statusSnippets" TEXT;
+
 -- =============================================================================
 -- END OF MANUAL CATCH-UP MIGRATION
 -- =============================================================================

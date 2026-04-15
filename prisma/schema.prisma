@@ -47,6 +47,7 @@ model User {
   portfolioSlug     String?  @unique
   portfolioEnabled  Boolean  @default(false)
   portfolioBio      String?
+  statusSnippets    String?  // JSON: { pending: string[], processing: string[], review: string[], approved: string[], rejected: string[] }
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]

@@ -29,6 +29,7 @@ model User {
   twoFactorSecret   String?
   watermarkLogoPath String?  // internal Dropbox path to logo PNG
   weeklyDigest      Boolean  @default(true)
+  dailySummary      Boolean  @default(false)
   notifyJobReady    Boolean  @default(true)
   notifyClientComment Boolean @default(true)
   notifyPhotoFailed Boolean  @default(true)

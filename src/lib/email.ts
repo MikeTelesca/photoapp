@@ -125,6 +125,67 @@ export function weeklyDigestTemplate(data: WeeklyDigestData) {
   `;
 }
 
+export interface DailySummaryData {
+  name: string;
+  date: string;
+  jobsCreated: number;
+  photosProcessed: number;
+  awaitingReview: number;
+  spendToday: number;
+  dashboardUrl: string;
+  signature?: string;
+}
+
+export function dailySummaryTemplate(data: DailySummaryData) {
+  const hasActivity = data.jobsCreated > 0 || data.photosProcessed > 0 || data.awaitingReview > 0;
+
+  return `
+    <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 20px;">
+      <h1 style="color: #111; font-size: 22px; margin: 0 0 8px;">Today's recap, ${escapeHtml(data.name)}</h1>
+      <p style="color: #888; font-size: 13px; margin: 0;">${data.date}</p>
+
+      ${hasActivity ? `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0;">
+          <div style="background: #f0fdfa; padding: 14px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #666; text-transform: uppercase;">Jobs created</div>
+            <div style="font-size: 24px; font-weight: 700; color: #0891b2;">${data.jobsCreated}</div>
+          </div>
+          <div style="background: #f0fdfa; padding: 14px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #666; text-transform: uppercase;">Photos enhanced</div>
+            <div style="font-size: 24px; font-weight: 700; color: #0891b2;">${data.photosProcessed}</div>
+          </div>
+          <div style="background: ${data.awaitingReview > 0 ? '#fef3c7' : '#f0fdfa'}; padding: 14px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #666; text-transform: uppercase;">Awaiting review</div>
+            <div style="font-size: 24px; font-weight: 700; color: ${data.awaitingReview > 0 ? '#92400e' : '#0891b2'};">${data.awaitingReview}</div>
+          </div>
+          <div style="background: #f0fdfa; padding: 14px; border-radius: 6px;">
+            <div style="font-size: 11px; color: #666; text-transform: uppercase;">Spend today</div>
+            <div style="font-size: 24px; font-weight: 700; color: #0891b2;">$${data.spendToday.toFixed(2)}</div>
+          </div>
+        </div>
+      ` : `
+        <p style="color: #666; font-size: 14px; margin: 24px 0;">Quiet day — no new activity. 😌</p>
+      `}
+
+      ${data.awaitingReview > 0 ? `
+        <p style="margin: 24px 0;">
+          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #06b6d4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Review pending photos →</a>
+        </p>
+      ` : ""}
+
+      ${data.signature ? `
+        <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; color: #555; font-size: 13px; white-space: pre-wrap;">
+          ${escapeHtml(data.signature)}
+        </div>
+      ` : ""}
+
+      <p style="color: #999; font-size: 12px; margin-top: 32px;">
+        Turn this off in Settings → Notifications.
+      </p>
+    </div>
+  `;
+}
+
 export function shareLinkTemplate(opts: {
   photographerName: string;
   address: string;

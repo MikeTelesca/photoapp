@@ -24,6 +24,7 @@ import { SoundToggle } from "@/components/settings/sound-toggle";
 import { BudgetInput } from "@/components/settings/budget-input";
 import { EmailSignatureForm } from "@/components/settings/email-signature-form";
 import { AutoArchiveSelect } from "@/components/settings/auto-archive-select";
+import { BackupRestore } from "@/components/settings/backup-restore";
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { prisma } from "@/lib/db";
 
@@ -36,6 +37,7 @@ export default async function SettingsPage() {
 
   let emailNotificationsEnabled = true;
   let weeklyDigestEnabled = true;
+  let dailySummaryEnabled = false;
   let notifyJobReady = true;
   let notifyClientComment = true;
   let notifyPhotoFailed = true;
@@ -61,6 +63,7 @@ export default async function SettingsPage() {
         slackWebhookUrl: true,
         emailNotifications: true,
         weeklyDigest: true,
+        dailySummary: true,
         notifyJobReady: true,
         notifyClientComment: true,
         notifyPhotoFailed: true,
@@ -81,6 +84,7 @@ export default async function SettingsPage() {
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
     emailNotificationsEnabled = user?.emailNotifications ?? true;
     weeklyDigestEnabled = user?.weeklyDigest ?? true;
+    dailySummaryEnabled = user?.dailySummary ?? false;
     notifyJobReady = user?.notifyJobReady ?? true;
     notifyClientComment = user?.notifyClientComment ?? true;
     notifyPhotoFailed = user?.notifyPhotoFailed ?? true;
@@ -310,6 +314,14 @@ export default async function SettingsPage() {
               <WeeklyDigestToggle initial={weeklyDigestEnabled} />
             </div>
             <hr className="border-graphite-200" />
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-graphite-900">Daily summary email</div>
+                <div className="text-xs text-graphite-400">5pm recap of today's jobs and pending reviews</div>
+              </div>
+              <DailySummaryToggle initial={dailySummaryEnabled} />
+            </div>
+            <hr className="border-graphite-200" />
             <SoundToggle />
             <hr className="border-graphite-200" />
             <div>
@@ -430,6 +442,16 @@ export default async function SettingsPage() {
                 <div className="text-xs text-graphite-400">Customize your keyboard bindings</div>
               </div>
             </Link>
+          </div>
+        </Card>
+
+        {/* Backup & Restore */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Backup & restore</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <BackupRestore />
           </div>
         </Card>
 

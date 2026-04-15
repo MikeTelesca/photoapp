@@ -13,6 +13,7 @@ export async function PATCH(request: NextRequest) {
     name,
     emailNotifications,
     weeklyDigest,
+    dailySummary,
     slackWebhookUrl,
     notifyJobReady,
     notifyClientComment,
@@ -45,6 +46,10 @@ export async function PATCH(request: NextRequest) {
 
   if (weeklyDigest !== undefined) {
     updateData.weeklyDigest = Boolean(weeklyDigest);
+  }
+
+  if (dailySummary !== undefined) {
+    updateData.dailySummary = Boolean(dailySummary);
   }
 
   if (notifyJobReady !== undefined) {

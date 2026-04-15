@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import PDFDocument from "pdfkit";
+import { logDownload } from "@/lib/download-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -135,6 +136,13 @@ export async function GET(
 
   doc.end();
   const pdf = await pdfPromise;
+
+  await logDownload({
+    userId: access.userId,
+    jobId,
+    type: "pdf-gallery",
+    count: photoBuffers.length,
+  }).catch(() => {});
 
   const addr = job.address.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
   return new NextResponse(new Uint8Array(pdf), {

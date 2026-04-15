@@ -382,3 +382,17 @@ model PushSubscription {
 
   @@index([userId])
 }
+
+model DownloadLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  jobId     String?
+  photoId   String?
+  type      String   // "zip" | "mls" | "single" | "invoice" | "pdf-gallery"
+  preset    String?
+  count     Int?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([jobId, createdAt])
+}

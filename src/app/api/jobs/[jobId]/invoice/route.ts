@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import PDFDocument from "pdfkit";
+import { logDownload } from "@/lib/download-log";
 
 export const runtime = "nodejs";
 
@@ -158,6 +159,12 @@ export async function GET(
       data: { invoiceSentAt: new Date() },
     })
     .catch(() => {});
+
+  await logDownload({
+    userId: access.userId,
+    jobId,
+    type: "invoice",
+  }).catch(() => {});
 
   return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {

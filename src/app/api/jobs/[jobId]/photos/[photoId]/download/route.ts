@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import { applyWatermark } from "@/lib/watermark";
 import { applyPattern } from "@/lib/filename-pattern";
+import { logDownload } from "@/lib/download-log";
 
 // GET /api/jobs/:jobId/photos/:photoId/download
 export async function GET(
@@ -84,6 +85,13 @@ export async function GET(
       index: photo.orderIndex + 1,
       total: 1,
     });
+
+    await logDownload({
+      userId: access.userId,
+      jobId,
+      photoId,
+      type: "single",
+    }).catch(() => {});
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {

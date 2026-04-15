@@ -4,6 +4,7 @@ import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
 import sharp from "sharp";
 import { applyPattern } from "@/lib/filename-pattern";
+import { logDownload } from "@/lib/download-log";
 
 export const maxDuration = 300;
 
@@ -86,6 +87,15 @@ export async function GET(
   }
 
   const buf = await zip.generateAsync({ type: "nodebuffer" });
+
+  await logDownload({
+    userId: access.userId,
+    jobId,
+    type: "mls",
+    preset,
+    count: idx,
+  }).catch(() => {});
+
   return new NextResponse(new Uint8Array(buf), {
     headers: {
       "Content-Type": "application/zip",

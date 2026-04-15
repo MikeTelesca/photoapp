@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
 import { applyPattern } from "@/lib/filename-pattern";
+import { logDownload } from "@/lib/download-log";
 
 export const maxDuration = 300;
 
@@ -76,6 +77,13 @@ export async function GET(
     compression: "DEFLATE",
     compressionOptions: { level: 6 },
   });
+
+  await logDownload({
+    userId: access.userId,
+    jobId,
+    type: "zip",
+    count: idx,
+  }).catch(() => {});
 
   return new NextResponse(new Uint8Array(zipBuffer), {
     headers: {

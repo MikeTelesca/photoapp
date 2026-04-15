@@ -144,6 +144,7 @@ export default async function SettingsPage() {
               <NavCard href="/admin/announcements" title="Announcements" desc="Site-wide banners" icon="📣" />
               <NavCard href="/admin/flags" title="Feature flags" desc="Toggle features" icon="🚩" />
               <NavCard href="/admin/preset-stats" title="Preset stats" desc="Usage metrics by preset" icon="📊" />
+              <NavCard href="/admin/downloads" title="Downloads" desc="Download audit log" icon="📥" />
             </div>
           </>
         )}

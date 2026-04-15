@@ -2,10 +2,10 @@ import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { UserGroupIcon, EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
+import { UserGroupIcon } from "@heroicons/react/24/outline";
 import { AddClientModal } from "@/components/clients/add-client-modal";
 import { ImportClientsButton } from "@/components/clients/import-button";
-import Link from "next/link";
+import { ClientsListWithSelect } from "@/components/clients/clients-list-with-select";
 
 export const dynamic = "force-dynamic";
 
@@ -64,47 +64,7 @@ export default async function ClientsPage() {
           </Card>
         ) : (
           <Card>
-            <div className="divide-y divide-graphite-100 dark:divide-graphite-800">
-              {clients.map((client) => (
-                <Link
-                  key={client.id}
-                  href={`/clients/${client.id}`}
-                  className="flex items-center justify-between px-5 py-4 hover:bg-graphite-50 dark:hover:bg-graphite-800 transition-colors group"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-sm font-semibold text-graphite-900 dark:text-white group-hover:text-cyan transition-colors">
-                        {client.name}
-                      </span>
-                      {client.company && (
-                        <span className="text-xs text-graphite-400 dark:text-graphite-500">
-                          · {client.company}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 mt-0.5">
-                      {client.email && (
-                        <span className="flex items-center gap-1 text-xs text-graphite-400 dark:text-graphite-500">
-                          <EnvelopeIcon className="w-3 h-3" />
-                          {client.email}
-                        </span>
-                      )}
-                      {client.phone && (
-                        <span className="flex items-center gap-1 text-xs text-graphite-400 dark:text-graphite-500">
-                          <PhoneIcon className="w-3 h-3" />
-                          {client.phone}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="ml-4 text-right flex-shrink-0">
-                    <span className="text-xs font-semibold text-graphite-500 dark:text-graphite-400">
-                      {client._count.jobs} job{client._count.jobs === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <ClientsListWithSelect clients={clients} />
           </Card>
         )}
       </div>

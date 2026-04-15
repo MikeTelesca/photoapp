@@ -231,6 +231,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [selectMode, setSelectMode] = useState(false);
   const [showWatermark, setShowWatermark] = useState(false);
   const [bulkNote, setBulkNote] = useState("");
+  const [bulkRotating, setBulkRotating] = useState(false);
 
   // Deep-link state
   const searchParams = useSearchParams();
@@ -772,6 +773,27 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [currentPhoto, job.id]);
 
+  const applyAspectCrop = useCallback(async (ratio: string) => {
+    if (!currentPhoto) return;
+    if (!confirm(`Crop to ${ratio} aspect ratio? Original is preserved if you re-enhance.`)) return;
+    setCropping(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/aspect-crop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ratio }),
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed");
+      }
+    } finally {
+      setCropping(false);
+    }
+  }, [currentPhoto, job.id]);
+
   const [enhanceErrors, setEnhanceErrors] = useState<Record<string, string>>({});
   const [enhancingIds, setEnhancingIds] = useState<Set<string>>(new Set());
 
@@ -1120,6 +1142,32 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       setSelectMode(false);
     } catch (err: any) {
       addToast("error", err.message || "Download failed");
+    }
+  }
+
+  async function bulkRotate(degrees: number) {
+    if (selectedPhotoIds.size === 0) return;
+    if (!confirm(`Rotate ${selectedPhotoIds.size} selected photos by ${degrees}°? This may take a minute.`)) return;
+    setBulkRotating(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/bulk-rotate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...selectedPhotoIds], degrees }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Rotate failed");
+        return;
+      }
+      addToast("success", `Rotated ${data.rotated} photos${data.failed > 0 ? ` (${data.failed} failed)` : ""}`);
+      setSelectedPhotoIds(new Set());
+      setSelectMode(false);
+      window.location.reload();
+    } catch (err: any) {
+      addToast("error", err.message || "Rotate failed");
+    } finally {
+      setBulkRotating(false);
     }
   }
 
@@ -1987,6 +2035,33 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               >
                 ✕ Clear
               </button>
+
+              <div className="flex gap-0.5">
+                <button
+                  onClick={() => bulkRotate(-90)}
+                  disabled={bulkRotating || batching}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
+                  title="Rotate selected 90° counter-clockwise"
+                >
+                  ↺
+                </button>
+                <button
+                  onClick={() => bulkRotate(90)}
+                  disabled={bulkRotating || batching}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
+                  title="Rotate selected 90° clockwise"
+                >
+                  ↻
+                </button>
+                <button
+                  onClick={() => bulkRotate(180)}
+                  disabled={bulkRotating || batching}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
+                  title="Flip selected photos 180°"
+                >
+                  ↻↻
+                </button>
+              </div>
 
               <button
                 onClick={downloadSelected}
@@ -2988,6 +3063,20 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   title="Mirror vertical (top-bottom)">
                   ⇅
                 </button>
+                <select disabled={cropping || rotating || isUpdating || enhanceLoading} onChange={(e) => {
+                  if (e.target.value) applyAspectCrop(e.target.value);
+                  e.target.value = "";
+                }}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white hover:bg-graphite-50 dark:hover:bg-graphite-700 disabled:opacity-50"
+                  title="Crop to aspect ratio">
+                  <option value="">Crop ratio...</option>
+                  <option value="3:2">3:2 (MLS standard)</option>
+                  <option value="4:3">4:3 (4×6 print)</option>
+                  <option value="1:1">1:1 (square / Instagram)</option>
+                  <option value="4:5">4:5 (Instagram portrait)</option>
+                  <option value="16:9">16:9 (video)</option>
+                  <option value="5:4">5:4 (8×10 print)</option>
+                </select>
               </div>
               <button
                 onClick={handleFavorite}

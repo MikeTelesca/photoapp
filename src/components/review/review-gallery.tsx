@@ -1773,12 +1773,24 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     const oldIdx = photos.findIndex((p) => p.id === active.id);
     const newIdx = photos.findIndex((p) => p.id === over.id);
     const newPhotos = arrayMove(photos, oldIdx, newIdx);
+    // Optimistic local update
     setJob((prev) => ({ ...prev, photos: newPhotos }));
-    fetch(`/api/jobs/${job.id}/reorder`, {
+    const order = newPhotos.map((p) => p.id);
+    fetch(`/api/jobs/${job.id}/photos/reorder`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ photoIds: newPhotos.map((p) => p.id) }),
-    });
+      body: JSON.stringify({ order }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          addToast("success", "Photo order saved");
+        } else {
+          addToast("error", "Failed to save photo order");
+        }
+      })
+      .catch(() => {
+        addToast("error", "Failed to save photo order");
+      });
   }
 
   async function handleSmartSort() {

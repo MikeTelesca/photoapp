@@ -17,7 +17,7 @@ export default async function ReviewPage({
     include: {
       photographer: { select: { name: true } },
       photos: {
-        orderBy: { orderIndex: "asc" },
+        orderBy: [{ orderIndex: "asc" }, { createdAt: "asc" }],
         include: { ratings: { orderBy: { createdAt: "asc" } } },
       },
     },

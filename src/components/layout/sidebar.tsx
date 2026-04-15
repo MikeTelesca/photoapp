@@ -35,6 +35,7 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { SidebarSearch } from "@/components/layout/sidebar-search";
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
@@ -125,6 +126,8 @@ export function Sidebar() {
         </button>
       )}
 
+
+      {!collapsed && <SidebarSearch />}
       <nav className="mb-7">
         {!collapsed && <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Menu</div>}
         {menuItems.map((item) => {

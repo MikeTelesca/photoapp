@@ -77,6 +77,7 @@ interface Photo {
   note?: string | null;
   caption?: string | null;
   colorLabel?: string | null;
+  retouchRequest?: string | null;
   ratings?: { id: string; authorName: string; rating: number; createdAt: string }[];
   createdAt: string;
   updatedAt: string;
@@ -322,6 +323,31 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Dropbox sync state
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ ok: boolean; uploaded: number; failed: number; folderPath: string; shareLink: string | null } | null>(null);
+
+  // Focus (fullscreen) mode state — persisted to localStorage as default
+  const [focusMode, setFocusMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ath-focus-mode-default") === "true";
+  });
+
+  // Apply/remove the global focus-mode class on body when toggled
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (focusMode) {
+      document.body.classList.add("ath-focus-mode");
+    } else {
+      document.body.classList.remove("ath-focus-mode");
+    }
+    return () => {
+      document.body.classList.remove("ath-focus-mode");
+    };
+  }, [focusMode]);
+
+  // Persist focus mode preference whenever it changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("ath-focus-mode-default", focusMode ? "true" : "false");
+  }, [focusMode]);
 
   // Load hover preview preference
   useEffect(() => {
@@ -1577,6 +1603,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       if (shortcutsDisabled()) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
+      // Shift+F toggles fullscreen focus mode
+      if (e.shiftKey && (e.key === "F" || e.key === "f") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setFocusMode(v => !v);
+        return;
+      }
+
       const action = getActionForKey(e.key);
 
       // Handle custom bindings
@@ -1710,12 +1743,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           setShowMobileNav(false);
           setTwilightMenuOpen(false);
           setShowHelpOverlay(false);
+        } else if (focusMode) {
+          setFocusMode(false);
         }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleApprove, handleReject, handleRegenerate, handleToggleFlag, handleColorLabel, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay]);
+  }, [handleApprove, handleReject, handleRegenerate, handleToggleFlag, handleColorLabel, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay, focusMode]);
 
   // Close twilight menu when clicking outside
   useEffect(() => {
@@ -1883,14 +1918,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   );
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className={`flex flex-col h-screen ${focusMode ? "ath-focus-root" : ""}`}>
       <PhotoMinimap
         photos={sortedPhotos}
         activeIndex={currentIndex}
         jumpTo={jumpToPhoto}
       />
       {/* Top Bar */}
-      <div className="sticky top-0 z-20 bg-white/92 dark:bg-graphite-900/92 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-700 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
+      <div className="app-header review-toolbar-extras sticky top-0 z-20 bg-white/92 dark:bg-graphite-900/92 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-700 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3.5">
           <Link
             href="/dashboard"
@@ -1923,6 +1958,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           >
             <Bars3Icon className="w-4 h-4" />
             {currentIndex + 1} / {photos.length}
+          </button>
+          {/* Focus mode toggle */}
+          <button
+            onClick={() => setFocusMode(v => !v)}
+            className={`text-xs px-2 py-1.5 rounded-md border ${focusMode ? "bg-cyan-500 text-white border-cyan-500" : "border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"}`}
+            title="Toggle fullscreen focus mode (Shift+F)"
+          >
+            ⛶ Focus
           </button>
           {/* Preset selector + edit prompt */}
           <div className="flex items-center gap-1.5 hidden md:flex">
@@ -4025,6 +4068,65 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 {metaSaving ? "Saving…" : "Save"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Focus mode overlay controls — only rendered when focus mode is active */}
+      {focusMode && (
+        <div className="ath-focus-overlay">
+          <button
+            onClick={() => setFocusMode(false)}
+            className="ath-focus-exit"
+            title="Exit focus mode (Esc or Shift+F)"
+            aria-label="Exit focus mode"
+          >
+            ✕
+          </button>
+          <button
+            onClick={goPrev}
+            className="ath-focus-arrow ath-focus-arrow-left"
+            title="Previous photo"
+            aria-label="Previous photo"
+          >
+            <ChevronLeftIcon className="w-7 h-7" />
+          </button>
+          <button
+            onClick={goNext}
+            className="ath-focus-arrow ath-focus-arrow-right"
+            title="Next photo"
+            aria-label="Next photo"
+          >
+            <ChevronRightIcon className="w-7 h-7" />
+          </button>
+          <div className="ath-focus-actions">
+            <button
+              onClick={handleReject}
+              className="ath-focus-action ath-focus-action-reject"
+              title="Reject"
+              aria-label="Reject"
+            >
+              <XMarkIcon className="w-5 h-5" />
+              <span>Reject</span>
+            </button>
+            <button
+              onClick={handleFavorite}
+              className="ath-focus-action ath-focus-action-fav"
+              title="Favorite"
+              aria-label="Favorite"
+            >
+              <span className="text-base leading-none">★</span>
+              <span>Favorite</span>
+            </button>
+            <button
+              onClick={handleApprove}
+              className="ath-focus-action ath-focus-action-approve"
+              title="Approve"
+              aria-label="Approve"
+            >
+              <CheckIcon className="w-5 h-5" />
+              <span>Approve</span>
+            </button>
           </div>
         </div>
       )}

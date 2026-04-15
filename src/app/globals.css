@@ -108,3 +108,126 @@ body.ath-bg-subtle-noise {
     radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
+/* ===========================================================
+   Fullscreen Focus Mode (toggled via Shift+F on review page)
+   =========================================================== */
+body.ath-focus-mode {
+  background: #000 !important;
+  overflow: hidden;
+}
+body.ath-focus-mode .app-header,
+body.ath-focus-mode .app-sidebar,
+body.ath-focus-mode .review-toolbar-extras {
+  display: none !important;
+}
+/* Push the gallery flush to the viewport edges */
+body.ath-focus-mode main,
+body.ath-focus-mode .ath-focus-root {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+}
+
+/* Floating overlay container — sits above the image, transparent to clicks
+   except where the controls themselves live. */
+.ath-focus-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+}
+.ath-focus-overlay > * {
+  pointer-events: auto;
+}
+
+/* Exit (X) — top right, always visible but subtle */
+.ath-focus-exit {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+/* Prev / Next — vertically centered on each side */
+.ath-focus-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  opacity: 0;
+  transition: opacity 0.18s ease, background 0.18s ease;
+}
+.ath-focus-arrow:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+.ath-focus-arrow-left { left: 18px; }
+.ath-focus-arrow-right { right: 18px; }
+
+/* Bottom action bar */
+.ath-focus-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.ath-focus-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ath-focus-action:hover { background: rgba(255, 255, 255, 0.18); }
+.ath-focus-action-approve { background: rgba(16, 185, 129, 0.85); }
+.ath-focus-action-approve:hover { background: rgba(5, 150, 105, 1); }
+.ath-focus-action-reject { background: rgba(239, 68, 68, 0.85); }
+.ath-focus-action-reject:hover { background: rgba(220, 38, 38, 1); }
+.ath-focus-action-fav { background: rgba(245, 158, 11, 0.85); }
+.ath-focus-action-fav:hover { background: rgba(217, 119, 6, 1); }
+
+/* Reveal overlay controls on hover anywhere inside the focused root */
+body.ath-focus-mode .ath-focus-root:hover .ath-focus-exit,
+body.ath-focus-mode .ath-focus-root:hover .ath-focus-arrow,
+body.ath-focus-mode .ath-focus-root:hover .ath-focus-actions,
+body.ath-focus-mode .ath-focus-root:focus-within .ath-focus-exit,
+body.ath-focus-mode .ath-focus-root:focus-within .ath-focus-arrow,
+body.ath-focus-mode .ath-focus-root:focus-within .ath-focus-actions {
+  opacity: 1;
+}
+

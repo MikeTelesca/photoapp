@@ -62,6 +62,9 @@ export const authConfig = {
       if (nextUrl.pathname === "/api/public/status") return true;
       if (nextUrl.pathname === "/status") return true;
 
+      // Public maintenance page (no auth required)
+      if (nextUrl.pathname === "/maintenance") return true;
+
       // Public share routes (tokenized client gallery)
       if (nextUrl.pathname.startsWith("/share/")) return true;
 

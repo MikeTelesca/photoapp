@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MainContent } from "@/components/layout/main-content";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
@@ -13,8 +14,20 @@ import { GlobalShortcuts } from "@/components/layout/global-shortcuts";
 import { QuickAddFab } from "@/components/layout/quick-add-fab";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 import { DashboardBackground } from "@/components/layout/dashboard-background";
+import { auth } from "@/lib/auth";
+import { getMaintenanceState } from "@/lib/maintenance";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  // Maintenance gate: when enabled, redirect non-admin users to /maintenance.
+  // Admins keep access so they can disable maintenance from the admin UI.
+  const [{ enabled }, session] = await Promise.all([
+    getMaintenanceState(),
+    auth(),
+  ]);
+  if (enabled && session?.user?.role !== "admin") {
+    redirect("/maintenance");
+  }
+
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       <DashboardBackground />

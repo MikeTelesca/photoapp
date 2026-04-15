@@ -32,6 +32,7 @@ import {
   MegaphoneIcon,
   AdjustmentsHorizontalIcon,
   SparklesIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -63,6 +64,7 @@ const settingsItems = [
   { label: "Announcements", href: "/admin/announcements", icon: MegaphoneIcon },
   { label: "Errors", href: "/admin/errors", icon: ExclamationTriangleIcon },
   { label: "Health", href: "/admin/health", icon: HeartIcon },
+  { label: "Maintenance", href: "/admin/maintenance", icon: WrenchScrewdriverIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },
   { label: "🎨 Portfolio", href: "/settings/portfolio", icon: Cog6ToothIcon },
 ];
@@ -310,7 +312,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile header - shows only on small screens */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-800 px-4 py-3 flex items-center justify-between">
+      <div className="app-header md:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button onClick={() => setIsOpen(true)} aria-label="Open navigation menu" className="p-1">
             <Bars3Icon className="w-6 h-6 text-graphite-700 dark:text-graphite-300" />
@@ -320,7 +322,7 @@ export function Sidebar() {
       </div>
 
       {/* Desktop sidebar */}
-      <aside className={`hidden md:flex md:fixed md:top-0 md:left-0 md:bottom-0 bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-800 flex-col z-20 transition-all duration-300 ${collapsed ? "md:w-[60px]" : "md:w-[230px]"}`}>
+      <aside className={`app-sidebar hidden md:flex md:fixed md:top-0 md:left-0 md:bottom-0 bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-800 flex-col z-20 transition-all duration-300 ${collapsed ? "md:w-[60px]" : "md:w-[230px]"}`}>
         {sidebarContent}
       </aside>
 

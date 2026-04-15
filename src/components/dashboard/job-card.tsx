@@ -20,6 +20,7 @@ import { InlinePresetSwitch } from "@/components/dashboard/inline-preset-switch"
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { ColorLabelPicker } from "@/components/dashboard/color-label-picker";
 import { JobHoverPreview } from "@/components/dashboard/job-hover-preview";
+import { StatusHoverCard } from "@/components/dashboard/status-hover-card";
 import { LockButton } from "@/components/dashboard/lock-button";
 import { formatJobNumber } from "@/lib/job-number";
 import { tagColor } from "@/lib/tag-color";
@@ -43,6 +44,18 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
   const [isStarting, setIsStarting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
+  const [statusHover, setStatusHover] = useState<{ x: number; y: number } | null>(null);
+
+  const statusHoverHandlers = {
+    onMouseEnter: (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setStatusHover({ x: e.clientX, y: e.clientY });
+    },
+    onMouseMove: (e: React.MouseEvent) => {
+      if (statusHover) setStatusHover({ x: e.clientX, y: e.clientY });
+    },
+    onMouseLeave: () => setStatusHover(null),
+  };
   const canPreview = ["processing", "review", "approved"].includes(job.status);
   const progress = job.totalPhotos > 0 ? Math.round((job.processedPhotos / job.totalPhotos) * 100) : 0;
   const padding = density === "compact" ? "px-5 py-2" : density === "comfortable" ? "px-5 py-5" : "px-5 py-3.5";
@@ -112,7 +125,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
           <img src={job.coverPhotoUrl} alt=""
             className="w-10 h-10 object-cover rounded shadow-sm flex-shrink-0" />
         ) : (
-          <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
+          <div {...statusHoverHandlers} className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
         )}
         <div>
           <div className="flex gap-1 items-center mb-0.5">
@@ -233,7 +246,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
       </div>
       <div className="flex items-center gap-3">
         {job.status === "processing" && (
-          <div>
+          <div {...statusHoverHandlers}>
             <div className="text-xs font-semibold text-amber-600">Processing {job.processedPhotos}/{job.totalPhotos}</div>
             <ProgressBar value={progress} color="amber" />
             <EtaBadge jobId={job.id} />
@@ -241,7 +254,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
         )}
         {job.status === "review" && (
           <>
-            <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <span {...statusHoverHandlers} className="text-xs font-semibold text-cyan">Ready for Review</span>
             <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
             <CopyJobLinkButton jobId={job.id} />
             <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
@@ -272,7 +285,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
         )}
         {job.status === "approved" && (
           <>
-            <span className="text-xs font-semibold text-emerald-600">Approved</span>
+            <span {...statusHoverHandlers} className="text-xs font-semibold text-emerald-600">Approved</span>
             {job.lockedAt && (
               <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold uppercase tracking-wide">
                 🔒 Locked
@@ -313,6 +326,9 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
     </Wrapper>
     {hover && canPreview && (
       <JobHoverPreview jobId={job.id} visible={true} x={hover.x} y={hover.y} />
+    )}
+    {statusHover && (
+      <StatusHoverCard job={job} visible={true} x={statusHover.x} y={statusHover.y} />
     )}
     <InvoicePreviewModal jobId={job.id} open={previewOpen} onClose={() => setPreviewOpen(false)} />
     </>

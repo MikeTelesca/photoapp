@@ -432,3 +432,10 @@ DO $$ BEGIN
   ALTER TABLE "ShareView" ADD CONSTRAINT "ShareView_jobId_fkey"
     FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ---------------------------------------------------------------------------
+-- Wave 113: Inline job notes (internalNotes) for dashboard quick-access
+-- ---------------------------------------------------------------------------
+DO $$ BEGIN
+  ALTER TABLE "Job" ADD COLUMN "internalNotes" TEXT;
+EXCEPTION WHEN duplicate_column THEN NULL; END $$;

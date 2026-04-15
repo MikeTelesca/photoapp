@@ -40,11 +40,64 @@ const dotColors: Record<string, string> = {
   rejected: "bg-red-500",
 };
 
+function renderNotePreview(notes: string) {
+  const truncated = notes.length > 60 ? notes.slice(0, 60) + "…" : notes;
+  if (/(^|\s)-\s/.test(notes)) {
+    const items = notes
+      .split(/\n+/)
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith("- "))
+      .map((l) => l.slice(2).trim())
+      .filter(Boolean);
+    if (items.length > 0) {
+      return (
+        <ul className="list-disc list-inside text-[11px] italic text-graphite-500 dark:text-graphite-400 mt-0.5">
+          {items.slice(0, 3).map((item, i) => (
+            <li key={i}>{item.length > 60 ? item.slice(0, 60) + "…" : item}</li>
+          ))}
+        </ul>
+      );
+    }
+  }
+  return (
+    <div className="text-[11px] italic text-graphite-500 dark:text-graphite-400 mt-0.5">
+      {truncated}
+    </div>
+  );
+}
+
 function JobCardInternal({ job, density = "normal" }: JobCardProps) {
   const [isStarting, setIsStarting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
   const [statusHover, setStatusHover] = useState<{ x: number; y: number } | null>(null);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notesValue, setNotesValue] = useState<string>(job.internalNotes || "");
+  const [notesSaved, setNotesSaved] = useState<string>(job.internalNotes || "");
+  const [notesSaving, setNotesSaving] = useState(false);
+
+  async function saveNotes() {
+    if (notesValue === notesSaved) {
+      setNotesOpen(false);
+      return;
+    }
+    setNotesSaving(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/notes`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notesValue }),
+      });
+      if (res.ok) {
+        setNotesSaved(notesValue);
+      }
+    } catch (err) {
+      console.error("save notes err:", err);
+    } finally {
+      setNotesSaving(false);
+      setNotesOpen(false);
+    }
+  }
 
   const statusHoverHandlers = {
     onMouseEnter: (e: React.MouseEvent) => {
@@ -197,7 +250,70 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             )}
           </div>
           {job.clientName && (
-            <div className="text-[11px] text-graphite-500 dark:text-graphite-400 mt-0.5">{job.clientName}</div>
+            <div className="text-[11px] text-graphite-500 dark:text-graphite-400 mt-0.5 flex items-center gap-1">
+              <span>{job.clientName}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setNotesOpen((v) => !v);
+                }}
+                className="text-[11px] opacity-60 hover:opacity-100"
+                title={notesSaved ? "Edit notes" : "Add notes"}
+                aria-label="Edit job notes"
+              >
+                📝
+              </button>
+            </div>
+          )}
+          {!job.clientName && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setNotesOpen((v) => !v);
+              }}
+              className="text-[11px] opacity-60 hover:opacity-100 mt-0.5"
+              title={notesSaved ? "Edit notes" : "Add notes"}
+              aria-label="Edit job notes"
+            >
+              📝
+            </button>
+          )}
+          {notesSaved && !notesOpen && renderNotePreview(notesSaved)}
+          {notesOpen && (
+            <div
+              className="mt-1 relative"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <textarea
+                autoFocus
+                value={notesValue}
+                onChange={(e) => setNotesValue(e.target.value)}
+                onBlur={saveNotes}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    saveNotes();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    setNotesValue(notesSaved);
+                    setNotesOpen(false);
+                  }
+                }}
+                placeholder="Quick notes… (Enter to save, Shift+Enter for newline, '- ' for list)"
+                className="w-80 max-w-full text-[12px] p-2 rounded border border-graphite-300 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-graphite-100 focus:outline-none focus:ring-1 focus:ring-cyan"
+                rows={4}
+              />
+              {notesSaving && (
+                <div className="text-[10px] text-graphite-400 mt-0.5">Saving…</div>
+              )}
+            </div>
           )}
           {job.clientApprovalStatus === "approved" && (
             <div className="mt-1">

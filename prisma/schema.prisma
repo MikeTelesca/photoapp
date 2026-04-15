@@ -117,6 +117,7 @@ model Job {
   twilightCount    Int      @default(0)
   cost             Float    @default(0)
   notes            String?
+  internalNotes    String?
   watermarkText     String?
   watermarkPosition String  @default("bottom-right")  // top-left, top-right, bottom-left, bottom-right, center
   watermarkSize     Int     @default(32)              // font size in px

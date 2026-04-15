@@ -24,6 +24,7 @@ export interface Job {
   twilightCount: number;
   cost: number;
   notes?: string | null;
+  internalNotes?: string | null;
   customPromptOverride?: string | null;
   customFields?: string | null;
   clientName?: string | null;

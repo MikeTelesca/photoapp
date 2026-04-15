@@ -202,9 +202,10 @@ export function ShareButton({
                         }
                       }}
                       className="text-xs px-2 py-1 rounded bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-300 hover:bg-graphite-200 dark:hover:bg-graphite-700"
-                      title={`Last sent ${new Date(r.sentAt).toLocaleString()}`}
+                      title={r.openedAt ? `Opened ${r.openCount || 1} time(s) — last ${new Date(r.openedAt).toLocaleString()}` : "Not opened yet"}
                     >
-                      + {r.toEmail}
+                      {r.openedAt ? "✉️" : "📧"} {r.toEmail}
+                      {(r.openCount || 0) > 1 && <span className="ml-1 text-[9px] text-emerald-600">×{r.openCount}</span>}
                     </button>
                   ))}
                 </div>

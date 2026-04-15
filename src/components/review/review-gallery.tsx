@@ -73,6 +73,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
   const twilightMenuRef = useRef<HTMLDivElement>(null);
+  const [thumbFilter, setThumbFilter] = useState<"all" | "pending" | "edited" | "approved" | "rejected">("all");
 
   useEffect(() => {
     fetch("/api/presets")
@@ -723,57 +724,94 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Thumbnail Strip - hidden on mobile */}
-        <div className="hidden md:flex w-[100px] bg-white border-r border-graphite-200 overflow-y-auto p-2 flex-col gap-1 flex-shrink-0">
-          {photos.map((photo, idx) => (
-            <button
-              key={photo.id}
-              onClick={() => setCurrentIndex(idx)}
-              className={`relative w-[84px] h-[56px] rounded-md flex-shrink-0 transition-all duration-150 border-2 ${
-                idx === currentIndex
-                  ? "border-cyan shadow-sm"
-                  : "border-transparent hover:border-graphite-300"
-              } ${
-                photo.status === "approved"
-                  ? "bg-emerald-100"
-                  : photo.status === "rejected"
-                  ? "bg-red-100"
-                  : "bg-graphite-200"
-              }`}
-            >
-              {(photo.editedUrl && (photo.status === "edited" || photo.status === "approved")) ? (
-                <img
-                  src={photo.editedUrl}
-                  alt={`Photo ${idx + 1}`}
-                  loading="lazy"
-                  className="w-full h-full object-cover rounded-md"
-                />
-              ) : (photo.originalUrl || photo.status !== "processing") ? (
-                <img
-                  src={photo.originalUrl || `/api/jobs/${job.id}/photos/${photo.id}/original`}
-                  alt={`Photo ${idx + 1}`}
-                  loading="lazy"
-                  className="w-full h-full object-cover rounded-md"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-[9px] text-graphite-400 font-medium">
-                  ...
-                </div>
-              )}
-              {/* Status indicator */}
-              {photo.status === "approved" && (
-                <div className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
-              )}
-              {photo.status === "rejected" && (
-                <div className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-white" />
-              )}
-              {photo.isTwilight && (
-                <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
-              )}
-              <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500">
-                {idx + 1}
-              </span>
-            </button>
-          ))}
+        <div className="hidden md:flex w-[100px] bg-white border-r border-graphite-200 flex-col flex-shrink-0">
+          {/* Filter pills */}
+          <div className="flex gap-0.5 p-1 border-b border-graphite-200 flex-shrink-0">
+            {[
+              { v: "all", l: "All" },
+              { v: "edited", l: "New" },
+              { v: "approved", l: "✓" },
+              { v: "rejected", l: "✗" },
+            ].map(opt => (
+              <button
+                key={opt.v}
+                onClick={() => setThumbFilter(opt.v as any)}
+                className={`flex-1 text-[9px] font-semibold py-1 rounded ${
+                  thumbFilter === opt.v ? "bg-graphite-900 text-white" : "text-graphite-500 hover:bg-graphite-100"
+                }`}
+              >{opt.l}</button>
+            ))}
+          </div>
+          {/* Scrollable thumbnail list */}
+          <div className="overflow-y-auto flex-1 p-2 flex flex-col gap-1">
+            {photos.map((photo, idx) => {
+              if (thumbFilter !== "all" && photo.status !== thumbFilter) return null;
+              return (
+                <button
+                  key={photo.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`relative w-[84px] h-[56px] rounded-md flex-shrink-0 transition-all duration-150 border-2 ${
+                    idx === currentIndex
+                      ? "border-cyan shadow-sm"
+                      : "border-transparent hover:border-graphite-300"
+                  } ${
+                    photo.status === "approved"
+                      ? "bg-emerald-100"
+                      : photo.status === "rejected"
+                      ? "bg-red-100"
+                      : "bg-graphite-200"
+                  }`}
+                >
+                  <div className="relative w-full h-full">
+                    {(photo.editedUrl && (photo.status === "edited" || photo.status === "approved")) ? (
+                      <img
+                        src={photo.editedUrl}
+                        alt={`Photo ${idx + 1}`}
+                        loading="lazy"
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                    ) : (photo.originalUrl || photo.status !== "processing") ? (
+                      <img
+                        src={photo.originalUrl || `/api/jobs/${job.id}/photos/${photo.id}/original`}
+                        alt={`Photo ${idx + 1}`}
+                        loading="lazy"
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[9px] text-graphite-400 font-medium">
+                        ...
+                      </div>
+                    )}
+                    {/* Status overlay */}
+                    {photo.status === "approved" && (
+                      <div className="absolute inset-0 ring-2 ring-emerald-500 rounded">
+                        <div className="absolute top-1 right-1 bg-emerald-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✓</div>
+                      </div>
+                    )}
+                    {photo.status === "rejected" && (
+                      <div className="absolute inset-0 ring-2 ring-red-500 rounded bg-red-500/30">
+                        <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✗</div>
+                      </div>
+                    )}
+                    {photo.status === "edited" && (
+                      <div className="absolute inset-0 ring-2 ring-cyan rounded animate-pulse" />
+                    )}
+                    {photo.status === "regenerating" && (
+                      <div className="absolute inset-0 bg-graphite-900/60 flex items-center justify-center rounded">
+                        <div className="w-3 h-3 border-2 border-cyan border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  {photo.isTwilight && (
+                    <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
+                  )}
+                  <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500">
+                    {idx + 1}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Viewer */}

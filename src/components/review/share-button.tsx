@@ -1,14 +1,28 @@
 "use client";
 import { useState, useEffect } from "react";
 
+function formatTimeAgo(date: Date): string {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 export function ShareButton({
   jobId,
   initialToken,
   initialEnabled,
+  shareViewCount,
+  shareLastViewedAt,
 }: {
   jobId: string;
   initialToken: string | null;
   initialEnabled: boolean;
+  shareViewCount?: number;
+  shareLastViewedAt?: string | null;
 }) {
   const [token, setToken] = useState(initialToken);
   const [enabled, setEnabled] = useState(initialEnabled);
@@ -171,6 +185,13 @@ export function ShareButton({
           Disable
         </button>
       </div>
+      {enabled && shareViewCount !== undefined && (
+        <span className="text-xs text-graphite-500 dark:text-graphite-400">
+          👁 {shareViewCount} view{shareViewCount === 1 ? "" : "s"}
+          {shareLastViewedAt && ` · last ${formatTimeAgo(new Date(shareLastViewedAt))}`}
+        </span>
+      )}
+
       {sentTo && (
         <span className="text-xs text-emerald-600 font-semibold">Sent to {sentTo} ✓</span>
       )}

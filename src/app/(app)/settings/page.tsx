@@ -20,6 +20,7 @@ import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload
 import { AccentPicker } from "@/components/settings/accent-picker";
 import { NotificationPrefs } from "@/components/settings/notification-prefs";
 import { TimezonePicker } from "@/components/settings/timezone-picker";
+import { DateFormatPicker } from "@/components/settings/date-format-picker";
 import { SoundToggle } from "@/components/settings/sound-toggle";
 import { BudgetInput } from "@/components/settings/budget-input";
 import { EmailSignatureForm } from "@/components/settings/email-signature-form";
@@ -185,6 +186,16 @@ export default async function SettingsPage() {
           <div className="p-4">
             <h2 className="text-sm font-semibold mb-2 dark:text-white">Display timezone</h2>
             <TimezonePicker initial={userTimezone} />
+          </div>
+        </Card>
+
+        {/* Date Format */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Date format</CardTitle>
+          </CardHeader>
+          <div className="p-4">
+            <DateFormatPicker />
           </div>
         </Card>
 

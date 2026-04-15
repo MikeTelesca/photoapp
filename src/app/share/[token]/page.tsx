@@ -62,6 +62,16 @@ export default async function SharePage({
     }
   }
 
+  // Track view (fire-and-forget)
+  prisma.job.update({
+    where: { id: job.id },
+    data: {
+      shareViewCount: { increment: 1 },
+      shareFirstViewedAt: job.shareFirstViewedAt || new Date(),
+      shareLastViewedAt: new Date(),
+    },
+  }).catch(err => console.error("share view track:", err));
+
   const approvedPhotos = job.photos;
 
   // Fetch reactions for all comments

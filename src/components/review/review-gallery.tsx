@@ -96,6 +96,8 @@ interface Job {
   skyStyle?: string | null;
   shareToken?: string | null;
   shareEnabled?: boolean;
+  shareViewCount?: number;
+  shareLastViewedAt?: string | null;
   listingDescription?: string | null;
   sequenceNumber?: number | null;
   trackedTimeSeconds?: number;
@@ -1721,6 +1723,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             jobId={job.id}
             initialToken={job.shareToken ?? null}
             initialEnabled={job.shareEnabled ?? false}
+            shareViewCount={job.shareViewCount}
+            shareLastViewedAt={job.shareLastViewedAt}
           />
           {slideshowPhotos.length > 0 && (
             <button

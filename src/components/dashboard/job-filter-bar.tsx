@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Job } from "@/lib/types";
 import { tagColor } from "@/lib/tag-color";
 import { JobCard } from "./job-card";
@@ -7,6 +7,24 @@ import { JobCard } from "./job-card";
 interface Props {
   jobs: Job[];
 }
+
+// Helper to bucket jobs by date
+function getDateBucket(date: Date | string): string {
+  const now = new Date();
+  const d = new Date(date);
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  if (d >= startOfToday) return "Today";
+  if (d >= startOfYesterday) return "Yesterday";
+  if (d >= startOfWeek) return "This week";
+  if (d >= startOfMonth) return "This month";
+  return "Older";
+}
+
+const BUCKET_ORDER = ["Pinned", "Today", "Yesterday", "This week", "This month", "Older"];
 
 export function JobFilterBar({ jobs }: Props) {
   const [search, setSearch] = useState("");
@@ -16,6 +34,19 @@ export function JobFilterBar({ jobs }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [bulkTag, setBulkTag] = useState("");
+  const [groupByDate, setGroupByDate] = useState(true);
+
+  // Load groupByDate preference from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("dashboard-group-by-date");
+    if (saved === "false") setGroupByDate(false);
+  }, []);
+
+  // Save groupByDate preference to localStorage
+  useEffect(() => {
+    localStorage.setItem("dashboard-group-by-date", String(groupByDate));
+  }, [groupByDate]);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -43,6 +74,21 @@ export function JobFilterBar({ jobs }: Props) {
       return true;
     });
   }, [jobs, search, status, preset, activeTag]);
+
+  // Group filtered jobs by date
+  const grouped = useMemo(() => {
+    if (!groupByDate) return null;
+
+    const groups = new Map<string, typeof filtered>();
+    for (const j of filtered) {
+      let bucket = getDateBucket(j.createdAt);
+      // Pinned jobs go to top regardless
+      if (j.pinnedAt) bucket = "Pinned";
+      if (!groups.has(bucket)) groups.set(bucket, []);
+      groups.get(bucket)!.push(j);
+    }
+    return BUCKET_ORDER.filter(b => groups.has(b)).map(b => ({ name: b, jobs: groups.get(b)! }));
+  }, [filtered, groupByDate]);
 
   const statuses = ["all", "pending", "processing", "review", "approved", "rejected"];
   const presets = ["all", ...Array.from(new Set(jobs.map(j => j.preset)))];
@@ -236,6 +282,10 @@ export function JobFilterBar({ jobs }: Props) {
           className="px-2 py-1.5 text-sm rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-white">
           {presets.map(p => <option key={p} value={p}>{p === "all" ? "All presets" : p}</option>)}
         </select>
+        <button onClick={() => setGroupByDate(!groupByDate)}
+          className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700">
+          {groupByDate ? "📅 Grouped" : "📋 Flat"}
+        </button>
       </div>
       {allTags.length > 0 && (
         <div className="flex gap-1 flex-wrap px-5 py-2 border-b border-graphite-50 dark:border-graphite-800">
@@ -268,6 +318,35 @@ export function JobFilterBar({ jobs }: Props) {
       {filtered.length === 0 ? (
         <div className="px-5 py-8 text-center text-sm text-graphite-400 dark:text-graphite-500">
           No jobs match your filters
+        </div>
+      ) : groupByDate && grouped ? (
+        <div>
+          {grouped.map(group => (
+            <div key={group.name}>
+              <div className="px-5 py-1.5 bg-graphite-50 dark:bg-graphite-800/50 border-b border-graphite-100 dark:border-graphite-800">
+                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-graphite-500 dark:text-graphite-400">
+                  {group.name === "Pinned" ? "📌 " : ""}{group.name}
+                  <span className="ml-2 text-graphite-400 dark:text-graphite-500 normal-case font-normal">{group.jobs.length}</span>
+                </h3>
+              </div>
+              {group.jobs.map(job => (
+                <div key={job.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(job.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggle(job.id);
+                    }}
+                    className="ml-3 mr-2 cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <JobCard job={job} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       ) : (
         filtered.map(job => (

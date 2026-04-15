@@ -28,6 +28,7 @@ import {
   ExclamationTriangleIcon,
   MagnifyingGlassIcon,
   BeakerIcon,
+  MegaphoneIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -51,6 +52,7 @@ const settingsItems = [
   { label: "Users", href: "/admin/users", icon: UsersIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
+  { label: "Announcements", href: "/admin/announcements", icon: MegaphoneIcon },
   { label: "Errors", href: "/admin/errors", icon: ExclamationTriangleIcon },
   { label: "Health", href: "/admin/health", icon: HeartIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },

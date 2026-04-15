@@ -26,6 +26,7 @@ model User {
   slackWebhookUrl   String?
   twoFactorEnabled  Boolean  @default(false)
   twoFactorSecret   String?
+  watermarkLogoPath String?  // internal Dropbox path to logo PNG
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]
@@ -198,4 +199,15 @@ model ErrorLog {
 
   @@index([source, createdAt(sort: Desc)])
   @@index([jobId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  message   String
+  type      String   @default("info") // "info", "warning", "success"
+  active    Boolean  @default(true)
+  createdBy String?
+  createdAt DateTime @default(now())
+
+  @@index([active, createdAt])
 }

@@ -105,6 +105,7 @@ interface Job {
   shareEnabled?: boolean;
   shareViewCount?: number;
   shareLastViewedAt?: string | null;
+  sharePasswordSet?: boolean;
   listingDescription?: string | null;
   sequenceNumber?: number | null;
   trackedTimeSeconds?: number;
@@ -314,6 +315,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   // Caption state
   const [generatingCaption, setGeneratingCaption] = useState(false);
+  const [autoCaptioning, setAutoCaptioning] = useState(false);
+  const [autoCaptioningAll, setAutoCaptioningAll] = useState(false);
 
   // Dropbox sync state
   const [syncing, setSyncing] = useState(false);
@@ -1474,6 +1477,42 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function autoCaption() {
+    if (!currentPhoto) return;
+    setAutoCaptioning(true);
+    try {
+      const res = await fetch(`/api/photos/${currentPhoto.id}/auto-caption`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setJob(prev => ({
+          ...prev,
+          photos: prev.photos.map(p =>
+            p.id === currentPhoto.id ? { ...p, caption: data.caption } : p
+          ),
+        }));
+      }
+    } finally {
+      setAutoCaptioning(false);
+    }
+  }
+
+  async function autoCaptionAll() {
+    if (!confirm(`Auto-caption all photos without captions? (Up to 50 at a time)`)) return;
+    setAutoCaptioningAll(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/auto-caption-all`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Auto-captioned ${data.success} photos (${data.failed} failed)`);
+        window.location.reload();
+      } else {
+        alert("Auto-caption all failed");
+      }
+    } finally {
+      setAutoCaptioningAll(false);
+    }
+  }
+
   const handleApproveAll = useCallback(async () => {
     setIsUpdating(true);
     try {
@@ -2046,6 +2085,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               💬 Caption all
             </button>
           )}
+          <button
+            onClick={autoCaptionAll}
+            disabled={autoCaptioningAll}
+            className="text-xs px-3 py-1.5 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-60"
+          >
+            {autoCaptioningAll ? "Writing..." : "✨ Auto-caption all"}
+          </button>
           {job.status === "approved" && (
             <button
               onClick={() => setInvoicePreviewOpen(true)}
@@ -2107,6 +2153,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             initialEnabled={job.shareEnabled ?? false}
             shareViewCount={job.shareViewCount}
             shareLastViewedAt={job.shareLastViewedAt}
+            initialPasswordSet={job.sharePasswordSet ?? false}
           />
           <JobTimeline jobId={job.id} />
           {slideshowPhotos.length > 0 && (
@@ -3121,12 +3168,22 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                     className="ml-1 text-cyan hover:underline text-[10px] whitespace-nowrap disabled:opacity-50">
                     {generatingCaption ? "Writing..." : "regenerate"}
                   </button>
+                  <button onClick={autoCaption} disabled={autoCaptioning}
+                    className="text-purple-600 hover:underline text-[10px] whitespace-nowrap disabled:opacity-50">
+                    {autoCaptioning ? "Writing..." : "✨ Auto-caption"}
+                  </button>
                 </div>
               ) : (
-                <button onClick={generateCaption} disabled={generatingCaption}
-                  className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50">
-                  {generatingCaption ? "Writing..." : "💬 Generate caption"}
-                </button>
+                <>
+                  <button onClick={generateCaption} disabled={generatingCaption}
+                    className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50">
+                    {generatingCaption ? "Writing..." : "💬 Generate caption"}
+                  </button>
+                  <button onClick={autoCaption} disabled={autoCaptioning}
+                    className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50">
+                    {autoCaptioning ? "Writing..." : "✨ Auto-caption"}
+                  </button>
+                </>
               )}
             </div>
           )}

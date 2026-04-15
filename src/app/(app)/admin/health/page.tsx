@@ -36,6 +36,19 @@ export default function HealthPage() {
   const checks = data?.checks || {};
   const stats = data?.stats || {};
 
+  async function runPurge() {
+    if (!confirm("Run log purge now? This deletes old activity, error, and login records.")) return;
+    const res = await fetch("/api/cron/purge-logs");
+    const purgeData = await res.json();
+    if (res.ok) {
+      alert(
+        `Purged: ${purgeData.activityDeleted} activity, ${purgeData.errorDeleted} errors, ${purgeData.loginDeleted} login records, ${purgeData.notificationDeleted} notifications`
+      );
+    } else {
+      alert(`Purge failed: ${purgeData.error}`);
+    }
+  }
+
   return (
     <>
       <Topbar title="System Health" />
@@ -94,17 +107,25 @@ export default function HealthPage() {
                   danger={stats.stuckPhotos > 0}
                 />
               </div>
-              {stats.stuckPhotos > 0 && (
+              <div className="mt-3 flex gap-2 flex-wrap">
+                {stats.stuckPhotos > 0 && (
+                  <button
+                    onClick={async () => {
+                      await fetch("/api/cron/recover-stuck");
+                      load();
+                    }}
+                    className="text-xs px-3 py-1.5 rounded bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors"
+                  >
+                    Run stuck recovery now
+                  </button>
+                )}
                 <button
-                  onClick={async () => {
-                    await fetch("/api/cron/recover-stuck");
-                    load();
-                  }}
-                  className="mt-3 text-xs px-3 py-1.5 rounded bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-colors"
+                  onClick={runPurge}
+                  className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 transition-colors"
                 >
-                  Run stuck recovery now
+                  🗑 Run log purge now
                 </button>
-              )}
+              </div>
             </div>
           </Card>
         )}

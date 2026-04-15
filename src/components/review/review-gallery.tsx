@@ -993,6 +993,38 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function downloadSelected() {
+    if (selectedPhotoIds.size === 0) return;
+    if (!confirm(`Download ${selectedPhotoIds.size} selected photos as ZIP?`)) return;
+
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/download-selected`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedPhotoIds) }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        addToast("error", data.error || "Download failed");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `selected-${selectedPhotoIds.size}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      addToast("success", `Downloaded ${selectedPhotoIds.size} photos`);
+      setSelectedPhotoIds(new Set());
+      setSelectMode(false);
+    } catch (err: any) {
+      addToast("error", err.message || "Download failed");
+    }
+  }
+
   const handleDownload = useCallback(async () => {
     const approvedPhotos = photos.filter(
       (p) => p.status === "approved" && p.editedUrl
@@ -1241,6 +1273,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         case "prev":
           goPrev();
           break;
+      }
+
+      // Handle Page Up / Page Down / Home / End (not customizable)
+      if (e.key === "PageDown") {
+        e.preventDefault();
+        setCurrentIndex(i => Math.min(i + 10, photos.length - 1));
+        return;
+      }
+      if (e.key === "PageUp") {
+        e.preventDefault();
+        setCurrentIndex(i => Math.max(i - 10, 0));
+        return;
+      }
+      if (e.key === "Home") {
+        e.preventDefault();
+        setCurrentIndex(0);
+        return;
+      }
+      if (e.key === "End") {
+        e.preventDefault();
+        setCurrentIndex(photos.length - 1);
+        return;
       }
 
       // Handle escape key (not customizable)
@@ -1708,6 +1762,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 title="Clear status from selected photos"
               >
                 ✕ Clear
+              </button>
+
+              <button
+                onClick={downloadSelected}
+                disabled={batching}
+                className="text-xs px-2 py-1 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-60 whitespace-nowrap"
+                title="Download selected photos as ZIP"
+              >
+                📦 Download
               </button>
 
               <button

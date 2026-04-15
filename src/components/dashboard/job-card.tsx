@@ -7,6 +7,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { DownloadButton } from "@/components/dashboard/download-button";
 import { DeleteJobButton } from "@/components/dashboard/delete-job-button";
+import { DuplicateJobButton } from "@/components/dashboard/duplicate-job-button";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -62,7 +63,15 @@ function JobCardInternal({ job }: JobCardProps) {
           <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">
             <span>{job.photographerName}</span>
             <span>{formatTime(job.createdAt)}</span>
-            <span>{job.totalPhotos} photos{job.twilightCount > 0 ? ` · ${job.twilightCount} twilight` : ""}</span>
+            <span>
+              {job.totalPhotos} photos{job.twilightCount > 0 ? ` · ${job.twilightCount} twilight` : ""}
+              {job.approvedPhotos > 0 && (
+                <span className="ml-1 text-emerald-600 font-semibold">· {job.approvedPhotos} ✓</span>
+              )}
+              {job.rejectedPhotos > 0 && (
+                <span className="ml-1 text-red-600 font-semibold">· {job.rejectedPhotos} ✗</span>
+              )}
+            </span>
             {job.cost > 0 && <span>${job.cost.toFixed(2)}</span>}
             <Badge variant={job.preset === "luxury" ? "luxury" : "standard"}>
               {job.preset.charAt(0).toUpperCase() + job.preset.slice(1)}
@@ -92,6 +101,7 @@ function JobCardInternal({ job }: JobCardProps) {
         {job.status === "review" && (
           <>
             <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
             <span className="text-graphite-300 text-base">›</span>
           </>
@@ -106,6 +116,7 @@ function JobCardInternal({ job }: JobCardProps) {
             >
               {isStarting ? "Starting..." : "Start Processing"}
             </Button>
+            <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
           </>
         )}
@@ -113,6 +124,7 @@ function JobCardInternal({ job }: JobCardProps) {
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
             <DownloadButton jobId={job.id} />
+            <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
             <span className="text-graphite-300 text-base">›</span>
           </>

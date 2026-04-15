@@ -120,6 +120,19 @@ export function PresetsManager({ initialPresets }: { initialPresets: Preset[] })
                     Edit
                   </Button>
                 )}
+                <button
+                  onClick={async () => {
+                    const res = await fetch(`/api/presets/${preset.id}/clone`, { method: "POST" });
+                    if (res.ok) {
+                      const updated = await fetch("/api/presets").then(r => r.json());
+                      setPresets(updated);
+                    }
+                  }}
+                  className="px-2 py-1 text-xs bg-graphite-100 text-graphite-700 rounded hover:bg-graphite-200"
+                  title="Clone this preset"
+                >
+                  Clone
+                </button>
                 {!preset.isDefault && (
                   <button
                     onClick={() => handleDelete(preset.id)}

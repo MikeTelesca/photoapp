@@ -10,17 +10,32 @@ if (!process.env.NEXTAUTH_SECRET) {
 export const authConfig = {
   providers: [], // Providers added in auth.ts (they need Prisma)
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+      }
+      // Handle impersonation: only admins can set impersonatedUserId
+      if (trigger === "update" && session?.impersonatedUserId !== undefined) {
+        if (token.role === "admin") {
+          token.impersonatedUserId = session.impersonatedUserId;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.role = token.role ?? "photographer";
-        session.user.id = token.id ?? "";
+        if (token.impersonatedUserId) {
+          // Swap the user ID to the impersonated user
+          session.user.id = token.impersonatedUserId as string;
+          session.impersonating = true;
+          session.realUserId = token.sub;
+          // Don't expose role during impersonation (behave as photographer)
+          session.user.role = "photographer";
+        } else {
+          session.user.role = token.role ?? "photographer";
+          session.user.id = token.id ?? "";
+        }
       }
       return session;
     },

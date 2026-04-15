@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/api-auth";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
 import { UsageCsvExport } from "@/components/billing/usage-csv-export";
+import { RevenueChart, type RevenuePoint } from "@/components/billing/revenue-chart";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -13,9 +14,78 @@ export default async function BillingPage() {
 
   const jobs = await prisma.job.findMany({
     where: { photographerId: auth.userId },
-    select: { createdAt: true, totalPhotos: true, cost: true, status: true },
+    select: {
+      createdAt: true,
+      updatedAt: true,
+      clientApprovedAt: true,
+      totalPhotos: true,
+      approvedPhotos: true,
+      cost: true,
+      status: true,
+    },
     orderBy: { createdAt: "desc" },
   });
+
+  const userBilling = await prisma.user.findUnique({
+    where: { id: auth.userId },
+    select: { pricePerPhoto: true, fixedFeeCents: true },
+  });
+  const pricePerPhoto = userBilling?.pricePerPhoto ?? 0;
+  const fixedFee = (userBilling?.fixedFeeCents ?? 0) / 100;
+
+  // Build last-12-months revenue series. Revenue for approved jobs is attributed
+  // to the month the job was approved (clientApprovedAt || updatedAt for
+  // status === "approved" jobs). Cost is attributed to the job's createdAt.
+  const now = new Date();
+  const monthKeys: string[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  const revenueByMonth = new Map<string, number>();
+  const costByMonth = new Map<string, number>();
+  for (const k of monthKeys) {
+    revenueByMonth.set(k, 0);
+    costByMonth.set(k, 0);
+  }
+
+  for (const j of jobs) {
+    const costKey = j.createdAt.toISOString().slice(0, 7);
+    if (costByMonth.has(costKey)) {
+      costByMonth.set(costKey, (costByMonth.get(costKey) || 0) + (j.cost || 0));
+    }
+    if (j.status === "approved") {
+      const approvedAt = j.clientApprovedAt ?? j.updatedAt;
+      const revKey = approvedAt.toISOString().slice(0, 7);
+      if (revenueByMonth.has(revKey)) {
+        const rev = (j.approvedPhotos || 0) * pricePerPhoto + fixedFee;
+        revenueByMonth.set(revKey, (revenueByMonth.get(revKey) || 0) + rev);
+      }
+    }
+  }
+
+  const revenueSeries: RevenuePoint[] = monthKeys.map((k) => {
+    const [y, m] = k.split("-");
+    const label = new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString("en-US", {
+      month: "short",
+      year: "2-digit",
+    });
+    const revenue = revenueByMonth.get(k) || 0;
+    const cost = costByMonth.get(k) || 0;
+    return { month: label, revenue, cost, profit: revenue - cost };
+  });
+
+  const curMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const monthRevenue = revenueByMonth.get(curMonthKey) || 0;
+  const monthCost = costByMonth.get(curMonthKey) || 0;
+  const monthProfit = monthRevenue - monthCost;
+
+  const ytdProfit = revenueSeries
+    .filter((p, idx) => {
+      const key = monthKeys[idx];
+      return key.startsWith(String(now.getFullYear()));
+    })
+    .reduce((s, p) => s + p.profit, 0);
 
   // Group by YYYY-MM
   const byMonth = new Map<string, { jobs: number; photos: number; cost: number }>();
@@ -40,7 +110,6 @@ export default async function BillingPage() {
     );
 
   // Current month projection
-  const now = new Date();
   const curKey = now.toISOString().slice(0, 7);
   const cur = byMonth.get(curKey) || { jobs: 0, photos: 0, cost: 0 };
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -65,6 +134,54 @@ export default async function BillingPage() {
     <>
       <Topbar title="Billing & Usage" subtitle="View your monthly costs and photo processing stats" />
       <div className="p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <div className="p-4">
+              <div className="text-xs text-graphite-400 dark:text-graphite-500 mb-1">This month revenue</div>
+              <div className="text-2xl font-bold text-emerald-500">${monthRevenue.toFixed(2)}</div>
+            </div>
+          </Card>
+          <Card>
+            <div className="p-4">
+              <div className="text-xs text-graphite-400 dark:text-graphite-500 mb-1">This month cost</div>
+              <div className="text-2xl font-bold text-rose-500">${monthCost.toFixed(2)}</div>
+            </div>
+          </Card>
+          <Card>
+            <div className="p-4">
+              <div className="text-xs text-graphite-400 dark:text-graphite-500 mb-1">This month profit</div>
+              <div className={`text-2xl font-bold ${monthProfit >= 0 ? "text-cyan" : "text-rose-500"}`}>
+                ${monthProfit.toFixed(2)}
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <div className="p-4">
+              <div className="text-xs text-graphite-400 dark:text-graphite-500 mb-1">YTD profit</div>
+              <div className={`text-2xl font-bold ${ytdProfit >= 0 ? "text-cyan" : "text-rose-500"}`}>
+                ${ytdProfit.toFixed(2)}
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <Card>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-graphite-900 dark:text-white">Revenue, cost & profit</h2>
+                <p className="text-xs text-graphite-500 dark:text-graphite-400">
+                  Last 12 months. Revenue = approved photos × price + flat fee.
+                  {pricePerPhoto === 0 && fixedFee === 0 && (
+                    <> <a href="/settings" className="text-cyan underline">Set your rates</a>.</>
+                  )}
+                </p>
+              </div>
+            </div>
+            <RevenueChart data={revenueSeries} />
+          </div>
+        </Card>
+
         {outstanding.length > 0 && (
           <Card>
             <div className="p-4">

@@ -70,6 +70,8 @@ export default async function SettingsPage() {
     invoiceRate: 50,
     invoicePrefix: "INV",
     invoiceCounter: 1000,
+    pricePerPhoto: null as number | null,
+    fixedFeeCents: null as number | null,
   };
   if (userId) {
     const user = await prisma.user.findUnique({
@@ -90,6 +92,8 @@ export default async function SettingsPage() {
         invoiceRate: true,
         invoicePrefix: true,
         invoiceCounter: true,
+        pricePerPhoto: true,
+        fixedFeeCents: true,
         watermarkLogoPath: true,
         invoiceLogoPath: true,
         timezone: true,
@@ -131,6 +135,8 @@ export default async function SettingsPage() {
         invoiceRate: user.invoiceRate ?? 50,
         invoicePrefix: user.invoicePrefix ?? "INV",
         invoiceCounter: user.invoiceCounter ?? 1000,
+        pricePerPhoto: user.pricePerPhoto ?? null,
+        fixedFeeCents: user.fixedFeeCents ?? null,
       };
     }
   }
@@ -437,6 +443,8 @@ export default async function SettingsPage() {
               initialInvoiceRate={invoiceSettings.invoiceRate}
               initialInvoicePrefix={invoiceSettings.invoicePrefix}
               initialInvoiceCounter={invoiceSettings.invoiceCounter}
+              initialPricePerPhoto={invoiceSettings.pricePerPhoto}
+              initialFixedFeeCents={invoiceSettings.fixedFeeCents}
             />
           </div>
         </Card>

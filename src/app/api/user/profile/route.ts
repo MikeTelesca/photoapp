@@ -24,6 +24,8 @@ export async function PATCH(request: NextRequest) {
     businessPhone,
     businessAddress,
     invoiceRate,
+    pricePerPhoto,
+    fixedFeeCents,
     invoicePrefix,
     invoiceCounter,
     jobSequencePrefix,
@@ -85,6 +87,23 @@ export async function PATCH(request: NextRequest) {
   if (businessPhone !== undefined) updateData.businessPhone = businessPhone?.trim() || null;
   if (businessAddress !== undefined) updateData.businessAddress = businessAddress?.trim() || null;
   if (invoiceRate !== undefined) updateData.invoiceRate = parseFloat(invoiceRate) || 50;
+  if (pricePerPhoto !== undefined) {
+    if (pricePerPhoto === null || pricePerPhoto === "") {
+      updateData.pricePerPhoto = null;
+    } else {
+      const n = parseFloat(pricePerPhoto);
+      updateData.pricePerPhoto = Number.isFinite(n) && n >= 0 ? n : null;
+    }
+  }
+  if (fixedFeeCents !== undefined) {
+    if (fixedFeeCents === null || fixedFeeCents === "") {
+      updateData.fixedFeeCents = null;
+    } else {
+      // Accept dollars (float) and store as integer cents
+      const dollars = parseFloat(fixedFeeCents);
+      updateData.fixedFeeCents = Number.isFinite(dollars) && dollars >= 0 ? Math.round(dollars * 100) : null;
+    }
+  }
   if (invoicePrefix !== undefined) {
     const trimmed = (invoicePrefix ?? "").toString().trim();
     const prefix = trimmed || "INV";

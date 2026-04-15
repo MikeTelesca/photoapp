@@ -385,3 +385,15 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMP(3);
 
 -- Wave 109: 2FA backup codes
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "twoFactorBackupCodes" TEXT;
+
+-- Wave 110: Admin rate-limit tier overrides
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "rateLimitTier" TEXT NOT NULL DEFAULT 'standard';
+
+-- ---------------------------------------------------------------------------
+-- Revenue tracking: per-user billing rate (price per photo + flat fee)
+-- ---------------------------------------------------------------------------
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "pricePerPhoto" DOUBLE PRECISION;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "fixedFeeCents" INTEGER;
+
+-- Wave 110: Pinnable photo notes (note overlay on image)
+ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "notePinned" BOOLEAN NOT NULL DEFAULT false;

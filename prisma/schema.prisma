@@ -22,6 +22,8 @@ model User {
   businessPhone     String?
   businessAddress   String?
   invoiceRate       Float?    @default(50)  // default $/photo for invoicing
+  pricePerPhoto     Float?    // billed price per delivered photo (revenue tracking)
+  fixedFeeCents     Int?      // flat fee per job in cents (revenue tracking)
   invoicePrefix     String    @default("INV")
   invoiceCounter    Int       @default(1000)
   jobSequenceCounter Int       @default(0)   // auto-incrementing job sequence
@@ -50,6 +52,7 @@ model User {
   portfolioBio      String?
   statusSnippets    String?  // JSON: { pending: string[], processing: string[], review: string[], approved: string[], rejected: string[] }
   tagsInheritFromJob Boolean @default(false)
+  rateLimitTier      String   @default("standard") // "standard" | "pro" | "unlimited" | "banned"
   onboardedAt        DateTime?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -200,6 +203,7 @@ model Photo {
   autoTags             String?  // JSON array of detected tags: ["kitchen", "interior", "bright"]
   rejectionReason      String?
   note                 String?
+  notePinned           Boolean  @default(false)
   caption              String?
   customFilename       String?  // user-chosen base filename; extension preserved from original on export
   colorLabel           String?  // null | "red" | "amber" | "emerald" | "blue" | "purple" | "pink"

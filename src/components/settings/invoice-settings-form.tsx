@@ -12,6 +12,8 @@ interface Props {
   initialInvoiceRate: number;
   initialInvoicePrefix: string;
   initialInvoiceCounter?: number;
+  initialPricePerPhoto?: number | null;
+  initialFixedFeeCents?: number | null;
 }
 
 export function InvoiceSettingsForm({
@@ -22,6 +24,8 @@ export function InvoiceSettingsForm({
   initialInvoiceRate,
   initialInvoicePrefix,
   initialInvoiceCounter = 1000,
+  initialPricePerPhoto = null,
+  initialFixedFeeCents = null,
 }: Props) {
   const [businessName, setBusinessName] = useState(initialBusinessName);
   const [businessEmail, setBusinessEmail] = useState(initialBusinessEmail);
@@ -30,6 +34,12 @@ export function InvoiceSettingsForm({
   const [invoiceRate, setInvoiceRate] = useState(String(initialInvoiceRate));
   const [invoicePrefix, setInvoicePrefix] = useState(initialInvoicePrefix);
   const [invoiceCounter, setInvoiceCounter] = useState(String(initialInvoiceCounter));
+  const [pricePerPhoto, setPricePerPhoto] = useState(
+    initialPricePerPhoto != null ? String(initialPricePerPhoto) : ""
+  );
+  const [fixedFeeDollars, setFixedFeeDollars] = useState(
+    initialFixedFeeCents != null ? (initialFixedFeeCents / 100).toFixed(2) : ""
+  );
   const [saving, setSaving] = useState(false);
   const { addToast } = useToast();
 
@@ -58,6 +68,8 @@ export function InvoiceSettingsForm({
           invoiceRate: parseFloat(invoiceRate) || 50,
           invoicePrefix: trimmedPrefix,
           invoiceCounter: counterNum,
+          pricePerPhoto: pricePerPhoto === "" ? null : pricePerPhoto,
+          fixedFeeCents: fixedFeeDollars === "" ? null : fixedFeeDollars,
         }),
       });
       if (res.ok) {
@@ -165,6 +177,36 @@ export function InvoiceSettingsForm({
             </button>
           </div>
           <p className="text-[11px] text-graphite-400 mt-1">Next invoice will use this number, then auto-increment.</p>
+        </div>
+      </div>
+      <div className="pt-2 mt-2 border-t border-graphite-100 dark:border-graphite-800">
+        <h3 className="text-xs font-semibold text-graphite-700 dark:text-graphite-300 uppercase tracking-wider mb-3">Revenue Tracking</h3>
+        <p className="text-[11px] text-graphite-400 mb-3">Used on the billing page to calculate revenue and profit charts.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Price per photo delivered ($)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={pricePerPhoto}
+              onChange={(e) => setPricePerPhoto(e.target.value)}
+              className={inputCls}
+              placeholder="e.g. 5.00"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Flat fee per job ($)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={fixedFeeDollars}
+              onChange={(e) => setFixedFeeDollars(e.target.value)}
+              className={inputCls}
+              placeholder="e.g. 25.00"
+            />
+          </div>
         </div>
       </div>
       <Button type="submit" disabled={saving}>

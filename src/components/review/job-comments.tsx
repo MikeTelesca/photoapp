@@ -118,35 +118,77 @@ export function JobComments({ jobId }: { jobId: string }) {
             <div className="text-xs text-graphite-400 py-2">No comments yet</div>
           ) : (
             <ul className="space-y-2 max-h-48 overflow-y-auto">
-              {comments.map(c => (
-                <li key={c.id} className="bg-graphite-50 dark:bg-graphite-800 rounded p-2 text-xs">
-                  <div className="flex justify-between items-baseline mb-0.5">
-                    <span className="font-semibold dark:text-white">
-                      {c.author?.name || c.author?.email || "Unknown"}
-                    </span>
-                    <div className="flex gap-2 items-center">
-                      <span className="text-[10px] text-graphite-400">{timeAgo(c.createdAt)}</span>
-                      <button onClick={() => { setEditingId(c.id); setEditBody(c.body); }}
-                        className="text-[10px] text-cyan hover:underline">edit</button>
-                      <button onClick={() => del(c.id)} className="text-[10px] text-red-500 hover:underline">×</button>
-                    </div>
-                  </div>
-                  {editingId === c.id ? (
-                    <div className="flex flex-col gap-1">
-                      <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={2}
-                        className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-900 dark:text-white" />
-                      <div className="flex gap-1">
-                        <button onClick={saveEdit} className="text-[10px] px-2 py-0.5 rounded bg-cyan text-white">Save</button>
-                        <button onClick={() => { setEditingId(null); setEditBody(""); }}
-                          className="text-[10px] px-2 py-0.5 rounded text-graphite-500">Cancel</button>
+              {(() => {
+                const topLevel = comments.filter(c => !c.parentId);
+                const repliesByParent = new Map<string, typeof comments>();
+                for (const c of comments) {
+                  if (c.parentId) {
+                    if (!repliesByParent.has(c.parentId)) repliesByParent.set(c.parentId, []);
+                    repliesByParent.get(c.parentId)!.push(c);
+                  }
+                }
+
+                return topLevel.map(c => (
+                  <div key={c.id}>
+                    <li className="bg-graphite-50 dark:bg-graphite-800 rounded p-2 text-xs">
+                      <div className="flex justify-between items-baseline mb-0.5">
+                        <span className="font-semibold dark:text-white">
+                          {c.author?.name || c.author?.email || "Unknown"}
+                        </span>
+                        <div className="flex gap-2 items-center">
+                          <span className="text-[10px] text-graphite-400">{timeAgo(c.createdAt)}</span>
+                          <button onClick={() => { setEditingId(c.id); setEditBody(c.body); }}
+                            className="text-[10px] text-cyan hover:underline">edit</button>
+                          <button onClick={() => del(c.id)} className="text-[10px] text-red-500 hover:underline">×</button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">{renderBody(c.body)}</div>
-                  )}
-                  <Reactions commentId={c.id} commentType="job" initialReactions={c.reactions} />
-                </li>
-              ))}
+                      {editingId === c.id ? (
+                        <div className="flex flex-col gap-1">
+                          <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={2}
+                            className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-900 dark:text-white" />
+                          <div className="flex gap-1">
+                            <button onClick={saveEdit} className="text-[10px] px-2 py-0.5 rounded bg-cyan text-white">Save</button>
+                            <button onClick={() => { setEditingId(null); setEditBody(""); }}
+                              className="text-[10px] px-2 py-0.5 rounded text-graphite-500">Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">{renderBody(c.body)}</div>
+                      )}
+                      <div className="flex gap-2 items-center mt-1">
+                        <button onClick={() => setReplyingTo(c.id)} className="text-[10px] text-cyan hover:underline">reply</button>
+                        <Reactions commentId={c.id} commentType="job" initialReactions={c.reactions} />
+                      </div>
+                    </li>
+
+                    {/* Replies */}
+                    {(repliesByParent.get(c.id) || []).map(r => (
+                      <div key={r.id} className="ml-4 mt-2 pl-2 border-l-2 border-graphite-200 dark:border-graphite-700 bg-graphite-50 dark:bg-graphite-900 rounded p-2 text-xs">
+                        <div className="font-semibold dark:text-white text-[11px]">{r.author?.name || r.author?.email}</div>
+                        <div className="text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">{renderBody(r.body)}</div>
+                        <div className="flex justify-between items-baseline mt-1">
+                          <div className="text-[10px] text-graphite-400">{timeAgo(r.createdAt)}</div>
+                          <div className="flex gap-2">
+                            <button onClick={() => { setEditingId(r.id); setEditBody(r.body); }}
+                              className="text-[10px] text-cyan hover:underline">edit</button>
+                            <button onClick={() => del(r.id)} className="text-[10px] text-red-500 hover:underline">×</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {replyingTo === c.id && (
+                      <div className="ml-4 mt-2 pl-2 border-l-2 border-cyan flex gap-1">
+                        <input autoFocus value={replyBody} onChange={(e) => setReplyBody(e.target.value)}
+                          placeholder="Reply..."
+                          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) postReply(); if (e.key === "Escape") setReplyingTo(null); }}
+                          className="flex-1 text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-900 dark:text-white" />
+                        <button onClick={postReply} className="text-[10px] px-2 py-0.5 rounded bg-cyan text-white">Post</button>
+                      </div>
+                    )}
+                  </div>
+                ));
+              })()}
             </ul>
           )}
           <div className="flex flex-col gap-1 pt-2 border-t border-graphite-100 dark:border-graphite-800">

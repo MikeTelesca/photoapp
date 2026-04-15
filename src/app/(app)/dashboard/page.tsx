@@ -6,6 +6,7 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { CostTracker } from "@/components/dashboard/cost-tracker";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { RecentActivityWidget } from "@/components/dashboard/recent-activity-widget";
+import { RecentlyViewedWidget } from "@/components/dashboard/recently-viewed-widget";
 import { InboxWidget } from "@/components/dashboard/inbox-widget";
 import { NotificationHandler } from "@/components/notifications/notification-handler";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
@@ -230,6 +231,9 @@ export default async function DashboardPage({
                 imageCount={stats.totalImages}
                 budget={150}
               />
+            </WidgetWrapper>
+            <WidgetWrapper widgetKey="recently-viewed">
+              <RecentlyViewedWidget />
             </WidgetWrapper>
             <WidgetWrapper widgetKey="recent-activity">
               <RecentActivityWidget userId={userId || ""} isAdmin={userRole === "admin"} />

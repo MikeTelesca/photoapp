@@ -10,6 +10,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
   { key: "inbox", label: "Inbox (review queue)", defaultVisible: true },
   { key: "quick-actions", label: "Quick actions", defaultVisible: true },
   { key: "cost-tracker", label: "This month cost", defaultVisible: true },
+  { key: "recently-viewed", label: "Recently viewed jobs", defaultVisible: true },
   { key: "recent-activity", label: "Recent activity", defaultVisible: true },
   { key: "activity-feed", label: "Activity feed", defaultVisible: true },
 ];

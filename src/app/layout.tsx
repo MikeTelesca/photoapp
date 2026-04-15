@@ -13,7 +13,6 @@ export const metadata: Metadata = {
   title: "PhotoApp",
   description: "AI-powered real estate photo editing",
   manifest: "/manifest.json",
-  themeColor: "#0891B2",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

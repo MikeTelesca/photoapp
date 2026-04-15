@@ -2057,6 +2057,17 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <span>★</span>
                 <span className="hidden sm:inline">Favorite</span>
               </button>
+              {currentPhoto && (
+                <a
+                  href={`/api/jobs/${job.id}/photos/${currentPhoto.id}/download`}
+                  download
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-graphite-100 text-graphite-700 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-200 dark:hover:bg-graphite-700 transition-colors"
+                  title="Download this photo"
+                >
+                  <span>⬇</span>
+                  <span className="hidden sm:inline">Save</span>
+                </a>
+              )}
               <div className="relative" ref={twilightMenuRef}>
                 {currentPhoto?.isTwilight ? (
                   <button

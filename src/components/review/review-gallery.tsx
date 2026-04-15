@@ -160,6 +160,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [enhanceLoading, setEnhanceLoading] = useState(false);
 
   const handleRegenerate = useCallback(async () => {
+    console.log("[regen] Button clicked", { currentPhotoId: currentPhoto?.id, instruction: customInstruction });
     if (!currentPhoto) return;
     const instruction = customInstruction.trim() || null;
     setEnhanceError(null);
@@ -174,12 +175,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }));
 
     try {
+      console.log("[regen] Calling enhance endpoint...");
       const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customInstructions: instruction }),
       });
+      console.log("[regen] Response status:", res.status);
       const data = await res.json();
+      console.log("[regen] Response data:", data);
 
       if (data.success) {
         setJob((prev) => ({

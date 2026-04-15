@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { checkRate } from "@/lib/rate-limit";
 import { enhancePhoto } from "@/lib/ai-enhance";
 
 export const maxDuration = 120;
@@ -13,6 +14,9 @@ export async function POST(
   const { jobId, photoId } = await params;
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
+
+  const rateErr = checkRate(access.userId, "enhance");
+  if (rateErr) return rateErr;
 
   const { preset } = await request.json();
   if (!preset) return NextResponse.json({ error: "preset required" }, { status: 400 });

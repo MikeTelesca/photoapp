@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { enhancePhoto, analyzePhoto } from "@/lib/ai-enhance";
 import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
+import { checkRate } from "@/lib/rate-limit";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 import { logActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-log";
@@ -50,6 +51,9 @@ export async function POST(
   const { jobId } = await params;
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
+
+  const rateErr = checkRate(access.userId, "enhance");
+  if (rateErr) return rateErr;
 
   log.info("[start-enhance] received", { jobId });
 

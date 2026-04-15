@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { checkRate } from "@/lib/rate-limit";
 
 export const maxDuration = 120;
 
@@ -11,6 +12,9 @@ export async function POST(
   const { jobId } = await params;
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
+
+  const rateErr = checkRate(access.userId, "ai-lite");
+  if (rateErr) return rateErr;
 
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });

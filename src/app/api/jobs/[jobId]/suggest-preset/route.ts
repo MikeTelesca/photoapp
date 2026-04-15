@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { checkRate } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
 
@@ -11,6 +12,9 @@ export async function POST(
   const { jobId } = await params;
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
+
+  const rateErr = checkRate(access.userId, "ai-lite");
+  if (rateErr) return rateErr;
 
   // Get 3 sample photos from the job (first, middle, last if available)
   const photos = await prisma.photo.findMany({

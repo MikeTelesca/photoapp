@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
+import { checkRate } from "@/lib/rate-limit";
 import { enhancePhoto } from "@/lib/ai-enhance";
 
 export const maxDuration = 120;
@@ -8,6 +9,9 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   const auth = await requireUser();
   if ("error" in auth) return auth.error;
+
+  const rateErr = checkRate(auth.userId, "enhance");
+  if (rateErr) return rateErr;
 
   const formData = await request.formData();
   const file = formData.get("file") as File | null;

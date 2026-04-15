@@ -120,6 +120,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
   const [mlsPreset, setMlsPreset] = useState("mls-hi");
 
+  // AI preset suggestion state
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestion, setSuggestion] = useState<{ preset: string; reasoning: string } | null>(null);
+
   // Batch re-enhance state
   const [batchPreset, setBatchPreset] = useState(initialJob.preset || "standard");
   const [batchFilter, setBatchFilter] = useState<"rejected" | "all">("rejected");
@@ -164,6 +168,24 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ preset: slug }),
     });
+  }
+
+  async function suggestPreset() {
+    setSuggesting(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/suggest-preset`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestion(data);
+      } else {
+        const err = await res.json();
+        addToast("error", err.error || "Preset suggestion failed");
+      }
+    } catch (e) {
+      addToast("error", "Preset suggestion failed");
+    } finally {
+      setSuggesting(false);
+    }
   }
 
   async function savePromptChanges() {
@@ -824,6 +846,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               ))}
             </select>
             <button
+              onClick={suggestPreset}
+              disabled={suggesting}
+              className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50"
+              title="AI analyzes sample photos and suggests the best preset"
+            >
+              {suggesting ? "Analyzing..." : "✨ Suggest preset"}
+            </button>
+            <button
               onClick={() => setShowPromptEditor(!showPromptEditor)}
               className="text-xs px-2 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 hover:bg-graphite-50"
               title="Edit prompt"
@@ -838,6 +868,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               {compareMode === "split" ? "Slider View" : "Split View"}
             </button>
           </div>
+          {suggestion && (
+            <div className="text-xs px-3 py-2 rounded bg-purple-50 border border-purple-200 flex items-center gap-2 hidden md:flex">
+              <span><strong>Suggested: {suggestion.preset}</strong> — {suggestion.reasoning}</span>
+              <button
+                onClick={() => { changePreset(suggestion.preset); setSuggestion(null); }}
+                className="ml-2 text-cyan-600 font-semibold hover:underline"
+              >Apply</button>
+              <button
+                onClick={() => setSuggestion(null)}
+                className="ml-1 text-graphite-400 hover:text-graphite-600"
+              >Dismiss</button>
+            </div>
+          )}
           <NotesPopover jobId={job.id} initialNotes={job.notes ?? null} />
           <button
             onClick={() => setShowWatermarkPanel(p => !p)}

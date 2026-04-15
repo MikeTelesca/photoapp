@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
 
     const roleFilter = role === "admin" ? {} : { photographerId: userId };
-    const where = status ? { ...roleFilter, status } : roleFilter;
+    const baseFilter = { ...roleFilter, deletedAt: null };
+    const where = status ? { ...baseFilter, status } : baseFilter;
 
     const jobs = await prisma.job.findMany({
       where,

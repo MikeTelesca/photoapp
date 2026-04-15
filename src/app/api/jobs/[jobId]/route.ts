@@ -122,10 +122,10 @@ export async function DELETE(
       );
     }
 
-    // Soft delete - preserve cost data
+    // Soft delete - move to trash (preserves cost data and allows restore)
     const deletedJob = await prisma.job.update({
       where: { id: jobId },
-      data: { status: "deleted" },
+      data: { status: "deleted", deletedAt: new Date() },
     });
 
     await logActivity({

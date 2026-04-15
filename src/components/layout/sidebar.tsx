@@ -49,6 +49,7 @@ const menuItems = [
   { label: "Templates", href: "/templates", icon: BookmarkIcon },
   { label: "Playground", href: "/playground", icon: BeakerIcon },
   { label: "Clients", href: "/clients", icon: UserGroupIcon },
+  { label: "🗑 Trash", href: "/trash", icon: ClockIcon },
 ];
 
 const settingsItems = [

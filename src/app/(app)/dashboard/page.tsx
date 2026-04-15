@@ -36,11 +36,11 @@ async function getStats(where: object) {
 
     const [totalJobs, processingJobs, reviewJobs, approvedToday, monthlyCost, totalImages] =
       await Promise.all([
-        prisma.job.count({ where: { ...where, status: { not: "deleted" } } }),
-        prisma.job.count({ where: { ...where, status: "processing" } }),
-        prisma.job.count({ where: { ...where, status: "review" } }),
+        prisma.job.count({ where: { ...where, status: { not: "deleted" }, deletedAt: null } }),
+        prisma.job.count({ where: { ...where, status: "processing", deletedAt: null } }),
+        prisma.job.count({ where: { ...where, status: "review", deletedAt: null } }),
         prisma.job.count({
-          where: { ...where, status: "approved", updatedAt: { gte: startOfDay } },
+          where: { ...where, status: "approved", deletedAt: null, updatedAt: { gte: startOfDay } },
         }),
         // Keep cost aggregation INCLUDING deleted jobs so monthly cost is preserved
         prisma.job.aggregate({
@@ -77,7 +77,7 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
   try {
     const baseWhere: any = {
       AND: [
-        { ...where, status: { not: "deleted" }, archivedAt: null },
+        { ...where, status: { not: "deleted" }, deletedAt: null, archivedAt: null },
         {
           OR: [
             { snoozedUntil: null },

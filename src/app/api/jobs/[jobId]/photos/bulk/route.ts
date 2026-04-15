@@ -32,6 +32,8 @@ export async function POST(
     case "clearStatus":
       data = { status: "edited", rejectionReason: null };
       break;
+    case "addNote":
+      return await handleBulkAppendNote(ids, jobId, value);
     default:
       return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   }
@@ -42,4 +44,21 @@ export async function POST(
   });
 
   return NextResponse.json({ count: result.count });
+}
+
+async function handleBulkAppendNote(ids: string[], jobId: string, text: string | undefined) {
+  if (!text || text.trim() === "") {
+    return NextResponse.json({ error: "Note text required" }, { status: 400 });
+  }
+  const photos = await prisma.photo.findMany({
+    where: { id: { in: ids }, jobId },
+    select: { id: true, note: true },
+  });
+  let count = 0;
+  for (const p of photos) {
+    const newNote = p.note ? `${p.note}\n${text}` : text;
+    await prisma.photo.update({ where: { id: p.id }, data: { note: newNote } });
+    count++;
+  }
+  return NextResponse.json({ count });
 }

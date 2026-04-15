@@ -218,6 +218,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Multi-select state
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
+  const [bulkNote, setBulkNote] = useState("");
 
   // Deep-link state
   const searchParams = useSearchParams();
@@ -990,6 +991,31 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       window.location.reload();
     } catch (err: any) {
       addToast("error", err.message || "Update failed");
+    }
+  }
+
+  async function applyBulkNote() {
+    if (!bulkNote.trim() || selectedPhotoIds.size === 0) return;
+    const selectedIds = Array.from(selectedPhotoIds);
+    if (!confirm(`Add note to ${selectedIds.length} selected photos?`)) return;
+
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds, action: "addNote", value: bulkNote }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Failed to add note");
+        return;
+      }
+      addToast("success", `Added note to ${data.count} photos`);
+      setBulkNote("");
+      setSelectedPhotoIds(new Set());
+      window.location.reload();
+    } catch (err: any) {
+      addToast("error", err.message || "Failed to add note");
     }
   }
 
@@ -1772,6 +1798,29 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               >
                 📦 Download
               </button>
+
+              <div className="flex gap-1 items-center">
+                <input
+                  type="text"
+                  value={bulkNote}
+                  onChange={(e) => setBulkNote(e.target.value)}
+                  placeholder="Note text"
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white w-40"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      applyBulkNote();
+                    }
+                  }}
+                />
+                <button
+                  onClick={applyBulkNote}
+                  disabled={!bulkNote.trim() || batching}
+                  className="text-xs px-2 py-1 rounded bg-slate-500 text-white font-semibold hover:bg-slate-600 disabled:opacity-60 whitespace-nowrap"
+                  title="Add note to selected photos"
+                >
+                  📝 Add note
+                </button>
+              </div>
 
               <button
                 onClick={() => { setSelectedPhotoIds(new Set()); setSelectMode(false); }}

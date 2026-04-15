@@ -409,6 +409,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [metaCaptionAppend, setMetaCaptionAppend] = useState(false);
   const [metaSaving, setMetaSaving] = useState(false);
 
+  // Batch tag edit modal state
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [tagAddInput, setTagAddInput] = useState("");
+  const [tagRemoveInput, setTagRemoveInput] = useState("");
+  const [tagSaving, setTagSaving] = useState(false);
+
   // Deep-link state
   const searchParams = useSearchParams();
   const [linkCopied, setLinkCopied] = useState(false);
@@ -1838,6 +1844,55 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function applyBatchTags() {
+    const selectedIds = Array.from(selectedPhotoIds);
+    if (selectedIds.length === 0) {
+      addToast("error", "No photos selected");
+      return;
+    }
+
+    const addTags = tagAddInput
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    const removeTags = tagRemoveInput
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+
+    if (addTags.length === 0 && removeTags.length === 0) {
+      addToast("error", "Enter tags to add or remove");
+      return;
+    }
+
+    setTagSaving(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/batch-tags`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoIds: selectedIds, addTags, removeTags }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Failed to update tags");
+        return;
+      }
+      addToast(
+        "success",
+        `Updated tags on ${data.count} photo${data.count === 1 ? "" : "s"}`
+      );
+      setShowTagModal(false);
+      setTagAddInput("");
+      setTagRemoveInput("");
+      setSelectedPhotoIds(new Set());
+      window.location.reload();
+    } catch (err: any) {
+      addToast("error", err.message || "Failed to update tags");
+    } finally {
+      setTagSaving(false);
+    }
+  }
+
   async function downloadSelected() {
     if (selectedPhotoIds.size === 0) return;
     if (!confirm(`Download ${selectedPhotoIds.size} selected photos as ZIP?`)) return;
@@ -3193,6 +3248,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 title="Edit caption / note / flag on selected photos"
               >
                 ✏ Edit Metadata
+              </button>
+
+              <button
+                onClick={() => setShowTagModal(true)}
+                disabled={batching}
+                className="text-xs px-2 py-1 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-60 whitespace-nowrap"
+                title="Add or remove tags on selected photos"
+              >
+                🏷 Tag
               </button>
 
               <button
@@ -4966,6 +5030,86 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-3 py-1.5 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 disabled:opacity-60"
               >
                 {metaSaving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch tag add/remove modal */}
+      {showTagModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !tagSaving && setShowTagModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg bg-white dark:bg-graphite-900 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-graphite-200 dark:border-graphite-700 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-graphite-900 dark:text-white">
+                Edit tags · {selectedPhotoIds.size} photo{selectedPhotoIds.size === 1 ? "" : "s"}
+              </h3>
+              <button
+                onClick={() => setShowTagModal(false)}
+                disabled={tagSaving}
+                className="text-graphite-500 hover:text-graphite-900 dark:hover:text-white disabled:opacity-60"
+                title="Close"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-4 py-3 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-graphite-700 dark:text-graphite-200 mb-1">
+                  Add tags
+                </label>
+                <input
+                  type="text"
+                  value={tagAddInput}
+                  onChange={(e) => setTagAddInput(e.target.value)}
+                  disabled={tagSaving}
+                  placeholder="kitchen, bright, staged"
+                  className="w-full text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
+                />
+                <p className="text-[11px] text-graphite-500 mt-1">
+                  Comma-separated. Merged with existing tags (case-insensitive dedupe).
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-graphite-700 dark:text-graphite-200 mb-1">
+                  Remove tags
+                </label>
+                <input
+                  type="text"
+                  value={tagRemoveInput}
+                  onChange={(e) => setTagRemoveInput(e.target.value)}
+                  disabled={tagSaving}
+                  placeholder="dark, blurry"
+                  className="w-full text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
+                />
+                <p className="text-[11px] text-graphite-500 mt-1">
+                  Comma-separated. Removed from existing tags (case-insensitive).
+                </p>
+              </div>
+            </div>
+
+            <div className="px-4 py-3 border-t border-graphite-200 dark:border-graphite-700 flex justify-end gap-2">
+              <button
+                onClick={() => setShowTagModal(false)}
+                disabled={tagSaving}
+                className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-100 dark:hover:bg-graphite-800 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={applyBatchTags}
+                disabled={tagSaving || (!tagAddInput.trim() && !tagRemoveInput.trim())}
+                className="text-xs px-3 py-1.5 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-60"
+              >
+                {tagSaving ? "Applying…" : "Apply"}
               </button>
             </div>
           </div>

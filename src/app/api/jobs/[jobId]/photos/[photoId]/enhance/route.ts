@@ -206,6 +206,7 @@ export async function POST(
           status: "pending",
           errorMessage: result.error || "Unknown error",
           errorAttempts: { increment: 1 },
+          retryCount: { increment: 1 },
         },
       });
       return NextResponse.json({ error: result.error }, { status: 500 });
@@ -296,6 +297,7 @@ export async function POST(
         status: "edited",
         errorMessage: null,
         errorAttempts: 0,
+        retryCount: 0,
         customInstructions: customInstructions || null,
         isTwilight: makeTwilight || photo.isTwilight,
         qualityFlags,

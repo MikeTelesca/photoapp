@@ -359,6 +359,7 @@ export async function POST(
           status: "pending",
           errorMessage: result.error || "Unknown error",
           errorAttempts: { increment: 1 },
+          retryCount: { increment: 1 },
         },
       });
       return NextResponse.json({ error: result.error, photoId: photo.id });
@@ -415,6 +416,7 @@ export async function POST(
           status: "pending",
           errorMessage: uploadErr,
           errorAttempts: { increment: 1 },
+          retryCount: { increment: 1 },
         },
       });
       return NextResponse.json({
@@ -445,7 +447,7 @@ export async function POST(
 
     await prisma.photo.update({
       where: { id: photo.id },
-      data: { editedUrl, status: "edited", errorMessage: null, errorAttempts: 0, qualityFlags },
+      data: { editedUrl, status: "edited", errorMessage: null, errorAttempts: 0, retryCount: 0, qualityFlags },
     });
 
     // Fire-and-forget auto-tagging — does not block enhance completion

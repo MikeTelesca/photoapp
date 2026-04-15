@@ -8,6 +8,7 @@ import { DailyChart } from "@/components/analytics/daily-chart";
 import { PhotographerCostChart } from "@/components/analytics/photographer-cost-chart";
 import { forecastCost } from "@/lib/forecast";
 import { ForecastChart } from "@/components/analytics/forecast-chart";
+import { CompletionTimeChart } from "@/components/analytics/completion-time-chart";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,38 @@ export default async function AnalyticsPage() {
       },
     }).catch(() => []),
   ]);
+
+  // Fetch recent jobs that reached review status for completion time chart
+  const recentReviewJobs = await prisma.job.findMany({
+    where: {
+      status: { in: ["review", "approved"] },
+      archivedAt: null,
+    },
+    select: {
+      id: true,
+      address: true,
+      createdAt: true,
+      updatedAt: true,
+      totalPhotos: true,
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 30,
+  });
+
+  const completionTimes = recentReviewJobs
+    .map(j => ({
+      address: j.address,
+      minutes: Math.round((j.updatedAt.getTime() - j.createdAt.getTime()) / 60000),
+      photos: j.totalPhotos,
+      perPhoto: j.totalPhotos > 0 ? Math.round((j.updatedAt.getTime() - j.createdAt.getTime()) / 1000 / j.totalPhotos) : 0,
+    }))
+    .filter(t => t.minutes > 0 && t.minutes < 24 * 60); // sanity bound
+
+  // Median per-photo seconds
+  const sortedPerPhoto = [...completionTimes].sort((a, b) => a.perPhoto - b.perPhoto);
+  const medianPerPhoto = sortedPerPhoto.length > 0
+    ? sortedPerPhoto[Math.floor(sortedPerPhoto.length / 2)].perPhoto
+    : 0;
 
   const photographerNames = await prisma.user.findMany({
     where: { id: { in: topPhotographers.map((p) => p.photographerId) } },
@@ -251,6 +284,24 @@ export default async function AnalyticsPage() {
               </div>
             </div>
             <ForecastChart data={chartData} />
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <h2 className="text-sm font-semibold dark:text-white">Time to completion</h2>
+                <div className="text-xs text-graphite-500 dark:text-graphite-400">
+                  Per-photo enhance time on last {completionTimes.length} jobs · Median: <strong className="text-cyan">{medianPerPhoto}s</strong>
+                </div>
+              </div>
+            </div>
+            {completionTimes.length === 0 ? (
+              <div className="text-center py-8 text-sm text-graphite-400">Need at least one completed job</div>
+            ) : (
+              <CompletionTimeChart data={completionTimes} median={medianPerPhoto} />
+            )}
           </div>
         </Card>
 

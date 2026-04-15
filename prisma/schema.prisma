@@ -133,7 +133,7 @@ model Photo {
   jobId                String
   job                  Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
   orderIndex           Int      @default(0)
-  status               String   @default("pending") // "pending", "processing", "edited", "approved", "rejected", "regenerating"
+  status               String   @default("pending") // "pending", "processing", "edited", "approved", "rejected", "regenerating", "failed"
   originalUrl          String?
   editedUrl            String?
   thumbnailUrl         String?
@@ -153,6 +153,8 @@ model Photo {
   heightPx             Int?
   errorMessage         String?
   errorAttempts        Int      @default(0)
+  retryCount           Int      @default(0)
+  maxRetries           Int      @default(3)
   qualityFlags         String?  // JSON: { blurry, underexposed, overexposed, lowContrast }
   autoTags             String?  // JSON array of detected tags: ["kitchen", "interior", "bright"]
   rejectionReason      String?

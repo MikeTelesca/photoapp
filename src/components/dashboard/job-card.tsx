@@ -129,6 +129,14 @@ function JobCardInternal({ job }: JobCardProps) {
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
             <DownloadButton jobId={job.id} />
+            <a
+              href={`/api/jobs/${job.id}/invoice`}
+              download
+              className="text-xs px-2 py-1 rounded border border-graphite-200 hover:bg-graphite-50 dark:border-graphite-700 dark:hover:bg-graphite-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Invoice
+            </a>
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />

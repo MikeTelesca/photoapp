@@ -21,6 +21,7 @@ export default async function SettingsPage() {
   const userId = session?.user?.id;
 
   let emailNotificationsEnabled = true;
+  let slackWebhookUrl: string | null = null;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -43,6 +44,7 @@ export default async function SettingsPage() {
         invoicePrefix: true,
       },
     });
+    slackWebhookUrl = user?.slackWebhookUrl ?? null;
     emailNotificationsEnabled = user?.emailNotifications ?? true;
     if (user) {
       invoiceSettings = {
@@ -158,6 +160,16 @@ export default async function SettingsPage() {
               </div>
               <EmailNotificationToggle initialEnabled={emailNotificationsEnabled} />
             </div>
+          </div>
+        </Card>
+
+        {/* Slack / Discord Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Slack / Discord notifications</CardTitle>
+          </CardHeader>
+          <div className="p-4">
+            <WebhookForm initial={slackWebhookUrl} />
           </div>
         </Card>
 

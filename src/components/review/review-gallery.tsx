@@ -997,6 +997,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               {generating ? "Writing..." : "✨ Generate listing"}
             </button>
           )}
+          {job.status === "approved" && (
+            <a
+              href={`/api/jobs/${job.id}/invoice`}
+              download
+              className="text-xs px-2 py-1.5 rounded border border-graphite-200 hover:bg-graphite-50 dark:border-graphite-700 dark:hover:bg-graphite-800"
+            >
+              Invoice
+            </a>
+          )}
           <ShareButton
             jobId={job.id}
             initialToken={job.shareToken ?? null}

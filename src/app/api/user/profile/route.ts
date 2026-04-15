@@ -12,6 +12,7 @@ export async function PATCH(request: NextRequest) {
   const {
     name,
     emailNotifications,
+    slackWebhookUrl,
     businessName,
     businessEmail,
     businessPhone,
@@ -31,6 +32,10 @@ export async function PATCH(request: NextRequest) {
 
   if (emailNotifications !== undefined) {
     updateData.emailNotifications = Boolean(emailNotifications);
+  }
+
+  if (slackWebhookUrl !== undefined) {
+    updateData.slackWebhookUrl = slackWebhookUrl?.trim() || null;
   }
 
   if (businessName !== undefined) updateData.businessName = businessName?.trim() || null;

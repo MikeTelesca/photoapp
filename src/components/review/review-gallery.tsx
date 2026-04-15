@@ -26,6 +26,7 @@ import { PhotoNote } from "./photo-note";
 import { BeforeAfterSlider } from "./before-after-slider";
 import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
+import { SaveTemplateButton } from "@/components/dashboard/save-template-button";
 import { ExifPanel } from "./exif-panel";
 import { PhotoVersions } from "./photo-versions";
 import { JobTimeline } from "./job-timeline";
@@ -1364,6 +1365,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               View folder →
             </a>
           )}
+          <SaveTemplateButton jobId={job.id} />
           <ShareButton
             jobId={job.id}
             initialToken={job.shareToken ?? null}

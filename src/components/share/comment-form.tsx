@@ -45,6 +45,7 @@ export function CommentForm({ token, photoId, initialComments }: Props) {
             <div key={c.id} className="bg-graphite-50 dark:bg-graphite-900 rounded p-2">
               <div className="font-semibold text-xs text-graphite-700 dark:text-graphite-200">{c.authorName}</div>
               <div className="text-xs text-graphite-600 dark:text-graphite-300 whitespace-pre-wrap">{c.message}</div>
+              <Reactions commentId={c.id} commentType="photo" initialReactions={c.reactions} />
             </div>
           ))}
         </div>

@@ -64,6 +64,25 @@ export default async function SharePage({
 
   const approvedPhotos = job.photos;
 
+  // Fetch reactions for all comments
+  const photosWithReactions = await Promise.all(
+    approvedPhotos.map(async (photo) => {
+      const commentsWithReactions = await Promise.all(
+        photo.comments.map(async (c) => {
+          const reactions = await prisma.commentReaction.findMany({
+            where: { commentId: c.id, commentType: "photo" },
+          });
+          const grouped: Record<string, number> = {};
+          for (const r of reactions) {
+            grouped[r.emoji] = (grouped[r.emoji] || 0) + 1;
+          }
+          return { ...c, reactions: grouped };
+        })
+      );
+      return { ...photo, comments: commentsWithReactions };
+    })
+  );
+
   return (
     <div className="min-h-screen bg-graphite-50">
       {/* Header */}
@@ -92,14 +111,14 @@ export default async function SharePage({
       </div>
       {/* Gallery */}
       <main className="max-w-5xl mx-auto px-4 py-8">
-        {approvedPhotos.length === 0 ? (
+        {photosWithReactions.length === 0 ? (
           <div className="text-center py-24 text-graphite-400">
             <p className="text-lg font-medium">No approved photos yet</p>
             <p className="text-sm mt-2">Check back soon — the photographer is still working on your gallery.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {approvedPhotos.map((photo) => {
+            {photosWithReactions.map((photo) => {
               const url = photo.editedUrl ?? photo.originalUrl;
               if (!url) return null;
               return (
@@ -139,6 +158,7 @@ export default async function SharePage({
                         authorName: c.authorName,
                         message: c.message,
                         createdAt: c.createdAt.toISOString(),
+                        reactions: c.reactions,
                       }))}
                     />
                   </div>

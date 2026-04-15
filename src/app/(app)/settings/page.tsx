@@ -11,6 +11,7 @@ import { MaintenanceActions } from "@/components/settings/maintenance-actions";
 import { AccountForm } from "@/components/settings/account-form";
 import { NotificationToggle } from "@/components/settings/notification-toggle";
 import { EmailNotificationToggle } from "@/components/settings/email-notification-toggle";
+import { WeeklyDigestToggle } from "@/components/settings/weekly-digest-toggle";
 import { InvoiceSettingsForm } from "@/components/settings/invoice-settings-form";
 import { WebhookForm } from "@/components/settings/webhook-form";
 import { TwoFactorForm } from "@/components/settings/two-factor-form";
@@ -26,6 +27,7 @@ export default async function SettingsPage() {
   const userId = session?.user?.id;
 
   let emailNotificationsEnabled = true;
+  let weeklyDigestEnabled = true;
   let slackWebhookUrl: string | null = null;
   let twoFactorEnabled = false;
   let watermarkLogoPath: string | null = null;
@@ -43,6 +45,7 @@ export default async function SettingsPage() {
       select: {
         slackWebhookUrl: true,
         emailNotifications: true,
+        weeklyDigest: true,
         twoFactorEnabled: true,
         businessName: true,
         businessEmail: true,
@@ -55,6 +58,7 @@ export default async function SettingsPage() {
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
     emailNotificationsEnabled = user?.emailNotifications ?? true;
+    weeklyDigestEnabled = user?.weeklyDigest ?? true;
     twoFactorEnabled = user?.twoFactorEnabled ?? false;
     watermarkLogoPath = user?.watermarkLogoPath ?? null;
     if (user) {
@@ -191,6 +195,14 @@ export default async function SettingsPage() {
                 <div className="text-xs text-graphite-400">Receive an email when jobs are ready for review</div>
               </div>
               <EmailNotificationToggle initialEnabled={emailNotificationsEnabled} />
+            </div>
+            <hr className="border-graphite-200" />
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-graphite-900">Weekly digest</div>
+                <div className="text-xs text-graphite-400">Summary of your jobs and spend each Monday</div>
+              </div>
+              <WeeklyDigestToggle initial={weeklyDigestEnabled} />
             </div>
           </div>
         </Card>

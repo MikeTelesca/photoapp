@@ -27,6 +27,7 @@ model User {
   twoFactorEnabled  Boolean  @default(false)
   twoFactorSecret   String?
   watermarkLogoPath String?  // internal Dropbox path to logo PNG
+  weeklyDigest      Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]

@@ -62,6 +62,56 @@ export function jobCompleteTemplate(opts: { address: string; photoCount: number;
   `;
 }
 
+export interface WeeklyDigestData {
+  name: string;
+  weekStart: string;
+  weekEnd: string;
+  jobCount: number;
+  photoCount: number;
+  approvedCount: number;
+  totalCost: number;
+  topAddress?: string;
+  dashboardUrl: string;
+}
+
+export function weeklyDigestTemplate(data: WeeklyDigestData) {
+  return `
+    <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+      <h1 style="color: #111; font-size: 24px;">Your week at a glance, ${escapeHtml(data.name)}</h1>
+      <p style="color: #666; font-size: 14px;">${data.weekStart} → ${data.weekEnd}</p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0;">
+        <div style="background: #f0fdfa; border-radius: 8px; padding: 16px;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Jobs</div>
+          <div style="font-size: 28px; font-weight: 700; color: #0891b2;">${data.jobCount}</div>
+        </div>
+        <div style="background: #f0fdfa; border-radius: 8px; padding: 16px;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Photos approved</div>
+          <div style="font-size: 28px; font-weight: 700; color: #0891b2;">${data.approvedCount} / ${data.photoCount}</div>
+        </div>
+        <div style="background: #f0fdfa; border-radius: 8px; padding: 16px;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Total spend</div>
+          <div style="font-size: 28px; font-weight: 700; color: #0891b2;">$${data.totalCost.toFixed(2)}</div>
+        </div>
+        <div style="background: #f0fdfa; border-radius: 8px; padding: 16px;">
+          <div style="font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Avg / photo</div>
+          <div style="font-size: 28px; font-weight: 700; color: #0891b2;">$${data.photoCount > 0 ? (data.totalCost / data.photoCount).toFixed(3) : "0.00"}</div>
+        </div>
+      </div>
+
+      ${data.topAddress ? `<p style="color: #444; font-size: 14px;">Top address this week: <strong>${escapeHtml(data.topAddress)}</strong></p>` : ""}
+
+      <p style="margin-top: 28px;">
+        <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #06b6d4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Open dashboard</a>
+      </p>
+
+      <p style="color: #999; font-size: 12px; margin-top: 40px;">
+        You can turn this digest off in Settings → Notifications.
+      </p>
+    </div>
+  `;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }

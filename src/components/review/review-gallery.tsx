@@ -50,6 +50,7 @@ import { ThumbHoverPreview } from "./thumb-hover-preview";
 import { PhotoPins } from "./photo-pins";
 import { CustomFieldsEditor } from "./custom-fields-editor";
 import { PhotoMinimap } from "./photo-minimap";
+import { JobColorPalette } from "./job-color-palette";
 
 interface Photo {
   id: string;
@@ -3026,6 +3027,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300">
             📋 Contact sheet
           </a>
+          {(job.status === "review" || job.status === "approved") && (
+            <JobColorPalette jobId={job.id} />
+          )}
           <a href={`/api/jobs/${job.id}/annotation-pdf`} download
             className="text-xs px-3 py-1.5 rounded border border-amber-400 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
             title="Download PDF with pin annotations">

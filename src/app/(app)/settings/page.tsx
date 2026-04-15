@@ -1,5 +1,7 @@
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { CommandLineIcon } from "@heroicons/react/24/outline";
 import { auth } from "@/lib/auth";
 import {
   CheckCircleIcon,
@@ -208,6 +210,22 @@ export default async function SettingsPage() {
             </div>
           </Card>
         )}
+
+        {/* Keyboard Shortcuts */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Keyboard & Input</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <Link href="/settings/keyboard" className="flex items-center gap-3 hover:bg-graphite-50 dark:hover:bg-graphite-800 p-3 rounded transition">
+              <CommandLineIcon className="w-5 h-5 text-graphite-600 dark:text-graphite-400" />
+              <div>
+                <div className="text-sm font-semibold text-graphite-900 dark:text-white">Keyboard Shortcuts</div>
+                <div className="text-xs text-graphite-400">Customize your keyboard bindings</div>
+              </div>
+            </Link>
+          </div>
+        </Card>
 
         {/* App Info */}
         <Card>

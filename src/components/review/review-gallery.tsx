@@ -27,6 +27,8 @@ import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
 import { ExifPanel } from "./exif-panel";
 import { useSwipe } from "@/hooks/use-swipe";
+import { getActionForKey } from "@/lib/keyboard-shortcuts";
+import { LazyThumb } from "./lazy-thumb";
 
 interface Photo {
   id: string;
@@ -715,50 +717,50 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      switch (e.key) {
-        case "a":
-        case "A":
+
+      const action = getActionForKey(e.key);
+
+      // Handle custom bindings
+      switch (action) {
+        case "approve":
           handleApprove();
           break;
-        case "r":
-        case "R":
+        case "reject":
           handleReject();
           break;
-        case "e":
-        case "E":
+        case "reenhance":
           handleRegenerate();
           break;
-        case "s":
-        case "S":
+        case "slider":
           setCompareMode(m => m === "split" ? "slider" : "split");
           break;
-        case "z":
-        case "Z":
+        case "zoom":
           setZoom(z => z === 1 ? 2 : 1);
           setPan({ x: 0, y: 0 });
           break;
-        case "Escape":
-          if (showPromptEditor || showMobileNav || twilightMenuOpen || showHelpOverlay) {
-            setShowPromptEditor(false);
-            setShowMobileNav(false);
-            setTwilightMenuOpen(false);
-            setShowHelpOverlay(false);
-          }
-          break;
-        case "f":
-        case "F":
+        case "favorite":
           handleFavorite();
           break;
-        case "?":
+        case "help":
           e.preventDefault();
           setShowHelpOverlay(prev => !prev);
           break;
-        case "ArrowRight":
+        case "next":
           goNext();
           break;
-        case "ArrowLeft":
+        case "prev":
           goPrev();
           break;
+      }
+
+      // Handle escape key (not customizable)
+      if (e.key === "Escape") {
+        if (showPromptEditor || showMobileNav || twilightMenuOpen || showHelpOverlay) {
+          setShowPromptEditor(false);
+          setShowMobileNav(false);
+          setTwilightMenuOpen(false);
+          setShowHelpOverlay(false);
+        }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -1343,18 +1345,18 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       >
                         <div className="relative w-full h-full">
                           {(photo.editedUrl && (photo.status === "edited" || photo.status === "approved")) ? (
-                            <img
+                            <LazyThumb
                               src={photo.editedUrl}
                               alt={`Photo ${idx + 1}`}
-                              loading="lazy"
-                              className="w-full h-full object-cover rounded-md"
+                              imgClassName="w-full h-full object-cover rounded-md"
+                              className="w-full h-full"
                             />
                           ) : (photo.originalUrl || photo.status !== "processing") ? (
-                            <img
+                            <LazyThumb
                               src={photo.originalUrl || `/api/jobs/${job.id}/photos/${photo.id}/original`}
                               alt={`Photo ${idx + 1}`}
-                              loading="lazy"
-                              className="w-full h-full object-cover rounded-md"
+                              imgClassName="w-full h-full object-cover rounded-md"
+                              className="w-full h-full"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-[9px] text-graphite-400 font-medium">

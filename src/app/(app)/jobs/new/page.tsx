@@ -19,6 +19,7 @@ import { TemplatePicker } from "@/components/jobs/template-picker";
 import { ClientPicker } from "@/components/jobs/client-picker";
 import { DuplicateWarning } from "@/components/jobs/duplicate-warning";
 import { TagAutocomplete } from "@/components/jobs/tag-autocomplete";
+import { SEASONAL_STYLES } from "@/lib/seasonal-styles";
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -37,6 +38,7 @@ function NewJobPageInner() {
   const [preset, setPreset] = useState("standard");
   const [tvStyle, setTvStyle] = useState("off");
   const [skyStyle, setSkyStyle] = useState("as-is");
+  const [seasonalStyle, setSeasonalStyle] = useState<string>("");
   const [watermarkText, setWatermarkText] = useState("");
   const [watermarkPosition, setWatermarkPosition] = useState("bottom-right");
   const [watermarkSize, setWatermarkSize] = useState(32);
@@ -150,6 +152,7 @@ function NewJobPageInner() {
           preset,
           tvStyle,
           skyStyle,
+          seasonalStyle,
           watermarkText: watermarkText.trim() || null,
           watermarkPosition,
           watermarkSize,
@@ -546,6 +549,43 @@ function NewJobPageInner() {
                     <span className="text-[10px] text-graphite-400">{opt.desc}</span>
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Seasonal Style */}
+            <div>
+              <label className="block text-sm font-semibold text-graphite-900 mb-2">
+                Seasonal style <span className="text-xs font-normal text-graphite-400">(optional)</span>
+              </label>
+              <div className="flex gap-1 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setSeasonalStyle("")}
+                  className={`text-xs px-3 py-1.5 rounded border transition-all ${
+                    seasonalStyle === ""
+                      ? "bg-cyan text-white border-cyan font-semibold"
+                      : "border-graphite-200 dark:border-graphite-700 text-graphite-700 dark:text-graphite-300 hover:border-graphite-300"
+                  }`}
+                >
+                  None
+                </button>
+                {SEASONAL_STYLES.map((s) => (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setSeasonalStyle(s.key)}
+                    className={`text-xs px-3 py-1.5 rounded border transition-all ${
+                      seasonalStyle === s.key
+                        ? "bg-cyan text-white border-cyan font-semibold"
+                        : "border-graphite-200 dark:border-graphite-700 text-graphite-700 dark:text-graphite-300 hover:border-graphite-300"
+                    }`}
+                  >
+                    {s.emoji} {s.name}
+                  </button>
+                ))}
+              </div>
+              <div className="text-[10px] text-graphite-400 mt-1">
+                Adds a seasonal mood bias to the editing prompt
               </div>
             </div>
 

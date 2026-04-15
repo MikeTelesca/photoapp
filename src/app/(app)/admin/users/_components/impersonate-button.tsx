@@ -1,21 +1,20 @@
 "use client";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export function ImpersonateButton({ userId, userName }: { userId: string; userName: string }) {
-  const { update } = useSession();
   const router = useRouter();
 
   async function start() {
-    if (!confirm(`View as ${userName}?`)) return;
-    const res = await fetch("/api/admin/impersonate", {
+    if (!confirm(`Impersonate ${userName}? Every action will be logged.`)) return;
+    const res = await fetch(`/api/admin/impersonate/${userId}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
     });
     if (res.ok) {
-      await update({ impersonatedUserId: userId });
       router.push("/");
+      router.refresh();
+    } else {
+      const msg = await res.text();
+      alert(`Impersonation failed: ${msg}`);
     }
   }
 
@@ -23,8 +22,9 @@ export function ImpersonateButton({ userId, userName }: { userId: string; userNa
     <button
       onClick={start}
       className="text-xs px-2 py-1 rounded bg-purple-500 text-white hover:bg-purple-600"
+      title="Impersonate this user"
     >
-      View as
+      🕵 Impersonate
     </button>
   );
 }

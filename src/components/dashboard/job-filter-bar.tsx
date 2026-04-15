@@ -48,6 +48,10 @@ export function JobFilterBar({ jobs }: Props) {
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [density, setDensity] = useState<Density>("normal");
+  const [showAssignClientModal, setShowAssignClientModal] = useState(false);
+  const [clients, setClients] = useState<Array<{ id: string; name: string; email?: string | null }>>([]);
+  const [clientSearch, setClientSearch] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState<string | null | "__clear__">(null);
 
   // On mount, hydrate filter state from URL params
   useEffect(() => {
@@ -339,6 +343,60 @@ export function JobFilterBar({ jobs }: Props) {
     }
   };
 
+  const openAssignClient = async () => {
+    if (selected.size === 0) return;
+    setShowAssignClientModal(true);
+    setClientSearch("");
+    setSelectedClientId(null);
+    try {
+      const res = await fetch("/api/clients");
+      if (res.ok) {
+        const data = await res.json();
+        setClients(Array.isArray(data) ? data : data.clients || []);
+      }
+    } catch (error) {
+      console.error("Error loading clients:", error);
+    }
+  };
+
+  const bulkAssignClient = async () => {
+    if (selected.size === 0 || selectedClientId === null) return;
+
+    const clientId = selectedClientId === "__clear__" ? null : selectedClientId;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/jobs/bulk-assign-client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobIds: Array.from(selected), clientId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const msg = clientId
+          ? `Assigned ${data.count} job(s) to ${data.clientName}`
+          : `Cleared client from ${data.count} job(s)`;
+        // Lightweight toast — fall back to alert if none available
+        if (typeof window !== "undefined") {
+          const evt = new CustomEvent("ath-toast", { detail: { message: msg, type: "success" } });
+          window.dispatchEvent(evt);
+        }
+        alert(msg);
+        setShowAssignClientModal(false);
+        setSelected(new Set());
+        window.location.reload();
+      } else {
+        alert("Failed to assign client");
+      }
+    } catch (error) {
+      console.error("Error assigning client:", error);
+      alert("Error assigning client");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   function applyFilter(f: SavedFilter) {
     setSearch(f.search || "");
     setStatus(f.status || "all");
@@ -396,6 +454,13 @@ export function JobFilterBar({ jobs }: Props) {
             className="px-3 py-1 rounded bg-red-500 text-white text-xs font-semibold hover:bg-red-600 disabled:opacity-50"
           >
             Delete
+          </button>
+          <button
+            onClick={openAssignClient}
+            disabled={isLoading}
+            className="px-3 py-1 rounded bg-indigo-500 text-white text-xs font-semibold hover:bg-indigo-600 disabled:opacity-50"
+          >
+            👤 Assign Client
           </button>
 
           <div className="flex gap-1 items-center ml-2">
@@ -606,6 +671,96 @@ export function JobFilterBar({ jobs }: Props) {
             </div>
           </div>
         ))
+      )}
+      {showAssignClientModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => !isLoading && setShowAssignClientModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-graphite-900 rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-1 text-graphite-900 dark:text-white">
+              Assign Client
+            </h2>
+            <p className="text-xs text-graphite-500 dark:text-graphite-400 mb-4">
+              Assign {selected.size} selected job(s) to a client
+            </p>
+            <input
+              type="text"
+              autoFocus
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              placeholder="Search clients..."
+              className="w-full px-3 py-2 text-sm rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-white focus:outline-none focus:border-cyan mb-3"
+            />
+            <div className="max-h-60 overflow-y-auto border border-graphite-200 dark:border-graphite-700 rounded">
+              <button
+                type="button"
+                onClick={() => setSelectedClientId("__clear__")}
+                className={`w-full text-left px-3 py-2 text-sm border-b border-graphite-100 dark:border-graphite-800 ${
+                  selectedClientId === "__clear__"
+                    ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan"
+                    : "hover:bg-graphite-50 dark:hover:bg-graphite-800 text-graphite-700 dark:text-graphite-200"
+                }`}
+              >
+                <span className="italic">— Clear client —</span>
+              </button>
+              {clients
+                .filter((c) => {
+                  if (!clientSearch.trim()) return true;
+                  const q = clientSearch.toLowerCase();
+                  return (
+                    c.name.toLowerCase().includes(q) ||
+                    (c.email || "").toLowerCase().includes(q)
+                  );
+                })
+                .map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedClientId(c.id)}
+                    className={`w-full text-left px-3 py-2 text-sm border-b border-graphite-100 dark:border-graphite-800 ${
+                      selectedClientId === c.id
+                        ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan"
+                        : "hover:bg-graphite-50 dark:hover:bg-graphite-800 text-graphite-700 dark:text-graphite-200"
+                    }`}
+                  >
+                    <div className="font-medium">{c.name}</div>
+                    {c.email && (
+                      <div className="text-xs text-graphite-500 dark:text-graphite-400">
+                        {c.email}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              {clients.length === 0 && (
+                <div className="px-3 py-4 text-sm text-center text-graphite-400">
+                  No clients yet
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => setShowAssignClientModal(false)}
+                disabled={isLoading}
+                className="px-4 py-2 text-sm rounded border border-graphite-200 dark:border-graphite-700 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={bulkAssignClient}
+                disabled={isLoading || selectedClientId === null}
+                className="px-4 py-2 text-sm rounded bg-cyan text-white font-semibold hover:bg-cyan-600 disabled:opacity-50"
+              >
+                {isLoading ? "Applying..." : "Apply"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

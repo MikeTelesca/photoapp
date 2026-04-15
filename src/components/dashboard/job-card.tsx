@@ -12,6 +12,7 @@ import { SaveTemplateButton } from "@/components/dashboard/save-template-button"
 import { EditTagsButton } from "@/components/dashboard/edit-tags-button";
 import { ArchiveButton } from "@/components/dashboard/archive-button";
 import { EtaBadge } from "@/components/dashboard/eta-badge";
+import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -28,6 +29,7 @@ const dotColors: Record<string, string> = {
 
 function JobCardInternal({ job }: JobCardProps) {
   const [isStarting, setIsStarting] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const progress = job.totalPhotos > 0 ? Math.round((job.processedPhotos / job.totalPhotos) * 100) : 0;
 
   async function handleStartProcessing(e: React.MouseEvent) {
@@ -59,8 +61,9 @@ function JobCardInternal({ job }: JobCardProps) {
       );
 
   return (
-    <Wrapper className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0">
-      <div className="flex items-center gap-3">
+    <>
+      <Wrapper className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0">
+        <div className="flex items-center gap-3">
         <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
         <div>
           <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{job.address}</div>
@@ -132,14 +135,16 @@ function JobCardInternal({ job }: JobCardProps) {
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
             <DownloadButton jobId={job.id} />
-            <a
-              href={`/api/jobs/${job.id}/invoice`}
-              download
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setPreviewOpen(true);
+              }}
               className="text-xs px-2 py-1 rounded border border-graphite-200 hover:bg-graphite-50 dark:border-graphite-700 dark:hover:bg-graphite-800"
-              onClick={(e) => e.stopPropagation()}
             >
               Invoice
-            </a>
+            </button>
             <a
               href={`/api/jobs/${job.id}/pdf-gallery`}
               download
@@ -157,6 +162,8 @@ function JobCardInternal({ job }: JobCardProps) {
         )}
       </div>
     </Wrapper>
+    <InvoicePreviewModal jobId={job.id} open={previewOpen} onClose={() => setPreviewOpen(false)} />
+    </>
   );
 }
 

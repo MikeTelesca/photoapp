@@ -18,7 +18,7 @@ import {
 import { TemplatePicker } from "@/components/jobs/template-picker";
 import { ClientPicker } from "@/components/jobs/client-picker";
 import { DuplicateWarning } from "@/components/jobs/duplicate-warning";
-import { TagAutocomplete } from "@/components/jobs/tag-autocomplete";
+import { TagInput } from "@/components/common/tag-input";
 import { SEASONAL_STYLES } from "@/lib/seasonal-styles";
 
 function formatFileSize(bytes: number): string {
@@ -508,11 +508,10 @@ function NewJobPageInner() {
                 <TagIcon className="w-4 h-4 text-graphite-500" />
                 Tags <span className="text-xs font-normal text-graphite-400">(comma-separated, optional)</span>
               </label>
-              <TagAutocomplete
+              <TagInput
                 value={tags}
                 onChange={setTags}
                 placeholder="e.g. luxury, condo, urgent"
-                className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
               />
             </div>
 

@@ -1,12 +1,14 @@
 "use client";
 import { useState } from "react";
-import { TagAutocomplete } from "@/components/jobs/tag-autocomplete";
+import { TagInput } from "@/components/common/tag-input";
 
 export function EditTagsButton({ jobId, initial }: { jobId: string; initial: string }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(initial);
+  const [saving, setSaving] = useState(false);
 
   async function save() {
+    setSaving(true);
     await fetch(`/api/jobs/${jobId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -18,24 +20,34 @@ export function EditTagsButton({ jobId, initial }: { jobId: string; initial: str
 
   if (editing) {
     return (
-      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-        <TagAutocomplete
+      <div
+        className="flex flex-col gap-1 w-56"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <TagInput
           autoFocus
           value={value}
           onChange={setValue}
-          placeholder="comma,separated,tags"
-          className="text-[10px] px-1 py-0.5 rounded border border-graphite-300 w-32"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") save();
-            if (e.key === "Escape") setEditing(false);
-          }}
+          placeholder="Add a tag…"
         />
-        <button
-          onClick={save}
-          className="text-[10px] text-cyan font-semibold"
-        >
-          save
-        </button>
+        <div className="flex gap-2 text-[10px]">
+          <button
+            onClick={save}
+            disabled={saving}
+            className="text-cyan font-semibold hover:text-cyan-dark disabled:opacity-50"
+          >
+            {saving ? "saving…" : "save"}
+          </button>
+          <button
+            onClick={() => {
+              setValue(initial);
+              setEditing(false);
+            }}
+            className="text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-200"
+          >
+            cancel
+          </button>
+        </div>
       </div>
     );
   }

@@ -137,6 +137,14 @@ function JobCardInternal({ job }: JobCardProps) {
             >
               Invoice
             </a>
+            <a
+              href={`/api/jobs/${job.id}/pdf-gallery`}
+              download
+              className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              PDF
+            </a>
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />

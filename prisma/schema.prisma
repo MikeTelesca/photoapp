@@ -35,6 +35,7 @@ model User {
   clients            Client[]
   passwordResetTokens PasswordResetToken[]
   loginRecords       LoginRecord[]
+  notifications      Notification[]
 }
 
 model LoginRecord {
@@ -229,6 +230,21 @@ model PasswordResetToken {
 
   @@index([token])
   @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // "job-ready", "photo-failed", "client-comment", "digest"
+  title     String
+  body      String?
+  href      String?  // link to act on it
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
 
 model Announcement {

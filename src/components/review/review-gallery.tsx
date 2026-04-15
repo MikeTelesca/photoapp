@@ -1174,6 +1174,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               Invoice
             </a>
           )}
+          {job.status === "approved" && (
+            <a
+              href={`/api/jobs/${job.id}/pdf-gallery`}
+              download
+              className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+            >
+              📄 PDF Gallery
+            </a>
+          )}
           <ShareButton
             jobId={job.id}
             initialToken={job.shareToken ?? null}

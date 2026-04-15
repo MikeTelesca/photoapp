@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { detectJobTwilight } from "@/lib/twilight-detect";
 
 export const dynamic = "force-dynamic";
 
@@ -146,6 +147,18 @@ export async function POST(
   }
 
   await prisma.photo.createMany({ data: photoRecords });
+
+  // Auto-detect twilight from EXIF data
+  const isTwilight = detectJobTwilight(photoRecords.map(p => p.exifData));
+  if (isTwilight) {
+    const jobRecord = await prisma.job.findUnique({ where: { id: jobId } });
+    if (jobRecord && !jobRecord.seasonalStyle) {
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { seasonalStyle: "twilight" },
+      });
+    }
+  }
 
   return NextResponse.json({ added: groupCount, files: imageFiles.length });
 }

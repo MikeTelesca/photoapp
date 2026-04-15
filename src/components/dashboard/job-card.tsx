@@ -107,6 +107,9 @@ function JobCardInternal({ job }: JobCardProps) {
                 Low
               </span>
             )}
+            {job.seasonalStyle === "twilight" && (
+              <span className="text-[10px] title='Twilight style detected'">🌆</span>
+            )}
             {(() => {
               const stale = checkStale({ status: job.status, createdAt: job.createdAt, updatedAt: job.updatedAt });
               if (!stale.isStale) return null;

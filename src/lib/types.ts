@@ -4,6 +4,7 @@ export type UserRole = "admin" | "photographer";
 export type PresetName = "standard" | "bright-airy" | "luxury" | "mls-standard" | "custom";
 export type TvStyle = "netflix" | "black" | "beach" | "mountains" | "fireplace" | "art" | "off";
 export type SkyStyle = "blue-clouds" | "clear-blue" | "golden-hour" | "dramatic" | "overcast-soft" | "as-is";
+export type SeasonalStyle = "spring" | "summer" | "autumn" | "winter" | "twilight";
 
 export interface Job {
   id: string;
@@ -13,6 +14,7 @@ export interface Job {
   preset: PresetName;
   tvStyle?: TvStyle;
   skyStyle?: SkyStyle;
+  seasonalStyle?: SeasonalStyle | null;
   priority?: string;
   status: JobStatus;
   totalPhotos: number;

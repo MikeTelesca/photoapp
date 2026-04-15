@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { detectJobTwilight } from "./twilight-detect";
 
 export interface IngestResult {
   jobId: string;
@@ -144,6 +145,9 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
 
     await prisma.photo.createMany({ data: photoRecords });
 
+    // Auto-detect twilight from EXIF data
+    const isTwilight = detectJobTwilight(photoRecords.map(p => p.exifData));
+
     // Set to "review" for now — enhance will be triggered separately
     await prisma.job.update({
       where: { id: jobId },
@@ -151,6 +155,7 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
         status: "review",
         totalPhotos: groupCount,
         processedPhotos: 0,
+        ...(isTwilight && !job.seasonalStyle && { seasonalStyle: "twilight" }),
       },
     });
 

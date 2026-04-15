@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
   Squares2X2Icon,
+  CalendarDaysIcon,
   EyeIcon,
   ArrowPathIcon,
   CheckCircleIcon,
@@ -40,6 +41,7 @@ import { SidebarBadge } from "@/components/layout/sidebar-badge";
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
+  { label: "Calendar", href: "/calendar", icon: CalendarDaysIcon },
   { label: "Search", href: "/search", icon: MagnifyingGlassIcon },
   { label: "Needs Review", href: "/dashboard?filter=review", icon: EyeIcon },
   { label: "Processing", href: "/dashboard?filter=processing", icon: ArrowPathIcon },
@@ -61,6 +63,7 @@ const settingsItems = [
   { label: "Errors", href: "/admin/errors", icon: ExclamationTriangleIcon },
   { label: "Health", href: "/admin/health", icon: HeartIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },
+  { label: "🎨 Portfolio", href: "/settings/portfolio", icon: Cog6ToothIcon },
 ];
 
 const helpItems = [

@@ -107,6 +107,7 @@ export default async function SettingsPage() {
           <NavCard href="/settings/keyboard" title="Keyboard shortcuts" desc="Customize key bindings" icon="⌨️" />
           <NavCard href="/settings/sessions" title="Sessions" desc="Recent sign-in activity" icon="🔐" />
           <NavCard href="/settings/api-keys" title="API keys" desc="External integrations access" icon="🔑" />
+          <NavCard href="/settings/snippets" title="Note snippets" desc="Save and reuse note templates" icon="💬" />
           <NavCard href="/templates" title="Job templates" desc="Reusable job configs" icon="📋" />
           <NavCard href="/presets" title="Presets" desc="Enhancement prompt presets" icon="🎨" />
           <NavCard href="/billing" title="Billing" desc="Usage and invoices" icon="💳" />

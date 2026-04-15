@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { SnippetPicker } from "@/components/notes/snippet-picker";
 
 interface Props {
   jobId: string;
@@ -73,23 +74,26 @@ export function PhotoNote({ jobId, photoId, initialNote }: Props) {
 
   return (
     <div className="flex flex-col gap-1">
-      <textarea
-        autoFocus
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        onBlur={() => {
-          setEditing(false);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            setNote(lastSavedRef.current);
+      <div className="flex items-start gap-2">
+        <textarea
+          autoFocus
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          onBlur={() => {
             setEditing(false);
-          }
-        }}
-        placeholder="Photo note (auto-saves)"
-        rows={2}
-        className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white w-64 max-w-full"
-      />
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setNote(lastSavedRef.current);
+              setEditing(false);
+            }
+          }}
+          placeholder="Photo note (auto-saves)"
+          rows={2}
+          className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white w-64 max-w-full flex-1"
+        />
+        <SnippetPicker category="photo" onInsert={(text) => setNote(prev => prev ? `${prev}\n${text}` : text)} />
+      </div>
       <div className="text-[10px] text-graphite-400">
         {saving ? "Saving..." : savedAt ? "Saved ✓" : "Auto-saves"}
       </div>

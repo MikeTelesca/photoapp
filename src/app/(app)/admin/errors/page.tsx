@@ -21,9 +21,18 @@ export default async function ErrorsPage() {
       <div className="p-6">
         <Card>
           <div className="p-4">
-            <div className="flex justify-between mb-3">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold dark:text-white">Recent errors ({errors.length})</h2>
-              <span className="text-xs text-graphite-400">Last 200 entries</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-graphite-400">Last 200 entries</span>
+                <a
+                  href="/api/admin/errors/export"
+                  download
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-50 dark:hover:bg-graphite-800 dark:text-graphite-300 transition-colors"
+                >
+                  Export CSV
+                </a>
+              </div>
             </div>
             {errors.length === 0 ? (
               <div className="text-center py-8 text-sm text-graphite-400">No errors logged</div>

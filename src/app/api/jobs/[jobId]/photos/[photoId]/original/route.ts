@@ -16,8 +16,21 @@ export async function GET(
     const photo = await prisma.photo.findUnique({ where: { id: photoId } });
     const job = await prisma.job.findUnique({ where: { id: jobId } });
 
-    if (!photo || !job || !job.dropboxUrl) {
+    if (!photo || !job) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Fast-path: if the photo has a direct URL stored, 302-redirect the browser
+    // to it instead of streaming through this server. Avoids a Dropbox API hit
+    // plus sharp resize on every page load.
+    const directUrl = photo.originalUrl || photo.editedUrl;
+    if (directUrl) {
+      return NextResponse.redirect(directUrl, { status: 302 });
+    }
+
+    if (!job.dropboxUrl) {
+      // Nothing to fall back on — avoid hanging the client.
+      return NextResponse.json({ error: "No source URL available" }, { status: 404 });
     }
 
     // Get the first file path from the bracket group

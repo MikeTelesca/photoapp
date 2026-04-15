@@ -501,6 +501,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     return localStorage.getItem("ath-focus-mode-default") === "true";
   });
 
+  // Collapse secondary toolbar actions behind a "More" toggle (remembered per-user)
+  const [showMoreActions, setShowMoreActions] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ath-review-more-open") === "true";
+  });
+  function toggleMoreActions() {
+    setShowMoreActions(v => {
+      const next = !v;
+      try { localStorage.setItem("ath-review-more-open", next ? "true" : "false"); } catch {}
+      return next;
+    });
+  }
+
   // Undo/Redo stacks for photo-level actions (client-side, in-memory)
   type UndoEntryType = "status" | "favorited" | "flagged" | "colorLabel" | "retouchRequest";
   type UndoEntry = {

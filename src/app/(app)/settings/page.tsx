@@ -12,6 +12,7 @@ import { AccountForm } from "@/components/settings/account-form";
 import { NotificationToggle } from "@/components/settings/notification-toggle";
 import { EmailNotificationToggle } from "@/components/settings/email-notification-toggle";
 import { WeeklyDigestToggle } from "@/components/settings/weekly-digest-toggle";
+import { DailySummaryToggle } from "@/components/settings/daily-summary-toggle";
 import { InvoiceSettingsForm } from "@/components/settings/invoice-settings-form";
 import { WebhookForm } from "@/components/settings/webhook-form";
 import { TwoFactorForm } from "@/components/settings/two-factor-form";
@@ -134,6 +135,7 @@ export default async function SettingsPage() {
               <NavCard href="/admin/errors" title="Error log" desc="Recent failures" icon="⚠️" />
               <NavCard href="/admin/announcements" title="Announcements" desc="Site-wide banners" icon="📣" />
               <NavCard href="/admin/flags" title="Feature flags" desc="Toggle features" icon="🚩" />
+              <NavCard href="/admin/preset-stats" title="Preset stats" desc="Usage metrics by preset" icon="📊" />
             </div>
           </>
         )}

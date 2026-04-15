@@ -44,6 +44,7 @@ import { Slideshow } from "./slideshow";
 import { PromptLinter } from "@/components/presets/prompt-linter";
 import { TimeTracker } from "./time-tracker";
 import { ReminderButton } from "./reminder-button";
+import { ThumbHoverPreview } from "./thumb-hover-preview";
 
 interface Photo {
   id: string;
@@ -200,6 +201,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
   const [sortBy, setSortBy] = useState<"order" | "name" | "date" | "flagged" | "rejected">("order");
   const [sorting, setSorting] = useState(false);
+  const [tagging, setTagging] = useState(false);
   const [tagFilter, setTagFilter] = useState<string>("");
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
   const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
@@ -247,6 +249,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [translating, setTranslating] = useState(false);
   const [translation, setTranslation] = useState<{ lang: string; text: string } | null>(null);
   const [translateLang, setTranslateLang] = useState("es");
+
+  // Hover preview state
+  const [hoverPreview, setHoverPreview] = useState<{ src: string; x: number; y: number } | null>(null);
+  const [hoverEnabled, setHoverEnabled] = useState(true);
   const [feedback, setFeedback] = useState("");
 
   // Crop suggestion state
@@ -275,6 +281,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Dropbox sync state
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ ok: boolean; uploaded: number; failed: number; folderPath: string; shareLink: string | null } | null>(null);
+
+  // Load hover preview preference
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("disable-hover-preview") === "true") {
+      setHoverEnabled(false);
+    }
+  }, []);
 
   // Load view mode from localStorage on mount
   useEffect(() => {
@@ -1412,6 +1426,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function handleTagAllPhotos() {
+    if (!confirm("Auto-tag all photos in this job that don't have tags yet? Costs ~$0.001 per photo.")) return;
+    setTagging(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/auto-tag`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Tagged ${data.tagged} photos${data.failed > 0 ? ` (${data.failed} failed)` : ""}`);
+        window.location.reload();
+      } else {
+        alert(data.error || "Failed to tag photos");
+      }
+    } catch (err) {
+      alert("Error tagging photos");
+      console.error(err);
+    } finally {
+      setTagging(false);
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen">
       {/* Top Bar */}
@@ -2134,6 +2168,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             >
               {sorting ? "Sorting..." : "🪄 Smart sort"}
             </button>
+            {/* Tag all photos button */}
+            <button
+              onClick={handleTagAllPhotos}
+              disabled={tagging}
+              title="AI auto-tags all photos in this job that don't have tags yet"
+              className="text-[9px] px-1.5 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 disabled:opacity-50 disabled:cursor-not-allowed w-full font-semibold"
+            >
+              {tagging ? "Tagging..." : "🏷️ Tag all"}
+            </button>
             {/* Select mode toggle */}
             <button
               onClick={() => {
@@ -2180,6 +2223,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                     <SortableThumb key={photo.id} id={photo.id}>
                       <button
                         onClick={() => setCurrentIndex(sortedPhotos.findIndex(p => p.id === photo.id))}
+                        onMouseEnter={(e) => {
+                          if (!hoverEnabled) return;
+                          const src = photo.editedUrl || photo.originalUrl || "";
+                          setHoverPreview({ src, x: e.clientX, y: e.clientY });
+                        }}
+                        onMouseMove={(e) => {
+                          if (!hoverEnabled || !hoverPreview) return;
+                          setHoverPreview({ ...hoverPreview, x: e.clientX, y: e.clientY });
+                        }}
+                        onMouseLeave={() => setHoverPreview(null)}
                         className={`relative w-[84px] h-[56px] rounded-md flex-shrink-0 transition-all duration-150 border-2 ${
                           idx === currentIndex
                             ? "border-cyan shadow-sm"
@@ -3092,6 +3145,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       )}
 
       <InvoicePreviewModal jobId={job.id} open={invoicePreviewOpen} onClose={() => setInvoicePreviewOpen(false)} />
+      {hoverPreview && (
+        <ThumbHoverPreview
+          src={hoverPreview.src}
+          visible={true}
+          x={hoverPreview.x}
+          y={hoverPreview.y}
+        />
+      )}
     </div>
   );
 }

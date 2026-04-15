@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { UserGroupIcon, EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import { AddClientModal } from "@/components/clients/add-client-modal";
+import { ImportClientsButton } from "@/components/clients/import-button";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -36,16 +37,19 @@ export default async function ClientsPage() {
     <>
       <Topbar title="Clients" subtitle="Manage your realtor and client contacts" />
       <div className="p-6 max-w-3xl">
-        <div className="flex items-center justify-between mb-5">
-          {clients.length > 0 && (
-            <a
-              href="/api/clients/export"
-              download
-              className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-50 dark:hover:bg-graphite-800 dark:text-graphite-300 transition-colors"
-            >
-              Export CSV
-            </a>
-          )}
+        <div className="flex items-center justify-between gap-2 mb-5">
+          <div className="flex items-center gap-2">
+            {clients.length > 0 && (
+              <a
+                href="/api/clients/export"
+                download
+                className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-50 dark:hover:bg-graphite-800 dark:text-graphite-300 transition-colors"
+              >
+                Export CSV
+              </a>
+            )}
+            <ImportClientsButton />
+          </div>
           <AddClientModal />
         </div>
         {clients.length === 0 ? (

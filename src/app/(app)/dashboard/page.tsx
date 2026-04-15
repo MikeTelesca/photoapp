@@ -8,6 +8,8 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { RecentActivityWidget } from "@/components/dashboard/recent-activity-widget";
 import { NotificationHandler } from "@/components/notifications/notification-handler";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
+import { WidgetWrapper } from "@/components/dashboard/widget-wrapper";
+import { CustomizeButton } from "@/components/dashboard/customize-button";
 import {
   FolderIcon,
   ArrowPathIcon,
@@ -140,7 +142,7 @@ export default async function DashboardPage({
         status: j.status,
       }))} />
       <OnboardingTour hasJobs={jobs.length > 0} />
-      <Topbar title="Dashboard" subtitle="Manage your photo editing jobs" />
+      <Topbar title="Dashboard" subtitle="Manage your photo editing jobs" actions={<CustomizeButton />} />
       <div className="p-6">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -178,14 +180,22 @@ export default async function DashboardPage({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
           <JobList jobs={jobs} />
           <div className="flex flex-col gap-4">
-            <QuickActions />
-            <CostTracker
-              amount={stats.monthlyCost}
-              imageCount={stats.totalImages}
-              budget={150}
-            />
-            <RecentActivityWidget userId={userId || ""} isAdmin={userRole === "admin"} />
-            <ActivityFeed />
+            <WidgetWrapper widgetKey="quick-actions">
+              <QuickActions />
+            </WidgetWrapper>
+            <WidgetWrapper widgetKey="cost-tracker">
+              <CostTracker
+                amount={stats.monthlyCost}
+                imageCount={stats.totalImages}
+                budget={150}
+              />
+            </WidgetWrapper>
+            <WidgetWrapper widgetKey="recent-activity">
+              <RecentActivityWidget userId={userId || ""} isAdmin={userRole === "admin"} />
+            </WidgetWrapper>
+            <WidgetWrapper widgetKey="activity-feed">
+              <ActivityFeed />
+            </WidgetWrapper>
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { notify } from "@/lib/notify";
+import { sendSlackNotification } from "@/lib/slack";
 
 export async function POST(
   request: NextRequest,
@@ -71,6 +72,14 @@ export async function POST(
     body: trimmedNote ? trimmedNote.slice(0, 200) : undefined,
     href: `/review/${job.id}`,
   }).catch(() => {});
+
+  // Slack/Discord webhook notification
+  const clientLabel = job.clientName || "Client";
+  const slackMessage =
+    action === "approve"
+      ? `✅ ${clientLabel} approved ${job.address}`
+      : `📝 ${clientLabel} requested changes on ${job.address}${trimmedNote ? `\n> ${trimmedNote.slice(0, 500)}` : ""}`;
+  await sendSlackNotification(job.photographerId, slackMessage);
 
   return NextResponse.json({ ok: true, status });
 }

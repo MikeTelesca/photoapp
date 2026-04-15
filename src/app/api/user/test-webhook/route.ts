@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
-import { sendWebhook } from "@/lib/webhook";
+import { sendSlackNotification } from "@/lib/slack";
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   const auth = await requireUser();
   if ("error" in auth) return auth.error;
 
-  const { url } = await request.json();
-  if (!url) return NextResponse.json({ error: "URL required" }, { status: 400 });
+  const ok = await sendSlackNotification(
+    auth.userId,
+    "Test message from ATH AI Editor"
+  );
 
-  const ok = await sendWebhook({
-    url,
-    title: "Test from ATH AI Editor",
-    text: "If you see this, your webhook is wired up correctly!",
-  });
+  if (!ok) {
+    return NextResponse.json(
+      { ok: false, error: "No Slack webhook URL saved, or delivery failed. Save a URL first." },
+      { status: 400 }
+    );
+  }
 
-  return NextResponse.json({ ok });
+  return NextResponse.json({ ok: true });
 }

@@ -12,7 +12,7 @@ import { readExif } from "@/lib/exif";
 import { analyzeImage } from "@/lib/image-quality";
 import { detectPhotoTags } from "@/lib/photo-tags";
 import { sendEmail, jobCompleteTemplate } from "@/lib/email";
-import { sendWebhook } from "@/lib/webhook";
+import { sendSlackNotification } from "@/lib/slack";
 import { notify, shouldNotify } from "@/lib/notify";
 import { sendPushNotification } from "@/lib/push";
 import { applySubject } from "@/lib/email-subject";
@@ -156,21 +156,11 @@ export async function POST(
           console.error("[start-enhance] email notification failed (non-fatal):", emailErr);
         }
 
-        // Send webhook notification if configured
-        try {
-          const webhookUser = await prisma.user.findUnique({ where: { id: updatedJob.photographerId } });
-          if (webhookUser?.slackWebhookUrl) {
-            const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
-            await sendWebhook({
-              url: webhookUser.slackWebhookUrl,
-              title: `✓ Photos ready: ${updatedJob.address}`,
-              text: `*${updatedJob.totalPhotos}* photos enhanced with *${updatedJob.preset}* preset and ready for review.`,
-              jobUrl: `${baseUrl}/review/${updatedJob.id}`,
-            });
-          }
-        } catch (webhookErr) {
-          console.error("[start-enhance] webhook notification failed (non-fatal):", webhookErr);
-        }
+        // Send Slack/Discord webhook notification if configured
+        await sendSlackNotification(
+          updatedJob.photographerId,
+          `📸 Your job is ready: ${updatedJob.address} — ${updatedJob.totalPhotos} photos`
+        );
 
         // In-app notification
         await notify({

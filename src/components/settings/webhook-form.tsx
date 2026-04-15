@@ -29,10 +29,15 @@ export function WebhookForm({ initial }: { initial: string | null }) {
     if (!url) return;
     setTesting(true);
     try {
+      // Save first so the helper can look up the URL
+      await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slackWebhookUrl: url }),
+      });
       const res = await fetch("/api/user/test-webhook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
       });
       const data = await res.json();
       alert(data.ok ? "Test message sent!" : "Test failed: " + (data.error || "unknown"));
@@ -61,7 +66,7 @@ export function WebhookForm({ initial }: { initial: string | null }) {
         {url && (
           <button onClick={test} disabled={testing}
             className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300">
-            {testing ? "Testing..." : "Test"}
+            {testing ? "Testing..." : "Test Slack"}
           </button>
         )}
       </div>

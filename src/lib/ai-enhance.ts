@@ -20,6 +20,7 @@ STRICT RULES — DO NOT VIOLATE:
 ONLY DO THESE SAFE ADJUSTMENTS:
 1. EXPOSURE: Balance brightness — lift dark shadows, recover blown highlights. Keep it realistic, not overexposed.
 2. WHITE BALANCE: Correct color casts (too yellow, too green, too cool) to neutral.
+   - REFLECTIVE FLOOR FIX: Glossy/polished floors (hardwood, tile, marble) often pick up a BLUE color cast from window light and sky reflections. Detect this and neutralize it — make wood floors warm brown, make polished tile look clean white/gray, NOT blue. The floor color should match the rest of the room's lighting.
 3. CONTRAST: Slight contrast boost for pop, but don't crush blacks.
 4. SATURATION: Very mild saturation boost for natural-looking colors. Do not oversaturate.
 5. SHARPNESS: Gentle sharpening for crisp detail.

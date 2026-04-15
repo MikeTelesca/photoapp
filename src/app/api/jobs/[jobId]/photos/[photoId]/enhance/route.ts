@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { enhancePhoto, convertToTwilight, analyzePhoto } from "@/lib/ai-enhance";
 import { uploadToDropbox } from "@/lib/dropbox";
+import { requireJobAccess } from "@/lib/api-auth";
 
 // Download a file from Dropbox shared link using raw API
 async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
@@ -34,6 +35,8 @@ export async function POST(
   { params }: { params: Promise<{ jobId: string; photoId: string }> }
 ) {
   const { jobId, photoId } = await params;
+  const access = await requireJobAccess(jobId);
+  if ("error" in access) return access.error;
 
   try {
     const body = await request.json().catch(() => ({}));
@@ -140,12 +143,32 @@ export async function POST(
     const editedFileName = `photo_${photo.orderIndex + 1}.jpg`;
     const dropboxPath = `/PhotoApp/edited/${sanitizedAddress}_${job.id.substring(0, 8)}/${editedFileName}`;
 
-    let editedUrl: string;
-    try {
-      editedUrl = await uploadToDropbox(outputBuffer, dropboxPath);
-    } catch (uploadError) {
-      console.error("Dropbox upload failed, using data URL:", uploadError);
-      editedUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+    // Upload with retry
+    let editedUrl: string | null = null;
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        editedUrl = await uploadToDropbox(outputBuffer, dropboxPath);
+        break;
+      } catch (err) {
+        lastError = err as Error;
+        console.error(`Upload attempt ${attempt + 1} failed:`, err);
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
+      }
+    }
+
+    if (!editedUrl) {
+      // Mark photo as pending again, don't bill
+      await prisma.photo.update({
+        where: { id: photoId },
+        data: { status: "pending" },
+      });
+      return NextResponse.json({
+        error: `Dropbox upload failed after 3 attempts: ${lastError?.message}`,
+        photoId,
+      }, { status: 500 });
     }
 
     await prisma.photo.update({

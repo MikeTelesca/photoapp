@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { enhancePhoto, analyzePhoto } from "@/lib/ai-enhance";
 import { downloadFileFromSharedLink, uploadToDropbox } from "@/lib/dropbox";
+import { requireJobAccess } from "@/lib/api-auth";
 
 // POST /api/jobs/:jobId/enhance - enhance all photos in a job
 export async function POST(
@@ -9,6 +10,8 @@ export async function POST(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params;
+  const access = await requireJobAccess(jobId);
+  if ("error" in access) return access.error;
 
   try {
     const job = await prisma.job.findUnique({
@@ -71,12 +74,31 @@ export async function POST(
           const fileName = `photo_${photo.orderIndex + 1}.jpg`;
           const dropboxPath = `/PhotoApp/edited/${sanitizedAddress}_${job.id.substring(0, 8)}/${fileName}`;
 
-          let editedUrl: string;
-          try {
-            editedUrl = await uploadToDropbox(editedImageBuffer, dropboxPath);
-          } catch (uploadError) {
-            console.error("Failed to upload to Dropbox, falling back to data URL:", uploadError);
-            editedUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+          // Upload with retry
+          let editedUrl: string | null = null;
+          let lastError: Error | null = null;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+              editedUrl = await uploadToDropbox(editedImageBuffer, dropboxPath);
+              break;
+            } catch (err) {
+              lastError = err as Error;
+              console.error(`Upload attempt ${attempt + 1} failed:`, err);
+              if (attempt < 2) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+              }
+            }
+          }
+
+          if (!editedUrl) {
+            // Mark photo as pending again, don't bill
+            await prisma.photo.update({
+              where: { id: photo.id },
+              data: { status: "pending" },
+            });
+            console.error(`Dropbox upload failed after 3 attempts for photo ${photo.id}: ${lastError?.message}`);
+            failed++;
+            continue;
           }
 
           await prisma.photo.update({
@@ -89,7 +111,7 @@ export async function POST(
             },
           });
           processed++;
-          
+
           // Track cost (~$0.04 per AI enhancement)
           const AI_COST_PER_IMAGE = 0.04;
           totalCost += AI_COST_PER_IMAGE;

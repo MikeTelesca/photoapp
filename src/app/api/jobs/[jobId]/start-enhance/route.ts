@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { enhancePhoto, analyzePhoto } from "@/lib/ai-enhance";
 import { uploadToDropbox } from "@/lib/dropbox";
+import { requireJobAccess } from "@/lib/api-auth";
 
 // Download a file from Dropbox shared link using raw API
 async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
@@ -35,42 +36,55 @@ export async function POST(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params;
+  const access = await requireJobAccess(jobId);
+  if ("error" in access) return access.error;
 
   try {
     const job = await prisma.job.findUnique({
       where: { id: jobId },
-      include: {
-        photos: {
-          where: { status: "pending" },
-          orderBy: { orderIndex: "asc" },
-          take: 1,
-        },
-      },
     });
 
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
-    if (job.photos.length === 0) {
-      // No more pending photos - mark job as review-ready
-      const totalEdited = await prisma.photo.count({
-        where: { jobId, status: { in: ["edited", "approved"] } },
+    // Atomic claim - race-safe
+    const claimed = await prisma.$transaction(async (tx) => {
+      const candidate = await tx.photo.findFirst({
+        where: { jobId, status: "pending" },
+        orderBy: { orderIndex: "asc" },
       });
-      await prisma.job.update({
-        where: { id: jobId },
-        data: { status: "review", processedPhotos: totalEdited },
+      if (!candidate) return null;
+
+      // Atomic conditional update - only succeeds if status is still "pending"
+      const updated = await tx.photo.updateMany({
+        where: { id: candidate.id, status: "pending" },
+        data: { status: "processing" },
       });
-      return NextResponse.json({ done: true, processed: totalEdited });
+
+      if (updated.count === 0) return null; // Another worker won the race
+      return candidate;
+    });
+
+    if (!claimed) {
+      // No more pending photos, or race lost - check again
+      const remaining = await prisma.photo.count({ where: { jobId, status: "pending" } });
+      if (remaining === 0) {
+        // All done
+        const totalEdited = await prisma.photo.count({
+          where: { jobId, status: { in: ["edited", "approved"] } },
+        });
+        await prisma.job.update({
+          where: { id: jobId },
+          data: { status: "review", processedPhotos: totalEdited },
+        });
+        return NextResponse.json({ done: true, processed: totalEdited });
+      }
+      // Race lost, tell client to retry
+      return NextResponse.json({ done: false, remaining, retry: true });
     }
 
-    const photo = job.photos[0];
-
-    // Mark as processing so another request won't pick it up
-    await prisma.photo.update({
-      where: { id: photo.id },
-      data: { status: "processing" },
-    });
+    const photo = claimed;
 
     // Get source image
     if (!job.dropboxUrl || !photo.exifData) {
@@ -148,11 +162,32 @@ export async function POST(
     const editedFileName = `photo_${photo.orderIndex + 1}.jpg`;
     const dropboxPath = `/PhotoApp/edited/${sanitizedAddress}_${job.id.substring(0, 8)}/${editedFileName}`;
 
-    let editedUrl: string;
-    try {
-      editedUrl = await uploadToDropbox(outputBuffer, dropboxPath);
-    } catch {
-      editedUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+    // Upload with retry
+    let editedUrl: string | null = null;
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        editedUrl = await uploadToDropbox(outputBuffer, dropboxPath);
+        break;
+      } catch (err) {
+        lastError = err as Error;
+        console.error(`Upload attempt ${attempt + 1} failed:`, err);
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
+      }
+    }
+
+    if (!editedUrl) {
+      // Mark photo as pending again, don't bill
+      await prisma.photo.update({
+        where: { id: photo.id },
+        data: { status: "pending" },
+      });
+      return NextResponse.json({
+        error: `Dropbox upload failed after 3 attempts: ${lastError?.message}`,
+        photoId: photo.id,
+      }, { status: 500 });
     }
 
     await prisma.photo.update({

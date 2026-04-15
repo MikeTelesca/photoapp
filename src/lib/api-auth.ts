@@ -23,17 +23,24 @@ export async function requireAdmin() {
 
 export async function requireJobAccess(jobId: string) {
   const authResult = await requireUser();
-  if ("error" in authResult) return authResult;
+  if ("error" in authResult) {
+    return { error: authResult.error } as const;
+  }
 
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) {
-    return { error: NextResponse.json({ error: "Not found" }, { status: 404 }) };
+    return { error: NextResponse.json({ error: "Not found" }, { status: 404 }) } as const;
   }
 
   if (authResult.role !== "admin" && job.photographerId !== authResult.userId) {
     // 404 not 403 to prevent ID enumeration
-    return { error: NextResponse.json({ error: "Not found" }, { status: 404 }) };
+    return { error: NextResponse.json({ error: "Not found" }, { status: 404 }) } as const;
   }
 
-  return { ...authResult, job };
+  return {
+    userId: authResult.userId,
+    role: authResult.role,
+    session: authResult.session,
+    job,
+  };
 }

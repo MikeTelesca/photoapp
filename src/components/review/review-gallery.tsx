@@ -600,6 +600,23 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
           <NotesPopover jobId={job.id} initialNotes={(job as any).notes ?? null} />
           <ReingestButton jobId={job.id} />
+          <button
+            onClick={async () => {
+              if (!confirm("Re-group ALL photos using EXIF data? This will reset all photos to pending. Existing edits will be lost.")) return;
+              const res = await fetch(`/api/jobs/${job.id}/regroup-by-exif`, { method: "POST" });
+              const data = await res.json();
+              if (res.ok) {
+                addToast("success", `Regrouped into ${data.groupCount} sets (${data.bracketCount}-bracket detected)`);
+                window.location.reload();
+              } else {
+                addToast("error", data.error || "Regroup failed");
+              }
+            }}
+            className="text-xs px-2 py-1.5 rounded-md bg-graphite-100 text-graphite-700 hover:bg-graphite-200"
+            title="Re-group photos using actual EXIF data (slow)"
+          >
+            Regroup by EXIF
+          </button>
           <div className="text-right mr-2 hidden sm:block">
             <div className="text-xs font-semibold text-graphite-700">
               {approvedCount} / {photos.length} approved

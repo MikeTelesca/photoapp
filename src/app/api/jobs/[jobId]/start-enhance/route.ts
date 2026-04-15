@@ -6,6 +6,7 @@ import { requireJobAccess } from "@/lib/api-auth";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 import { logActivity } from "@/lib/activity";
 import { log } from "@/lib/logger";
+import { readExif } from "@/lib/exif";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -149,6 +150,41 @@ export async function POST(
     if (validBrackets.length === 0) {
       await prisma.photo.update({ where: { id: photo.id }, data: { status: "pending" } });
       return NextResponse.json({ error: "Could not download any brackets", skipped: true });
+    }
+
+    // Validate bracket grouping using EXIF (defensive — does not change behavior)
+    try {
+      // Re-download originals for EXIF (validBrackets are already resized JPEGs; read EXIF from originals)
+      const exifResults = await Promise.all(
+        allBracketFiles.map(async (f, idx) => {
+          try {
+            const buf = await downloadFromDropbox(job.dropboxUrl!, f.fileName);
+            return await readExif(buf, f.fileName || `bracket-${idx}`);
+          } catch {
+            return null;
+          }
+        })
+      );
+      const validExif = exifResults.filter((e): e is NonNullable<typeof e> => e !== null);
+
+      const timestamps = validExif.map(e => e.timestamp).filter((t): t is Date => t !== null);
+      if (timestamps.length >= 2) {
+        const sorted = [...timestamps].sort((a, b) => a.getTime() - b.getTime());
+        const gapSeconds = (sorted[sorted.length - 1].getTime() - sorted[0].getTime()) / 1000;
+        if (gapSeconds > 60) {
+          console.warn(`[bracket-validation] Photo ${photo.id}: bracket timestamps span ${gapSeconds.toFixed(1)}s — may not be the same scene`);
+        }
+      }
+
+      const exposureValues = validExif.map(e => e.exposureCompensation).filter((e): e is number => e !== null);
+      if (exposureValues.length >= 2) {
+        const uniqueEvs = new Set(exposureValues);
+        if (uniqueEvs.size < 2) {
+          console.warn(`[bracket-validation] Photo ${photo.id}: all brackets have same exposure compensation — may not be a real bracket set`);
+        }
+      }
+    } catch (err) {
+      console.error("[bracket-validation] Failed:", err);
     }
 
     // Use middle bracket for analysis (it's typically the best-exposed for scene detection)

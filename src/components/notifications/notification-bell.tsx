@@ -114,6 +114,7 @@ function iconFor(type: string): string {
     case "job-ready": return "✅";
     case "photo-failed": return "⚠";
     case "client-comment": return "💬";
+    case "mention": return "💬";
     case "digest": return "📊";
     default: return "🔔";
   }

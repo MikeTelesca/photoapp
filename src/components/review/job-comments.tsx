@@ -60,6 +60,16 @@ export function JobComments({ jobId }: { jobId: string }) {
     return `${Math.floor(hrs / 24)}d ago`;
   }
 
+  function renderBody(body: string): React.ReactNode {
+    const parts = body.split(/(@[a-zA-Z0-9._-]+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("@")) {
+        return <span key={i} className="text-cyan font-semibold">{part}</span>;
+      }
+      return part;
+    });
+  }
+
   return (
     <div className="border border-graphite-100 dark:border-graphite-800 rounded">
       <button onClick={() => setOpen(!open)}
@@ -84,7 +94,7 @@ export function JobComments({ jobId }: { jobId: string }) {
                       <button onClick={() => del(c.id)} className="text-[10px] text-red-500 hover:underline">×</button>
                     </div>
                   </div>
-                  <div className="text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">{c.body}</div>
+                  <div className="text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">{renderBody(c.body)}</div>
                 </li>
               ))}
             </ul>

@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { ServiceWorkerRegister } from "@/components/pwa/sw-register";
+import { UpdateBanner } from "@/components/pwa/update-banner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -88,6 +89,7 @@ export default function RootLayout({
         <Analytics />
         <InstallPrompt />
         <ServiceWorkerRegister />
+        <UpdateBanner />
       </body>
     </html>
   );

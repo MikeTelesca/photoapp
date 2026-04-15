@@ -31,7 +31,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Existing handlers below...
-const CACHE_NAME = 'ath-editor-v1';
+const CACHE_NAME = 'ath-editor-v2';
 const CACHE_URLS = ['/', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -43,9 +43,15 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
-    )
+    Promise.all([
+      caches.keys().then((names) =>
+        Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+      ),
+      // Notify all clients
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((c) => c.postMessage({ type: 'NEW_VERSION_INSTALLED' }));
+      }),
+    ])
   );
   self.clients.claim();
 });

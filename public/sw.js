@@ -1,3 +1,36 @@
+// Push notification handler
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: 'ATH Editor', body: event.data.text() };
+  }
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-96.png',
+    data: { url: data.url || '/dashboard' },
+    requireInteraction: false,
+  };
+  event.waitUntil(self.registration.showNotification(data.title || 'ATH Editor', options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/dashboard';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(url) && 'focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
+  );
+});
+
+// Existing handlers below...
 const CACHE_NAME = 'ath-editor-v1';
 const CACHE_URLS = ['/', '/manifest.json'];
 

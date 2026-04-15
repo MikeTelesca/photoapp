@@ -23,6 +23,7 @@ import { SoundToggle } from "@/components/settings/sound-toggle";
 import { BudgetInput } from "@/components/settings/budget-input";
 import { EmailSignatureForm } from "@/components/settings/email-signature-form";
 import { AutoArchiveSelect } from "@/components/settings/auto-archive-select";
+import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -308,6 +309,14 @@ export default async function SettingsPage() {
             </div>
             <hr className="border-graphite-200" />
             <SoundToggle />
+            <hr className="border-graphite-200" />
+            <div>
+              <div className="text-sm font-semibold text-graphite-900 mb-1">Push notifications</div>
+              <p className="text-xs text-graphite-500 dark:text-graphite-400 mb-3">
+                Get desktop/mobile notifications when jobs finish, even when the app is closed.
+              </p>
+              <PushSubscribeButton />
+            </div>
           </div>
         </Card>
 

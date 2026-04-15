@@ -14,6 +14,7 @@ import { detectPhotoTags } from "@/lib/photo-tags";
 import { sendEmail, jobCompleteTemplate } from "@/lib/email";
 import { sendWebhook } from "@/lib/webhook";
 import { notify, shouldNotify } from "@/lib/notify";
+import { sendPushNotification } from "@/lib/push";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -168,6 +169,14 @@ export async function POST(
           body: `${updatedJob.totalPhotos} photos at ${updatedJob.address}`,
           href: `/review/${updatedJob.id}`,
         }).catch(() => {});
+
+        // Web Push notification (works even when app is closed)
+        await sendPushNotification({
+          userId: updatedJob.photographerId,
+          title: `Photos ready: ${updatedJob.address}`,
+          body: `${updatedJob.totalPhotos} photos enhanced and ready for review`,
+          url: `/review/${updatedJob.id}`,
+        }).catch(err => console.error("push err:", err));
         }
 
         return NextResponse.json({ done: true, processed: totalEdited });

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/api-auth";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
+import { UsageCsvExport } from "@/components/billing/usage-csv-export";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -124,6 +125,16 @@ export default async function BillingPage() {
             </div>
           </Card>
         </div>
+
+        <Card>
+          <div className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-graphite-900 dark:text-white">Export usage</h2>
+              <p className="text-xs text-graphite-500 dark:text-graphite-400">Download a CSV of jobs updated in a given month.</p>
+            </div>
+            <UsageCsvExport />
+          </div>
+        </Card>
 
         <Card>
           <div className="p-4">

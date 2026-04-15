@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logError } from "@/lib/error-log";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,15 @@ export async function GET(request: NextRequest) {
       },
       data: { status: "pending" },
     });
+
+    // Log recovery of stuck photos
+    if (stuckPhotos.count > 0) {
+      await logError({
+        source: "stuck-recovery",
+        message: `Recovered ${stuckPhotos.count} stuck photos from processing state`,
+        metadata: { recoveredCount: stuckPhotos.count },
+      }).catch(() => {});
+    }
 
     // Find jobs that are still in "processing" status
     const activeJobs = await prisma.job.findMany({

@@ -11,6 +11,7 @@ import {
   CheckCircleIcon,
   PaintBrushIcon,
   UsersIcon,
+  UserGroupIcon,
   Cog6ToothIcon,
   CameraIcon,
   Bars3Icon,
@@ -24,6 +25,7 @@ import {
   CreditCardIcon,
   ClockIcon,
   HeartIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -35,6 +37,7 @@ const menuItems = [
   { label: "Processing", href: "/dashboard?filter=processing", icon: ArrowPathIcon },
   { label: "Completed", href: "/dashboard?filter=approved", icon: CheckCircleIcon },
   { label: "Templates", href: "/templates", icon: BookmarkIcon },
+  { label: "Clients", href: "/clients", icon: UserGroupIcon },
 ];
 
 const settingsItems = [
@@ -44,6 +47,7 @@ const settingsItems = [
   { label: "Users", href: "/admin/users", icon: UsersIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
+  { label: "Errors", href: "/admin/errors", icon: ExclamationTriangleIcon },
   { label: "Health", href: "/admin/health", icon: HeartIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];

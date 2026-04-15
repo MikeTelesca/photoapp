@@ -5,6 +5,7 @@ import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 import { logActivity } from "@/lib/activity";
+import { logError } from "@/lib/error-log";
 import { log } from "@/lib/logger";
 import { readExif } from "@/lib/exif";
 import { analyzeImage } from "@/lib/image-quality";
@@ -415,6 +416,11 @@ export async function POST(
     });
   } catch (error: any) {
     log.error("[start-enhance] failed", { jobId, error: error.message });
+    await logError({
+      source: "enhance",
+      message: error.message || "Unknown error during enhancement",
+      jobId,
+    });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -175,3 +175,17 @@ model ActivityLog {
   @@index([createdAt(sort: Desc)])
   @@index([jobId])
 }
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  source    String   // "enhance", "ingest", "upload", "stuck-recovery", etc.
+  message   String
+  jobId     String?
+  photoId   String?
+  userId    String?
+  metadata  String?  // JSON string for extra data
+  createdAt DateTime @default(now())
+
+  @@index([source, createdAt(sort: Desc)])
+  @@index([jobId])
+}

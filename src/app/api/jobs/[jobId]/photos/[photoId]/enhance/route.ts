@@ -10,6 +10,7 @@ import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 import { logActivity } from "@/lib/activity";
+import { logError } from "@/lib/error-log";
 import { log } from "@/lib/logger";
 import { analyzeImage } from "@/lib/image-quality";
 
@@ -299,6 +300,12 @@ export async function POST(
   } catch (error: unknown) {
     const err = error as Error;
     log.error("[enhance] failed", { jobId, photoId, error: err.message });
+    await logError({
+      source: "enhance",
+      message: err.message || "Unknown error during photo enhancement",
+      jobId,
+      photoId,
+    });
     await prisma.photo.update({
       where: { id: photoId },
       data: {

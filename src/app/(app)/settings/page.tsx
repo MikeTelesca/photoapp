@@ -77,10 +77,37 @@ export default async function SettingsPage() {
   const dropboxConnected = dropboxRefreshToken || !!process.env.DROPBOX_ACCESS_TOKEN;
   const geminiConnected = !!process.env.GOOGLE_AI_API_KEY;
 
+  const isAdmin = userRole === "admin";
+
   return (
     <>
       <Topbar title="Settings" subtitle="App configuration and connections" />
       <div className="p-6 max-w-3xl space-y-4">
+        {/* Settings Navigation Hub */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+          <NavCard href="/settings/keyboard" title="Keyboard shortcuts" desc="Customize key bindings" icon="⌨️" />
+          <NavCard href="/settings/sessions" title="Sessions" desc="Recent sign-in activity" icon="🔐" />
+          <NavCard href="/templates" title="Job templates" desc="Reusable job configs" icon="📋" />
+          <NavCard href="/presets" title="Presets" desc="Enhancement prompt presets" icon="🎨" />
+          <NavCard href="/billing" title="Billing" desc="Usage and invoices" icon="💳" />
+          <NavCard href="/clients" title="Clients" desc="Client database" icon="👥" />
+          <NavCard href="/activity" title="Activity log" desc="Audit trail" icon="📜" />
+          <NavCard href="/whats-new" title="What's new" desc="Recent releases" icon="✨" />
+        </div>
+
+        {isAdmin && (
+          <>
+            <h2 className="text-xs font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wide mb-3 mt-2">Admin</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+              <NavCard href="/admin/users" title="Users" desc="User management" icon="👤" />
+              <NavCard href="/admin/health" title="System health" desc="Dropbox, AI, DB status" icon="❤️" />
+              <NavCard href="/admin/errors" title="Error log" desc="Recent failures" icon="⚠️" />
+              <NavCard href="/admin/announcements" title="Announcements" desc="Site-wide banners" icon="📣" />
+              <NavCard href="/admin/flags" title="Feature flags" desc="Toggle features" icon="🚩" />
+            </div>
+          </>
+        )}
+
         {/* Account */}
         <Card>
           <CardHeader>
@@ -335,5 +362,19 @@ export default async function SettingsPage() {
         </Card>
       </div>
     </>
+  );
+}
+
+function NavCard({ href, title, desc, icon }: { href: string; title: string; desc: string; icon: string }) {
+  return (
+    <Link href={href} className="block p-4 bg-white dark:bg-graphite-900 border border-graphite-100 dark:border-graphite-800 rounded-lg hover:border-cyan hover:shadow-sm transition-all">
+      <div className="flex items-start gap-2">
+        <span className="text-xl">{icon}</span>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold dark:text-white truncate">{title}</div>
+          <div className="text-[11px] text-graphite-500 dark:text-graphite-400 truncate">{desc}</div>
+        </div>
+      </div>
+    </Link>
   );
 }

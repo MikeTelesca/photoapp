@@ -109,6 +109,20 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const rejectedCount = photos.filter((p) => p.status === "rejected").length;
   const progress = photos.length > 0 ? Math.round((approvedCount / photos.length) * 100) : 0;
 
+  // Preload neighboring photos so navigation feels instant
+  useEffect(() => {
+    const preloadIndices = [currentIndex + 1, currentIndex + 2, currentIndex - 1, currentIndex + 3];
+    preloadIndices.forEach((idx) => {
+      if (idx < 0 || idx >= photos.length) return;
+      const p = photos[idx];
+      if (!p) return;
+      const url = p.originalUrl || `/api/jobs/${job.id}/photos/${p.id}/original`;
+      // Trigger browser to fetch + cache
+      const img = new Image();
+      img.src = url;
+    });
+  }, [currentIndex, photos, job.id]);
+
   const goNext = useCallback(() => {
     setCurrentIndex((i) => Math.min(i + 1, photos.length - 1));
   }, [photos.length]);

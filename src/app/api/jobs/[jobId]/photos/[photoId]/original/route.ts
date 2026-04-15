@@ -54,12 +54,21 @@ export async function GET(
       return NextResponse.json({ error: "Failed to download from Dropbox" }, { status: 500 });
     }
 
-    const imageBuffer = await response.arrayBuffer();
+    const imageBuffer = Buffer.from(await response.arrayBuffer());
 
-    return new NextResponse(Buffer.from(imageBuffer), {
+    // Resize to display size for fast loading (preserves quality at typical screen sizes)
+    // Browser caches aggressively so subsequent loads are instant
+    const sharp = (await import("sharp")).default;
+    const resized = await sharp(imageBuffer)
+      .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 85, mozjpeg: true })
+      .toBuffer();
+
+    return new NextResponse(resized, {
       headers: {
         "Content-Type": "image/jpeg",
-        "Cache-Control": "public, max-age=3600",
+        // Cache for 7 days - photos rarely change, browser will use cached version
+        "Cache-Control": "public, max-age=604800, immutable",
       },
     });
   } catch (error: any) {

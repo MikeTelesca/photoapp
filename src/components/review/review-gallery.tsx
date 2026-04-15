@@ -45,6 +45,7 @@ import { PromptLinter } from "@/components/presets/prompt-linter";
 import { TimeTracker } from "./time-tracker";
 import { ReminderButton } from "./reminder-button";
 import { ThumbHoverPreview } from "./thumb-hover-preview";
+import { PhotoPins } from "./photo-pins";
 
 interface Photo {
   id: string;
@@ -268,6 +269,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Gallery view mode state
   const [viewMode, setViewMode] = useState<"single" | "grid">("single");
   const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
+
+  // Pin annotation mode
+  const [pinMode, setPinMode] = useState(false);
 
   // Slideshow state
   const [slideshowOpen, setSlideshowOpen] = useState(false);
@@ -2556,6 +2560,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       ) : null;
                     } catch { return null; }
                   })()}
+                  {/* Pin annotations overlay */}
+                  {currentPhoto && (
+                    <PhotoPins jobId={job.id} photoId={currentPhoto.id} enabled={pinMode} />
+                  )}
                 </div>
               </div>
             )}
@@ -2682,6 +2690,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   <ChevronRightIcon className="w-4 h-4 text-graphite-700 dark:text-graphite-200" />
                 </button>
               </div>
+              {/* Pin mode toggle */}
+              <button
+                onClick={() => setPinMode(!pinMode)}
+                className={`text-xs px-3 py-1.5 rounded ${pinMode ? "bg-amber-500 text-white" : "border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300"}`}
+                title={pinMode ? "Click on the photo to drop a pin" : "Annotate photo with pins"}
+              >
+                {pinMode ? "📍 Pin mode (click to add)" : "📍 Annotate"}
+              </button>
               {/* View Mode Toggle */}
               <div className="flex gap-1 items-center">
                 <button

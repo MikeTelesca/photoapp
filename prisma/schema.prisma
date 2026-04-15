@@ -179,9 +179,22 @@ model Photo {
   comments             PhotoComment[]
   ratings              PhotoRating[]
   versions             PhotoVersion[]
+  pins                 PhotoPin[]
 
   @@index([jobId, status])
   @@index([jobId, orderIndex])
+}
+
+model PhotoPin {
+  id        String   @id @default(cuid())
+  photoId   String
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  x         Float    // 0-100 percentage
+  y         Float    // 0-100 percentage
+  note      String
+  createdAt DateTime @default(now())
+
+  @@index([photoId])
 }
 
 model PhotoVersion {

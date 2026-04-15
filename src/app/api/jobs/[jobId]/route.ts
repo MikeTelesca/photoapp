@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireJobAccess } from "@/lib/api-auth";
 
 // GET /api/jobs/:jobId - get a single job with its photos
 export async function GET(
@@ -8,6 +9,8 @@ export async function GET(
 ) {
   try {
     const { jobId } = await params;
+    const access = await requireJobAccess(jobId);
+    if ("error" in access) return access.error;
 
     const job = await prisma.job.findUnique({
       where: { id: jobId },
@@ -42,11 +45,39 @@ export async function PATCH(
 ) {
   try {
     const { jobId } = await params;
+    const access = await requireJobAccess(jobId);
+    if ("error" in access) return access.error;
+    const { role, job: existingJob } = access;
+
     const body = await request.json();
+
+    // Mass assignment defense: whitelist allowed fields
+    const allowed: Record<string, any> = {};
+    const allowedFields = ["address", "preset", "tvStyle", "skyStyle"] as const;
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) allowed[field] = body[field];
+    }
+
+    // Status field has additional role checks
+    if (body.status !== undefined) {
+      if (role === "admin") {
+        allowed.status = body.status;
+      } else {
+        // Photographers can only cancel their own jobs
+        if (body.status === "cancelled" || body.status === "deleted") {
+          allowed.status = body.status;
+        } else {
+          return NextResponse.json(
+            { error: "Forbidden: cannot change status" },
+            { status: 403 }
+          );
+        }
+      }
+    }
 
     const job = await prisma.job.update({
       where: { id: jobId },
-      data: body,
+      data: allowed,
       include: {
         photographer: {
           select: { id: true, name: true, email: true },
@@ -71,6 +102,8 @@ export async function DELETE(
 ) {
   try {
     const { jobId } = await params;
+    const access = await requireJobAccess(jobId);
+    if ("error" in access) return access.error;
 
     // Soft delete - preserve cost data
     await prisma.job.update({

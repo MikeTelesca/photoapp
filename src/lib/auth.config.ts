@@ -1,5 +1,10 @@
 import type { NextAuthConfig } from "next-auth";
 
+// Security: Ensure NEXTAUTH_SECRET is set at module load time
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET environment variable must be set");
+}
+
 // Edge-compatible auth config (no Prisma imports)
 // Used by middleware for session checking
 export const authConfig = {
@@ -22,9 +27,11 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isAuthPage = nextUrl.pathname.startsWith("/login");
-      const isApiRoute = nextUrl.pathname.startsWith("/api");
+      // NextAuth's own endpoints handle their own auth flow
+      const isNextAuthRoute = nextUrl.pathname.startsWith("/api/auth/") &&
+        !nextUrl.pathname.startsWith("/api/auth/dropbox");
 
-      if (isApiRoute) return true;
+      if (isNextAuthRoute) return true;
 
       if (isAuthPage) {
         if (isLoggedIn) {
@@ -42,5 +49,5 @@ export const authConfig = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET || "photoapp-secret-change-in-production",
+  secret: process.env.NEXTAUTH_SECRET,
 } satisfies NextAuthConfig;

@@ -43,7 +43,7 @@ export function JobCard({ job }: JobCardProps) {
     }
   }
 
-  const isLinkable = job.status === "review" || job.status === "approved";
+  const isLinkable = job.status === "review" || job.status === "approved" || job.status === "processing";
 
   const Wrapper = isLinkable
     ? ({ children, className }: { children: React.ReactNode; className: string }) => (

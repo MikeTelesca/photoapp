@@ -90,6 +90,8 @@ interface Job {
   shareToken?: string | null;
   shareEnabled?: boolean;
   listingDescription?: string | null;
+  sequenceNumber?: number | null;
+  createdAt?: string;
   photographer: { name: string };
   photos: Photo[];
 }
@@ -218,6 +220,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [generating, setGenerating] = useState(false);
   const [description, setDescription] = useState(initialJob.listingDescription || "");
   const [showDescModal, setShowDescModal] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translation, setTranslation] = useState<{ lang: string; text: string } | null>(null);
+  const [translateLang, setTranslateLang] = useState("es");
 
   // Crop suggestion state
   const [cropSuggestion, setCropSuggestion] = useState<{ x: number; y: number; width: number; height: number; reasoning: string } | null>(null);
@@ -986,6 +991,25 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       }
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function translateDescription() {
+    setTranslating(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/translate-description`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: translateLang }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTranslation({ lang: translateLang, text: data.translation });
+      } else {
+        alert(data.error || "Failed to translate");
+      }
+    } finally {
+      setTranslating(false);
     }
   }
 
@@ -2635,14 +2659,46 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {/* MLS Listing Description Modal */}
       {showDescModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDescModal(false)}>
-          <div className="bg-white dark:bg-graphite-900 rounded-lg p-6 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-graphite-900 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-2">MLS Listing Description</h2>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={14}
-              className="w-full p-3 text-sm border border-graphite-200 dark:border-graphite-700 rounded"
+              className="w-full p-3 text-sm border border-graphite-200 dark:border-graphite-700 rounded dark:bg-graphite-800 dark:text-white"
             />
+
+            {/* Translation Controls */}
+            <div className="mt-3 flex gap-2 items-center">
+              <select value={translateLang} onChange={(e) => setTranslateLang(e.target.value)}
+                className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white">
+                <option value="es">🇪🇸 Spanish</option>
+                <option value="fr">🇫🇷 French</option>
+                <option value="zh">🇨🇳 Mandarin</option>
+                <option value="pt">🇵🇹 Portuguese</option>
+                <option value="de">🇩🇪 German</option>
+                <option value="it">🇮🇹 Italian</option>
+              </select>
+              <button onClick={translateDescription} disabled={translating}
+                className="text-xs px-3 py-1.5 rounded bg-purple-500 text-white font-semibold disabled:opacity-50">
+                {translating ? "Translating..." : "🌐 Translate"}
+              </button>
+            </div>
+
+            {/* Translation Display */}
+            {translation && (
+              <div className="mt-3 border-t border-graphite-100 dark:border-graphite-800 pt-3">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">Translation ({translation.lang})</span>
+                  <button onClick={() => navigator.clipboard.writeText(translation.text)}
+                    className="text-xs text-cyan hover:underline dark:text-cyan-400">Copy</button>
+                </div>
+                <div className="text-sm text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">
+                  {translation.text}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2 mt-3 justify-end">
               <button
                 onClick={() => navigator.clipboard.writeText(description)}
@@ -2652,7 +2708,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </button>
               <button
                 onClick={() => setShowDescModal(false)}
-                className="text-xs px-3 py-1.5 rounded border"
+                className="text-xs px-3 py-1.5 rounded border dark:border-graphite-700 dark:text-white"
               >
                 Close
               </button>

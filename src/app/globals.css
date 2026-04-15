@@ -34,11 +34,42 @@
   }
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
   background: var(--background);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Dark-mode safety net: any element styled with light-mode-only utilities
+   gets a sensible dark counterpart automatically. Components that opt in
+   with explicit dark: classes always win. */
+.dark .bg-white:not([class*="dark:bg-"]):not([class*="ring-"]) {
+  background-color: #18181B;
+}
+.dark .text-graphite-900:not([class*="dark:text-"]),
+.dark .text-zinc-900:not([class*="dark:text-"]),
+.dark .text-black:not([class*="dark:text-"]) {
+  color: #FAFAFA;
+}
+.dark .text-graphite-700:not([class*="dark:text-"]),
+.dark .text-graphite-800:not([class*="dark:text-"]) {
+  color: #D4D4D8;
+}
+.dark .text-graphite-500:not([class*="dark:text-"]),
+.dark .text-graphite-600:not([class*="dark:text-"]) {
+  color: #A1A1AA;
+}
+.dark .text-graphite-400:not([class*="dark:text-"]) {
+  color: #71717A;
+}
+.dark .border-graphite-200:not([class*="dark:border-"]),
+.dark .border-graphite-100:not([class*="dark:border-"]) {
+  border-color: #27272A;
+}
+.dark .bg-graphite-50:not([class*="dark:bg-"]),
+.dark .bg-graphite-100:not([class*="dark:bg-"]) {
+  background-color: #18181B;
 }
 
 button:focus-visible,

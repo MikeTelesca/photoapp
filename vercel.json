@@ -27,6 +27,10 @@
     {
       "path": "/api/cron/purge-logs",
       "schedule": "0 5 * * 0"
+    },
+    {
+      "path": "/api/cron/admin-backup-reminder",
+      "schedule": "0 7 * * 1"
     }
   ]
 }

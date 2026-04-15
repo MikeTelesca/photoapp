@@ -17,6 +17,7 @@ import { InvoiceSettingsForm } from "@/components/settings/invoice-settings-form
 import { WebhookForm } from "@/components/settings/webhook-form";
 import { TwoFactorForm } from "@/components/settings/two-factor-form";
 import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload";
+import { InvoiceLogoUpload } from "@/components/settings/invoice-logo-upload";
 import { AccentPicker } from "@/components/settings/accent-picker";
 import { NotificationPrefs } from "@/components/settings/notification-prefs";
 import { TimezonePicker } from "@/components/settings/timezone-picker";
@@ -47,6 +48,7 @@ export default async function SettingsPage() {
   let slackWebhookUrl: string | null = null;
   let twoFactorEnabled = false;
   let watermarkLogoPath: string | null = null;
+  let invoiceLogoPath: string | null = null;
   let userTimezone: string | null = null;
   let budgetPerJob = 20;
   let emailSignature: string | null = null;
@@ -79,6 +81,7 @@ export default async function SettingsPage() {
         invoiceRate: true,
         invoicePrefix: true,
         watermarkLogoPath: true,
+        invoiceLogoPath: true,
         timezone: true,
         budgetPerJob: true,
         emailSignature: true,
@@ -95,6 +98,7 @@ export default async function SettingsPage() {
     notifyPhotoFailed = user?.notifyPhotoFailed ?? true;
     twoFactorEnabled = user?.twoFactorEnabled ?? false;
     watermarkLogoPath = user?.watermarkLogoPath ?? null;
+    invoiceLogoPath = user?.invoiceLogoPath ?? null;
     userTimezone = user?.timezone ?? null;
     budgetPerJob = user?.budgetPerJob ?? 20;
     emailSignature = user?.emailSignature ?? null;
@@ -400,6 +404,14 @@ export default async function SettingsPage() {
               initialInvoiceRate={invoiceSettings.invoiceRate}
               initialInvoicePrefix={invoiceSettings.invoicePrefix}
             />
+          </div>
+        </Card>
+
+        {/* Invoice Logo */}
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 dark:text-white">Invoice logo</h2>
+            <InvoiceLogoUpload initial={invoiceLogoPath} />
           </div>
         </Card>
 

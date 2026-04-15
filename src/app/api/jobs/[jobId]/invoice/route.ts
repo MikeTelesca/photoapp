@@ -51,8 +51,34 @@ export async function GET(
   const invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String((user as any).invoiceCounter || 1000).padStart(4, "0")}`;
   const jobNum = job.sequenceNumber ? formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt, prefix: (user as any).jobSequencePrefix }) : null;
 
+  // Fetch logo if exists
+  let logoBuffer: Buffer | null = null;
+  if ((user as any).invoiceLogoPath) {
+    try {
+      const { Dropbox } = await import("dropbox");
+      const token = process.env.DROPBOX_ACCESS_TOKEN;
+      if (token) {
+        const dbx = new Dropbox({ accessToken: token, fetch: globalThis.fetch });
+        const dl = await dbx.filesDownload({ path: (user as any).invoiceLogoPath });
+        logoBuffer = (dl.result as any).fileBinary;
+      }
+    } catch (err) {
+      console.error("invoice logo err:", err);
+    }
+  }
+
   // Header
-  doc.fontSize(22).font("Helvetica-Bold").text(businessName);
+  if (logoBuffer) {
+    try {
+      doc.image(logoBuffer, 50, 50, { fit: [200, 60] });
+      doc.moveDown(3);
+    } catch (err) {
+      // Fallback to text
+      doc.fontSize(22).font("Helvetica-Bold").text(businessName);
+    }
+  } else {
+    doc.fontSize(22).font("Helvetica-Bold").text(businessName);
+  }
   if (businessAddr)
     doc.fontSize(9).font("Helvetica").fillColor("#666").text(businessAddr);
   doc.moveDown(2);

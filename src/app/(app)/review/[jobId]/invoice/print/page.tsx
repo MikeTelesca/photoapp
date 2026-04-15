@@ -35,6 +35,7 @@ export default async function PrintInvoicePage({
   const invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String(((user as any).invoiceCounter || 1000)).padStart(4, "0")}`;
   const jobNum = (job as any).sequenceNumber ? formatJobNumber({ sequence: (job as any).sequenceNumber, createdAt: job.createdAt, prefix: (user as any).jobSequencePrefix }) : null;
   const client = (job as any).client;
+  const invoiceLogoPath = (user as any).invoiceLogoPath;
 
   return (
     <>
@@ -63,9 +64,13 @@ export default async function PrintInvoicePage({
       <div className="invoice-container max-w-4xl mx-auto bg-white p-12 shadow-lg">
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-              {businessName}
-            </h1>
+            {invoiceLogoPath ? (
+              <img src={`/api/user/invoice-logo/preview`} alt="Logo" style={{ maxWidth: 200, maxHeight: 60, marginBottom: 12 }} />
+            ) : (
+              <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+                {businessName}
+              </h1>
+            )}
             <div style={{ fontSize: 11, color: "#666", marginTop: 4 }}>
               {businessEmail}
               {businessPhone && ` · ${businessPhone}`}

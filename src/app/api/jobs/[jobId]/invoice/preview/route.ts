@@ -34,6 +34,7 @@ export async function GET(
 
   return NextResponse.json({
     invoiceNum,
+    logoPath: (user as any).invoiceLogoPath || null,
     business: { name: businessName, email: businessEmail, phone: businessPhone, address: businessAddress },
     client: client ? { name: client.name, email: client.email, phone: client.phone, company: client.company } : { name: job.clientName },
     job: {

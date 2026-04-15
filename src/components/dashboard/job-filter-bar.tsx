@@ -35,6 +35,7 @@ export function JobFilterBar({ jobs }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [bulkTag, setBulkTag] = useState("");
+  const [bulkPriority, setBulkPriority] = useState("medium");
   const [groupByDate, setGroupByDate] = useState(true);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
@@ -220,6 +221,31 @@ export function JobFilterBar({ jobs }: Props) {
     }
   };
 
+  const bulkSetPriority = async () => {
+    if (!confirm(`Set ${selected.size} jobs to ${bulkPriority} priority?`)) return;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/jobs/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "setPriority", ids: Array.from(selected), priority: bulkPriority }),
+      });
+
+      if (res.ok) {
+        setSelected(new Set());
+        window.location.reload();
+      } else {
+        alert("Failed to set priority");
+      }
+    } catch (error) {
+      console.error("Error setting priority:", error);
+      alert("Error setting priority");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   function applyFilter(f: SavedFilter) {
     setSearch(f.search || "");
     setStatus(f.status || "all");
@@ -295,6 +321,21 @@ export function JobFilterBar({ jobs }: Props) {
               className="px-2 py-1 rounded bg-cyan text-white text-xs font-semibold hover:bg-cyan-600 disabled:opacity-50"
             >
               + tag
+            </button>
+          </div>
+
+          <div className="flex gap-1 items-center">
+            <select value={bulkPriority} onChange={(e) => setBulkPriority(e.target.value)}
+              disabled={isLoading}
+              className="text-xs px-1 py-1 rounded border border-cyan-300 dark:border-cyan-700 dark:bg-graphite-800 dark:text-white">
+              <option value="high">🔴 High</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+            <button onClick={bulkSetPriority}
+              disabled={isLoading}
+              className="text-xs px-2 py-1 rounded bg-graphite-600 text-white font-semibold hover:bg-graphite-700 disabled:opacity-50">
+              Set Priority
             </button>
           </div>
 

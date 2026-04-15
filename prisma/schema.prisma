@@ -342,6 +342,8 @@ model ShareEmailLog {
   toEmail   String
   sentAt    DateTime @default(now())
   sentBy    String?
+  openedAt  DateTime?
+  openCount Int @default(0)
 
   @@index([jobId])
 }

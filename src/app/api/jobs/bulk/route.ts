@@ -145,6 +145,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ count: res.count });
     }
 
+    if (action === "setPriority") {
+      const body = await req.json();
+      const { priority } = body;
+      if (!["high", "medium", "low"].includes(priority)) {
+        return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+      }
+      const res = await prisma.job.updateMany({
+        where: { id: { in: ids }, photographerId: userId },
+        data: { priority },
+      });
+      return NextResponse.json({ count: res.count });
+    }
+
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (error) {
     console.error("Failed to perform bulk action:", error);

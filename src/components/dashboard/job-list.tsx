@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { JobCard } from "./job-card";
+import { DemoJobButton } from "./demo-job-button";
 import type { Job } from "@/lib/types";
 
 const filters = ["All", "Processing", "Review", "Approved"] as const;
@@ -43,9 +44,10 @@ export function JobList({ jobs }: JobListProps) {
           <div className="px-6 py-12 text-center">
             <p className="text-sm text-graphite-400">
               {activeFilter === "All"
-                ? "No jobs yet. Click 'New Job' to create your first one."
+                ? "No jobs yet. Click 'New Job' to create your first one, or try a demo to see how it works."
                 : `No ${activeFilter.toLowerCase()} jobs.`}
             </p>
+            {activeFilter === "All" && <DemoJobButton />}
           </div>
         ) : (
           filtered.map((job) => <JobCard key={job.id} job={job} />)

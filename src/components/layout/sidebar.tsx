@@ -19,6 +19,7 @@ import {
   SunIcon,
   MoonIcon,
   ComputerDesktopIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -36,6 +37,10 @@ const settingsItems = [
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },
+];
+
+const helpItems = [
+  { label: "Help", href: "/help", icon: QuestionMarkCircleIcon },
 ];
 
 export function Sidebar() {
@@ -158,6 +163,31 @@ export function Sidebar() {
           })}
         </nav>
       )}
+
+      <nav className="mb-7">
+        {!collapsed && <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Support</div>}
+        {helpItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={() => setIsOpen(false)}
+              title={collapsed ? item.label : undefined}
+              className={`flex items-center gap-2.5 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
+                collapsed ? "px-3 justify-center" : "px-6"
+              } ${
+                isActive
+                  ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
+                  : "text-graphite-500 dark:text-graphite-400 hover:bg-graphite-100 dark:hover:bg-graphite-800 hover:text-graphite-700 dark:hover:text-graphite-200"
+              }`}
+            >
+              <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+              {!collapsed && item.label}
+            </Link>
+          );
+        })}
+      </nav>
 
       <div className="flex-1" />
 

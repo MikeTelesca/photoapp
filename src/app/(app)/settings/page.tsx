@@ -9,6 +9,8 @@ import { MaintenanceActions } from "@/components/settings/maintenance-actions";
 import { AccountForm } from "@/components/settings/account-form";
 import { NotificationToggle } from "@/components/settings/notification-toggle";
 import { EmailNotificationToggle } from "@/components/settings/email-notification-toggle";
+import { InvoiceSettingsForm } from "@/components/settings/invoice-settings-form";
+import { WebhookForm } from "@/components/settings/webhook-form";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -19,12 +21,39 @@ export default async function SettingsPage() {
   const userId = session?.user?.id;
 
   let emailNotificationsEnabled = true;
+  let invoiceSettings = {
+    businessName: "",
+    businessEmail: "",
+    businessPhone: "",
+    businessAddress: "",
+    invoiceRate: 50,
+    invoicePrefix: "INV",
+  };
   if (userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { emailNotifications: true },
+      select: {
+        slackWebhookUrl: true,
+        emailNotifications: true,
+        businessName: true,
+        businessEmail: true,
+        businessPhone: true,
+        businessAddress: true,
+        invoiceRate: true,
+        invoicePrefix: true,
+      },
     });
     emailNotificationsEnabled = user?.emailNotifications ?? true;
+    if (user) {
+      invoiceSettings = {
+        businessName: user.businessName ?? "",
+        businessEmail: user.businessEmail ?? "",
+        businessPhone: user.businessPhone ?? "",
+        businessAddress: user.businessAddress ?? "",
+        invoiceRate: user.invoiceRate ?? 50,
+        invoicePrefix: user.invoicePrefix ?? "INV",
+      };
+    }
   }
 
   const dropboxRefreshToken = !!process.env.DROPBOX_REFRESH_TOKEN;
@@ -129,6 +158,24 @@ export default async function SettingsPage() {
               </div>
               <EmailNotificationToggle initialEnabled={emailNotificationsEnabled} />
             </div>
+          </div>
+        </Card>
+
+        {/* Invoice Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Invoice Settings</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <p className="text-xs text-graphite-400 mb-4">Used to generate PDF invoices for approved jobs. The rate is multiplied by the number of approved photos.</p>
+            <InvoiceSettingsForm
+              initialBusinessName={invoiceSettings.businessName}
+              initialBusinessEmail={invoiceSettings.businessEmail}
+              initialBusinessPhone={invoiceSettings.businessPhone}
+              initialBusinessAddress={invoiceSettings.businessAddress}
+              initialInvoiceRate={invoiceSettings.invoiceRate}
+              initialInvoicePrefix={invoiceSettings.invoicePrefix}
+            />
           </div>
         </Card>
 

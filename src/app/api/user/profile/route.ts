@@ -9,7 +9,16 @@ export async function PATCH(request: NextRequest) {
   if ("error" in auth) return auth.error;
 
   const body = await request.json();
-  const { name, emailNotifications } = body;
+  const {
+    name,
+    emailNotifications,
+    businessName,
+    businessEmail,
+    businessPhone,
+    businessAddress,
+    invoiceRate,
+    invoicePrefix,
+  } = body;
 
   const updateData: Record<string, any> = {};
 
@@ -23,6 +32,13 @@ export async function PATCH(request: NextRequest) {
   if (emailNotifications !== undefined) {
     updateData.emailNotifications = Boolean(emailNotifications);
   }
+
+  if (businessName !== undefined) updateData.businessName = businessName?.trim() || null;
+  if (businessEmail !== undefined) updateData.businessEmail = businessEmail?.trim() || null;
+  if (businessPhone !== undefined) updateData.businessPhone = businessPhone?.trim() || null;
+  if (businessAddress !== undefined) updateData.businessAddress = businessAddress?.trim() || null;
+  if (invoiceRate !== undefined) updateData.invoiceRate = parseFloat(invoiceRate) || 50;
+  if (invoicePrefix !== undefined) updateData.invoicePrefix = invoicePrefix?.trim() || "INV";
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });

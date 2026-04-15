@@ -16,6 +16,14 @@ model User {
   avatarUrl          String?
   monthlyAiCostLimit Float   @default(50)  // Default $50/month per user
   emailNotifications Boolean @default(true)
+  businessName      String?
+  businessEmail     String?
+  businessPhone     String?
+  businessAddress   String?
+  invoiceRate       Float?    @default(50)  // default $/photo for invoicing
+  invoicePrefix     String?   @default("INV")
+  invoiceCounter    Int       @default(1000)
+  slackWebhookUrl   String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]

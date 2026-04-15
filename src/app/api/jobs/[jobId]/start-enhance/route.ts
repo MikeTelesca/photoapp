@@ -10,6 +10,7 @@ import { log } from "@/lib/logger";
 import { readExif } from "@/lib/exif";
 import { analyzeImage } from "@/lib/image-quality";
 import { sendEmail, jobCompleteTemplate } from "@/lib/email";
+import { sendWebhook } from "@/lib/webhook";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -127,6 +128,22 @@ export async function POST(
           }
         } catch (emailErr) {
           console.error("[start-enhance] email notification failed (non-fatal):", emailErr);
+        }
+
+        // Send webhook notification if configured
+        try {
+          const user = await prisma.user.findUnique({ where: { id: updatedJob.photographerId } });
+          if (user?.slackWebhookUrl) {
+            const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
+            await sendWebhook({
+              url: user.slackWebhookUrl,
+              title: `✓ Photos ready: ${updatedJob.address}`,
+              text: `*${updatedJob.totalPhotos}* photos enhanced with *${updatedJob.preset}* preset and ready for review.`,
+              jobUrl: `${baseUrl}/review/${updatedJob.id}`,
+            });
+          }
+        } catch (webhookErr) {
+          console.error("[start-enhance] webhook notification failed (non-fatal):", webhookErr);
         }
 
         return NextResponse.json({ done: true, processed: totalEdited });

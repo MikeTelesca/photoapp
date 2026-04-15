@@ -37,7 +37,15 @@ export default async function ClientsPage() {
       <Topbar title="Clients" subtitle="Manage your realtor and client contacts" />
       <div className="p-6 max-w-3xl">
         <div className="flex items-center justify-between mb-5">
-          <div />
+          {clients.length > 0 && (
+            <a
+              href="/api/clients/export"
+              download
+              className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-50 dark:hover:bg-graphite-800 dark:text-graphite-300 transition-colors"
+            >
+              Export CSV
+            </a>
+          )}
           <AddClientModal />
         </div>
         {clients.length === 0 ? (

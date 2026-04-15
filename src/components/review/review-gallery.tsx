@@ -46,6 +46,7 @@ import { TimeTracker } from "./time-tracker";
 import { ReminderButton } from "./reminder-button";
 import { ThumbHoverPreview } from "./thumb-hover-preview";
 import { PhotoPins } from "./photo-pins";
+import { CustomFieldsEditor } from "./custom-fields-editor";
 
 interface Photo {
   id: string;
@@ -85,6 +86,7 @@ interface Job {
   rejectedPhotos: number;
   notes?: string | null;
   customPromptOverride?: string | null;
+  customFields?: string | null;
   clientName?: string | null;
   tags?: string | null;
   watermarkText?: string | null;
@@ -1599,6 +1601,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </div>
           )}
           <NotesPopover jobId={job.id} initialNotes={job.notes ?? null} />
+          <CustomFieldsEditor jobId={job.id} initial={job.customFields ?? null} />
           <button
             onClick={() => setShowWatermarkPanel(p => !p)}
             className={`text-xs px-2 py-1.5 rounded-md border transition-colors ${showWatermarkPanel ? "border-cyan bg-cyan-50 text-cyan" : "border-graphite-200 bg-white text-graphite-700 hover:bg-graphite-50"}`}

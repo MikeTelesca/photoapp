@@ -110,6 +110,7 @@ model Job {
   clientId         String?
   client           Client?  @relation(fields: [clientId], references: [id])
   customPromptOverride String?  // per-job custom instructions for AI enhance
+  customFields     String?  // JSON object for extra metadata (e.g., square footage, listing price, MLS number)
   sequenceNumber   Int?     // auto-incrementing per user
   shareToken          String?  @unique
   shareEnabled        Boolean  @default(false)

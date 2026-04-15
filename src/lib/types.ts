@@ -25,6 +25,7 @@ export interface Job {
   cost: number;
   notes?: string | null;
   customPromptOverride?: string | null;
+  customFields?: string | null;
   clientName?: string | null;
   tags?: string;
   watermarkText?: string | null;

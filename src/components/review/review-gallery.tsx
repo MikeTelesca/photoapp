@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -118,6 +118,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
   const twilightMenuRef = useRef<HTMLDivElement>(null);
   const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
+  const [sortBy, setSortBy] = useState<"order" | "name" | "date" | "flagged" | "rejected">("order");
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
   const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
   const [mlsPreset, setMlsPreset] = useState("mls-hi");
@@ -152,6 +153,42 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [compareTarget, setCompareTarget] = useState("luxury");
   const [compareResult, setCompareResult] = useState<string | null>(null);
   const [comparing, setComparing] = useState(false);
+
+  // Compute sorted photos
+  const sortedPhotos = useMemo(() => {
+    const arr = [...job.photos];
+    if (sortBy === "name") {
+      arr.sort((a, b) => (a.id || "").localeCompare(b.id || ""));
+    } else if (sortBy === "date") {
+      arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else if (sortBy === "flagged") {
+      // Photos with quality flags first
+      arr.sort((a, b) => {
+        const aFlagged = !!a.qualityFlags;
+        const bFlagged = !!b.qualityFlags;
+        if (aFlagged === bFlagged) return 0;
+        return aFlagged ? -1 : 1;
+      });
+    } else if (sortBy === "rejected") {
+      // Rejected photos first
+      arr.sort((a, b) => {
+        const aRej = a.status === "rejected" ? 0 : 1;
+        const bRej = b.status === "rejected" ? 0 : 1;
+        return aRej - bRej;
+      });
+    }
+    // "order" — keep original orderIndex order
+    return arr;
+  }, [job.photos, sortBy]);
+
+  // When sort changes, keep current photo visible
+  useEffect(() => {
+    const currentPhoto = job.photos[currentIndex];
+    if (currentPhoto) {
+      const newIdx = sortedPhotos.findIndex(p => p.id === currentPhoto.id);
+      if (newIdx >= 0) setCurrentIndex(newIdx);
+    }
+  }, [sortBy]);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -1303,34 +1340,48 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         {/* Thumbnail Strip - hidden on mobile */}
         <div className="hidden md:flex w-[100px] bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-700 flex-col flex-shrink-0">
           {/* Filter pills */}
-          <div className="flex gap-0.5 p-1 border-b border-graphite-200 dark:border-graphite-700 flex-shrink-0">
-            {[
-              { v: "all" as const, l: "All" },
-              { v: "favorites" as const, l: "★" },
-              { v: "edited" as const, l: "New" },
-              { v: "approved" as const, l: "✓" },
-              { v: "rejected" as const, l: "✗" },
-            ].map(opt => (
-              <button
-                key={opt.v}
-                onClick={() => setThumbFilter(opt.v)}
-                className={`flex-1 text-[9px] font-semibold py-1 rounded ${
-                  thumbFilter === opt.v ? "bg-graphite-900 text-white" : "text-graphite-500 hover:bg-graphite-100"
-                }`}
-              >{opt.l}</button>
-            ))}
+          <div className="flex flex-col gap-0.5 p-1 border-b border-graphite-200 dark:border-graphite-700 flex-shrink-0">
+            <div className="flex gap-0.5">
+              {[
+                { v: "all" as const, l: "All" },
+                { v: "favorites" as const, l: "★" },
+                { v: "edited" as const, l: "New" },
+                { v: "approved" as const, l: "✓" },
+                { v: "rejected" as const, l: "✗" },
+              ].map(opt => (
+                <button
+                  key={opt.v}
+                  onClick={() => setThumbFilter(opt.v)}
+                  className={`flex-1 text-[9px] font-semibold py-1 rounded ${
+                    thumbFilter === opt.v ? "bg-graphite-900 text-white" : "text-graphite-500 hover:bg-graphite-100"
+                  }`}
+                >{opt.l}</button>
+              ))}
+            </div>
+            {/* Sort dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="text-[9px] px-1.5 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white bg-white text-graphite-700 w-full"
+            >
+              <option value="order">Manual order</option>
+              <option value="name">Name A-Z</option>
+              <option value="date">Newest first</option>
+              <option value="flagged">Quality flagged first</option>
+              <option value="rejected">Rejected first</option>
+            </select>
           </div>
           {/* Scrollable thumbnail list */}
           <div className="overflow-y-auto flex-1 p-2 flex flex-col gap-1">
             <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={photos.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                {photos.map((photo, idx) => {
+                {sortedPhotos.map((photo, idx) => {
                   if (thumbFilter === "favorites" && !photo.isFavorite) return null;
                   if (thumbFilter !== "all" && thumbFilter !== "favorites" && photo.status !== thumbFilter) return null;
                   return (
                     <SortableThumb key={photo.id} id={photo.id}>
                       <button
-                        onClick={() => setCurrentIndex(idx)}
+                        onClick={() => setCurrentIndex(sortedPhotos.findIndex(p => p.id === photo.id))}
                         className={`relative w-[84px] h-[56px] rounded-md flex-shrink-0 transition-all duration-150 border-2 ${
                           idx === currentIndex
                             ? "border-cyan shadow-sm"

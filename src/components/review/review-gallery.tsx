@@ -170,63 +170,72 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     setTimeout(() => goNext(), 300);
   }, [currentPhoto, updatePhoto, goNext]);
 
-  const [enhanceError, setEnhanceError] = useState<string | null>(null);
-  const [enhanceLoading, setEnhanceLoading] = useState(false);
+  const [enhanceErrors, setEnhanceErrors] = useState<Record<string, string>>({});
+  const [enhancingIds, setEnhancingIds] = useState<Set<string>>(new Set());
+
+  // Helper: is the CURRENT photo currently being enhanced?
+  const enhanceLoading = currentPhoto ? enhancingIds.has(currentPhoto.id) : false;
+  const enhanceError = currentPhoto ? enhanceErrors[currentPhoto.id] || null : null;
 
   const handleRegenerate = useCallback(async () => {
-    console.log("[regen] Button clicked", { currentPhotoId: currentPhoto?.id, instruction: customInstruction });
     if (!currentPhoto) return;
+    const photoId = currentPhoto.id;
     const instruction = customInstruction.trim() || null;
-    setEnhanceError(null);
-    setEnhanceLoading(true);
 
-    // Update status optimistically — clear editedUrl so loading spinner shows
+    setEnhanceErrors((prev) => {
+      const next = { ...prev };
+      delete next[photoId];
+      return next;
+    });
+    setEnhancingIds((prev) => new Set(prev).add(photoId));
+
     setJob((prev) => ({
       ...prev,
       photos: prev.photos.map((p) =>
-        p.id === currentPhoto.id ? { ...p, status: "regenerating", editedUrl: null } : p
+        p.id === photoId ? { ...p, status: "regenerating", editedUrl: null } : p
       ),
     }));
 
     try {
-      console.log("[regen] Calling enhance endpoint...");
-      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${photoId}/enhance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customInstructions: instruction }),
       });
-      console.log("[regen] Response status:", res.status);
       const data = await res.json();
-      console.log("[regen] Response data:", data);
 
       if (data.success) {
         setJob((prev) => ({
           ...prev,
           photos: prev.photos.map((p) =>
-            p.id === currentPhoto.id
+            p.id === photoId
               ? { ...p, status: "edited", editedUrl: data.editedUrl }
               : p
           ),
         }));
       } else {
-        setEnhanceError(data.error || "Enhancement failed");
+        setEnhanceErrors((prev) => ({ ...prev, [photoId]: data.error || "Enhancement failed" }));
         setJob((prev) => ({
           ...prev,
           photos: prev.photos.map((p) =>
-            p.id === currentPhoto.id ? { ...p, status: "pending" } : p
+            p.id === photoId ? { ...p, status: "pending" } : p
           ),
         }));
       }
     } catch (err: any) {
-      setEnhanceError(err.message || "Network error");
+      setEnhanceErrors((prev) => ({ ...prev, [photoId]: err.message || "Network error" }));
       setJob((prev) => ({
         ...prev,
         photos: prev.photos.map((p) =>
-          p.id === currentPhoto.id ? { ...p, status: "pending" } : p
+          p.id === photoId ? { ...p, status: "pending" } : p
         ),
       }));
     } finally {
-      setEnhanceLoading(false);
+      setEnhancingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(photoId);
+        return next;
+      });
       setCustomInstruction("");
     }
   }, [currentPhoto, job.id, customInstruction]);

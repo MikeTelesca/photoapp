@@ -131,6 +131,7 @@ model Job {
   photos           Photo[]
   shareEmailLogs   ShareEmailLog[]
   jobComments      JobComment[]
+  shareRequests    ShareRequest[]
 
   @@index([photographerId, createdAt(sort: Desc)])
   @@index([status])
@@ -418,4 +419,17 @@ model FeedbackReport {
   createdAt DateTime @default(now())
 
   @@index([resolved, createdAt])
+}
+
+model ShareRequest {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  fromName    String
+  fromEmail   String?
+  message     String
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([jobId, createdAt])
 }

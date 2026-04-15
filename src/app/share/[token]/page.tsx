@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { CommentForm } from "@/components/share/comment-form";
 import { StarRating } from "@/components/share/star-rating";
 import { PasswordGate } from "@/components/share/password-gate";
+import { ShareContactForm } from "@/components/share/contact-form";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,11 @@ export default async function SharePage({
         </div>
       </header>
 
+
+      {/* Contact Form */}
+      <div className="my-6 max-w-2xl mx-auto px-4">
+        <ShareContactForm token={token} />
+      </div>
       {/* Gallery */}
       <main className="max-w-5xl mx-auto px-4 py-8">
         {approvedPhotos.length === 0 ? (

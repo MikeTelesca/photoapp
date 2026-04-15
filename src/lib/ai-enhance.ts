@@ -153,7 +153,8 @@ export async function enhancePhoto(
   mimeType: string,
   preset: string,
   customInstructions?: string | null,
-  seasonalStyle?: string | null
+  seasonalStyle?: string | null,
+  userPromptPrefix?: string | null
 ): Promise<EnhanceResult> {
   try {
     // Use preset prompt, or fall back to standard
@@ -168,6 +169,11 @@ export async function enhancePhoto(
     let prompt = extraInstructions
       ? `${basePrompt}\n\nADDITIONAL INSTRUCTIONS: ${extraInstructions}`
       : basePrompt;
+
+    // Prepend user's custom prompt prefix if provided
+    if (userPromptPrefix && userPromptPrefix.trim()) {
+      prompt = `USER STYLE GUIDE (apply consistently across all photos):\n${userPromptPrefix.trim()}\n\n${prompt}`;
+    }
 
     // Append seasonal style modifier if provided
     const { getSeasonalModifier } = await import("./seasonal-styles");

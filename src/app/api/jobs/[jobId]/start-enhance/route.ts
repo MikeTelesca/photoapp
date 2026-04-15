@@ -69,6 +69,11 @@ export async function POST(
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: job.photographerId },
+      select: { monthlyAiCostLimit: true, promptPrefix: true },
+    });
+
     // Check monthly cost limit
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const monthlyCostResult = await prisma.job.aggregate({
@@ -77,7 +82,6 @@ export async function POST(
     });
     const monthlyCost = monthlyCostResult._sum.cost || 0;
 
-    const user = await prisma.user.findUnique({ where: { id: job.photographerId } });
     const limit = user?.monthlyAiCostLimit ?? 50;
 
     if (monthlyCost + AI_COST_PER_IMAGE > limit) {
@@ -124,20 +128,20 @@ export async function POST(
         if (allowed) {
           // Send email notification if enabled
         try {
-          const user = await prisma.user.findUnique({
+          const emailUser = await prisma.user.findUnique({
             where: { id: updatedJob.photographerId },
             select: { email: true, emailNotifications: true, emailSignature: true },
           });
-          if (user?.email && user?.emailNotifications) {
+          if (emailUser?.email && emailUser?.emailNotifications) {
             const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
             await sendEmail({
-              to: user.email,
+              to: emailUser.email,
               subject: `Ready for review: ${updatedJob.address}`,
               html: jobCompleteTemplate({
                 address: updatedJob.address,
                 photoCount: updatedJob.totalPhotos,
                 jobUrl: `${baseUrl}/review/${updatedJob.id}`,
-                signature: user.emailSignature || undefined,
+                signature: emailUser.emailSignature || undefined,
               }),
             });
           }
@@ -147,11 +151,11 @@ export async function POST(
 
         // Send webhook notification if configured
         try {
-          const user = await prisma.user.findUnique({ where: { id: updatedJob.photographerId } });
-          if (user?.slackWebhookUrl) {
+          const webhookUser = await prisma.user.findUnique({ where: { id: updatedJob.photographerId } });
+          if (webhookUser?.slackWebhookUrl) {
             const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
             await sendWebhook({
-              url: user.slackWebhookUrl,
+              url: webhookUser.slackWebhookUrl,
               title: `✓ Photos ready: ${updatedJob.address}`,
               text: `*${updatedJob.totalPhotos}* photos enhanced with *${updatedJob.preset}* preset and ready for review.`,
               jobUrl: `${baseUrl}/review/${updatedJob.id}`,
@@ -328,7 +332,7 @@ export async function POST(
       : combinedInstructions;
 
     // Enhance the photo - pass ALL brackets for HDR merge
-    const result = await enhancePhoto(validBrackets, mimeType, job.preset, fullPrompt, job.seasonalStyle);
+    const result = await enhancePhoto(validBrackets, mimeType, job.preset, fullPrompt, job.seasonalStyle, user?.promptPrefix);
 
     if (!result.success) {
       log.error("[start-enhance] failed", { jobId, photoId: photo.id, error: result.error });

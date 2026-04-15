@@ -11,26 +11,36 @@ export async function POST(
   const { jobId } = await params;
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
-  const job = access.job;
-  if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const source = access.job;
+  if (!source) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = await request.json().catch(() => ({}));
-  const newAddress = (body.address as string) || `${job.address} (Copy)`;
-
-  const newJob = await prisma.job.create({
+  // Clone all settings but no photos, no dropbox URL, cost reset
+  const cloned = await prisma.job.create({
     data: {
-      address: newAddress,
-      photographerId: job.photographerId,
-      preset: job.preset,
-      tvStyle: job.tvStyle || "off",
-      skyStyle: job.skyStyle || "as-is",
-      watermarkText: job.watermarkText || null,
-      clientName: job.clientName || null,
-      tags: job.tags || "",
+      address: `${source.address} (copy)`,
+      photographerId: source.photographerId,
+      preset: source.preset,
+      tvStyle: source.tvStyle || "netflix",
+      skyStyle: source.skyStyle || "blue-clouds",
+      seasonalStyle: source.seasonalStyle || null,
+      watermarkText: source.watermarkText || null,
+      watermarkPosition: source.watermarkPosition || "bottom-right",
+      watermarkSize: source.watermarkSize || 32,
+      watermarkOpacity: source.watermarkOpacity || 0.7,
+      clientName: source.clientName || null,
+      clientId: source.clientId || null,
+      tags: source.tags || "",
+      notes: source.notes || null,
       status: "pending",
-      // Don't copy: dropboxUrl, photos, cost, totalPhotos
+      totalPhotos: 0,
+      processedPhotos: 0,
+      approvedPhotos: 0,
+      rejectedPhotos: 0,
+      twilightCount: 0,
+      cost: 0,
+      dropboxUrl: "", // user will provide new source
     },
   });
 
-  return NextResponse.json({ id: newJob.id });
+  return NextResponse.json({ id: cloned.id });
 }

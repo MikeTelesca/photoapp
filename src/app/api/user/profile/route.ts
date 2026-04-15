@@ -27,6 +27,7 @@ export async function PATCH(request: NextRequest) {
     budgetPerJob,
     emailSignature,
     autoArchiveDays,
+    promptPrefix,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -74,6 +75,7 @@ export async function PATCH(request: NextRequest) {
   if (autoArchiveDays !== undefined) {
     updateData.autoArchiveDays = autoArchiveDays === null ? null : (parseInt(autoArchiveDays) || null);
   }
+  if (promptPrefix !== undefined) updateData.promptPrefix = promptPrefix?.trim() || null;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });

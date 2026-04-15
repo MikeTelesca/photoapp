@@ -27,6 +27,11 @@ export async function POST(
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) return NextResponse.json({ error: "Job not found" }, { status: 404 });
 
+  const user = await prisma.user.findUnique({
+    where: { id: job.photographerId },
+    select: { promptPrefix: true },
+  });
+
   const origUrl = photo.originalUrl;
   if (!origUrl) return NextResponse.json({ error: "No original" }, { status: 400 });
 
@@ -43,7 +48,7 @@ export async function POST(
     const customInstructions = presetRow?.promptModifiers?.trim() || null;
 
     // Call enhance with the alternative preset
-    const result = await enhancePhoto(buf, "image/jpeg", preset, customInstructions, job.seasonalStyle);
+    const result = await enhancePhoto(buf, "image/jpeg", preset, customInstructions, job.seasonalStyle, user?.promptPrefix);
 
     if (!result.success || !result.imageBase64) {
       return NextResponse.json({ error: result.error || "Enhance failed" }, { status: 500 });

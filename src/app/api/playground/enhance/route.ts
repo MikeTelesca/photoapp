@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
 import { checkRate } from "@/lib/rate-limit";
 import { enhancePhoto } from "@/lib/ai-enhance";
+import { prisma } from "@/lib/db";
 
 export const maxDuration = 120;
 export const runtime = "nodejs";
@@ -25,9 +26,15 @@ export async function POST(request: NextRequest) {
   const mime = file.type || "image/jpeg";
 
   try {
+    // Fetch user's prompt prefix from database
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { promptPrefix: true },
+    });
+
     // Pass a non-existent preset so enhancePhoto falls through to using the
     // custom prompt as the base prompt (see ai-enhance.ts lines 162-165).
-    const result = await enhancePhoto(buf, mime, "custom", prompt);
+    const result = await enhancePhoto(buf, mime, "custom", prompt, undefined, user?.promptPrefix);
     if (!result.success || !result.imageBase64) {
       return NextResponse.json(
         { error: result.error || "Enhance returned no image" },

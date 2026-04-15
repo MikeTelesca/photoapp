@@ -35,6 +35,7 @@ model User {
   timezone          String?   // IANA format, e.g. "America/Toronto"
   emailSignature    String?
   autoArchiveDays   Int?      // null = disabled; otherwise days
+  promptPrefix      String?   // Custom prompt prefix prepended to all enhance prompts
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]

@@ -67,6 +67,11 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: job.photographerId },
+      select: { monthlyAiCostLimit: true, promptPrefix: true },
+    });
+
     // Check monthly cost limit
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const monthlyCostResult = await prisma.job.aggregate({
@@ -75,8 +80,7 @@ export async function POST(
     });
     const monthlyCost = monthlyCostResult._sum.cost || 0;
 
-    const userRecord = await prisma.user.findUnique({ where: { id: job.photographerId } });
-    const limit = userRecord?.monthlyAiCostLimit ?? 50;
+    const limit = user?.monthlyAiCostLimit ?? 50;
 
     if (monthlyCost + AI_COST_PER_IMAGE > limit) {
       return NextResponse.json({
@@ -191,7 +195,7 @@ export async function POST(
       if (customInstructions) additionalInstructions.push(customInstructions);
       const combinedInstructions = additionalInstructions.join("\n");
 
-      result = await enhancePhoto(bracketBuffers, mimeType, job.preset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions, job.seasonalStyle);
+      result = await enhancePhoto(bracketBuffers, mimeType, job.preset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions, job.seasonalStyle, user?.promptPrefix);
     }
 
     if (!result.success) {

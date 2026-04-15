@@ -118,7 +118,7 @@ model Job {
   pinnedAt            DateTime?
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  photographer     User     @relation(fields: [photographerId], references: [id])
+  photographer     User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)
   photographerId   String
   photos           Photo[]
   shareEmailLogs   ShareEmailLog[]

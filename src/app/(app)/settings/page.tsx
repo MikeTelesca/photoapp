@@ -27,6 +27,7 @@ import { AutoArchiveSelect } from "@/components/settings/auto-archive-select";
 import { BackupRestore } from "@/components/settings/backup-restore";
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { FilenamePatternForm } from "@/components/settings/filename-pattern-form";
+import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -468,6 +469,14 @@ export default async function SettingsPage() {
           </CardHeader>
           <div className="p-5">
             <BackupRestore />
+          </div>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card>
+          <div className="p-4 border-l-4 border-red-500">
+            <h2 className="text-sm font-semibold mb-2 text-red-700 dark:text-red-400">Danger zone</h2>
+            <DeleteAccountForm />
           </div>
         </Card>
 

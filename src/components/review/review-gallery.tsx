@@ -49,6 +49,7 @@ import { ReminderButton } from "./reminder-button";
 import { ThumbHoverPreview } from "./thumb-hover-preview";
 import { PhotoPins } from "./photo-pins";
 import { CustomFieldsEditor } from "./custom-fields-editor";
+import { PhotoMinimap } from "./photo-minimap";
 
 interface Photo {
   id: string;
@@ -1849,8 +1850,33 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  const jumpToPhoto = useCallback(
+    (idx: number) => {
+      if (idx < 0 || idx >= sortedPhotos.length) return;
+      setCurrentIndex(idx);
+      const photo = sortedPhotos[idx];
+      if (photo && typeof document !== "undefined") {
+        // Defer to next frame so the thumbnail can re-render with new active state
+        requestAnimationFrame(() => {
+          const el = document.querySelector<HTMLElement>(
+            `[data-thumb-id="${photo.id}"]`
+          );
+          if (el && typeof el.scrollIntoView === "function") {
+            el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        });
+      }
+    },
+    [sortedPhotos]
+  );
+
   return (
     <div className="flex flex-col h-screen">
+      <PhotoMinimap
+        photos={sortedPhotos}
+        activeIndex={currentIndex}
+        jumpTo={jumpToPhoto}
+      />
       {/* Top Bar */}
       <div className="sticky top-0 z-20 bg-white/92 dark:bg-graphite-900/92 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-700 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3.5">
@@ -2783,6 +2809,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   return (
                     <SortableThumb key={photo.id} id={photo.id}>
                       <button
+                        data-thumb-id={photo.id}
                         onClick={() => setCurrentIndex(sortedPhotos.findIndex(p => p.id === photo.id))}
                         onMouseEnter={(e) => {
                           if (!hoverEnabled) return;

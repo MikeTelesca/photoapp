@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { KeyboardHint } from "./keyboard-hint";
 import { NotesPopover } from "./notes-popover";
+import { PhotoNote } from "./photo-note";
 import { BeforeAfterSlider } from "./before-after-slider";
 import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
@@ -49,6 +50,7 @@ interface Photo {
   qualityFlags?: string | null;
   autoTags?: string | null;
   rejectionReason?: string | null;
+  note?: string | null;
   createdAt: string;
   updatedAt: string;
 }

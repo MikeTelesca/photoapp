@@ -50,6 +50,7 @@ export interface Photo {
   qualityFlags?: string | null;
   autoTags?: string | null;
   rejectionReason?: string | null;
+  note?: string | null;
   createdAt: Date;
 }
 

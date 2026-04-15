@@ -5,6 +5,7 @@ import { JobList } from "@/components/dashboard/job-list";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { CostTracker } from "@/components/dashboard/cost-tracker";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { RecentActivityWidget } from "@/components/dashboard/recent-activity-widget";
 import { NotificationHandler } from "@/components/notifications/notification-handler";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import {
@@ -183,6 +184,7 @@ export default async function DashboardPage({
               imageCount={stats.totalImages}
               budget={150}
             />
+            <RecentActivityWidget userId={userId || ""} isAdmin={userRole === "admin"} />
             <ActivityFeed />
           </div>
         </div>

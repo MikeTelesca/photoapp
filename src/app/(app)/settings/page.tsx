@@ -113,13 +113,21 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle>Notifications</CardTitle>
           </CardHeader>
-          <div className="p-5">
+          <div className="p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold text-graphite-900">Browser Notifications</div>
                 <div className="text-xs text-graphite-400">Get notified when jobs finish, even on another tab</div>
               </div>
               <NotificationToggle />
+            </div>
+            <hr className="border-graphite-200" />
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-graphite-900">Email Notifications</div>
+                <div className="text-xs text-graphite-400">Receive an email when jobs are ready for review</div>
+              </div>
+              <EmailNotificationToggle initialEnabled={emailNotificationsEnabled} />
             </div>
           </div>
         </Card>

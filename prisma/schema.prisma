@@ -19,6 +19,7 @@ model User {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]
+  jobTemplates       JobTemplate[]
 }
 
 model Job {
@@ -78,6 +79,24 @@ model Photo {
 
   @@index([jobId, status])
   @@index([jobId, orderIndex])
+}
+
+model JobTemplate {
+  id               String   @id @default(cuid())
+  name             String
+  ownerId          String
+  owner            User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  preset           String   @default("standard")
+  tvStyle          String?
+  skyStyle         String?
+  watermarkText    String?
+  photographerName String?
+  clientName       String?
+  tags             String?
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  @@index([ownerId])
 }
 
 model Preset {

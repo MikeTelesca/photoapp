@@ -112,7 +112,7 @@ export async function POST(
         // Send email notification if enabled
         try {
           const user = await prisma.user.findUnique({ where: { id: updatedJob.photographerId } });
-          if (user?.email) {
+          if (user?.email && user?.emailNotifications) {
             const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
             await sendEmail({
               to: user.email,

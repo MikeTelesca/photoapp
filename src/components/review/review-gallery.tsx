@@ -12,12 +12,14 @@ import {
   ArrowDownTrayIcon,
   CheckCircleIcon,
   FolderOpenIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { KeyboardHint } from "./keyboard-hint";
 import { NotesPopover } from "./notes-popover";
 import { BeforeAfterSlider } from "./before-after-slider";
+import { ReingestButton } from "./reingest-button";
 
 interface Photo {
   id: string;
@@ -67,6 +69,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [showPromptEditor, setShowPromptEditor] = useState(false);
   const [savingPreset, setSavingPreset] = useState(false);
   const [compareMode, setCompareMode] = useState<"split" | "slider">("split");
+  const [showMobileNav, setShowMobileNav] = useState(false);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -505,6 +508,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
         </div>
         <div className="flex items-center gap-2.5">
+          {/* Mobile nav button */}
+          <button
+            onClick={() => setShowMobileNav(true)}
+            className="md:hidden flex items-center gap-1 px-2 py-1 rounded text-xs bg-graphite-100"
+          >
+            <Bars3Icon className="w-4 h-4" />
+            {currentIndex + 1} / {photos.length}
+          </button>
           {/* Preset selector + edit prompt */}
           <div className="flex items-center gap-1.5 hidden md:flex">
             <select
@@ -533,6 +544,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </button>
           </div>
           <NotesPopover jobId={job.id} initialNotes={(job as any).notes ?? null} />
+          <ReingestButton jobId={job.id} />
           <div className="text-right mr-2 hidden sm:block">
             <div className="text-xs font-semibold text-graphite-700">
               {approvedCount} / {photos.length} approved
@@ -543,6 +555,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 style={{ width: `${progress}%` }}
               />
             </div>
+          </div>
+          <div className="flex items-center gap-1.5 hidden md:flex">
+            {photos.filter(p => p.status === "approved").length > 0 && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">
+                ✓ {photos.filter(p => p.status === "approved").length}
+              </span>
+            )}
+            {photos.filter(p => p.status === "rejected").length > 0 && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">
+                ✗ {photos.filter(p => p.status === "rejected").length}
+              </span>
+            )}
+            {photos.filter(p => p.status === "edited").length > 0 && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 text-cyan">
+                ⏳ {photos.filter(p => p.status === "edited").length}
+              </span>
+            )}
+            {photos.filter(p => p.status === "pending").length > 0 && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-graphite-100 text-graphite-700">
+                ○ {photos.filter(p => p.status === "pending").length}
+              </span>
+            )}
           </div>
           {photos.some(p => p.status === "pending") && (
             <Button onClick={handleEnhanceAll} disabled={isEnhancingAll}>
@@ -564,6 +598,37 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </Button>
         </div>
       </div>
+
+      {/* Mobile Nav Overlay */}
+      {showMobileNav && (
+        <div className="md:hidden fixed inset-0 z-50 bg-black/80" onClick={() => setShowMobileNav(false)}>
+          <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl max-h-[70vh] overflow-y-auto p-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-graphite-900">Photos ({photos.length})</span>
+              <button onClick={() => setShowMobileNav(false)} className="p-1 rounded-lg hover:bg-graphite-100">
+                <XMarkIcon className="w-5 h-5 text-graphite-600" />
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {photos.map((photo, idx) => (
+                <button
+                  key={photo.id}
+                  onClick={() => { setCurrentIndex(idx); setShowMobileNav(false); }}
+                  className={`aspect-[3/2] rounded overflow-hidden border-2 ${idx === currentIndex ? 'border-cyan' : 'border-transparent'} ${
+                    photo.status === 'approved' ? 'bg-emerald-100' : photo.status === 'rejected' ? 'bg-red-100' : 'bg-graphite-100'
+                  }`}
+                >
+                  {(photo.editedUrl || photo.originalUrl) ? (
+                    <img src={photo.editedUrl || photo.originalUrl || `/api/jobs/${job.id}/photos/${photo.id}/original`} className="w-full h-full object-cover" loading="lazy" alt={`Photo ${idx + 1}`} />
+                  ) : (
+                    <span className="text-[11px] text-graphite-500">{idx + 1}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Inline prompt editor */}
       {showPromptEditor && (
@@ -791,7 +856,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors disabled:opacity-50"
               >
                 <CheckIcon className="w-4 h-4" />
-                Approve
+                <span className="hidden sm:inline">Approve</span>
               </button>
               <button
                 onClick={handleReject}
@@ -799,7 +864,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-red-100 text-red-600 hover:bg-red-200 transition-colors disabled:opacity-50"
               >
                 <XMarkIcon className="w-4 h-4" />
-                Reject
+                <span className="hidden sm:inline">Reject</span>
               </button>
               <button
                 onClick={handleRegenerate}
@@ -807,7 +872,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-cyan-50 text-cyan hover:bg-cyan-50/80 transition-colors disabled:opacity-50"
               >
                 <ArrowPathIcon className="w-4 h-4" />
-                Regenerate
+                <span className="hidden sm:inline">Regenerate</span>
               </button>
               <button
                 onClick={handleTwilight}
@@ -819,7 +884,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 }`}
               >
                 <MoonIcon className="w-4 h-4" />
-                {currentPhoto?.isTwilight ? "Remove Twilight" : "Twilight"}
+                <span className="hidden sm:inline">{currentPhoto?.isTwilight ? "Remove Twilight" : "Twilight"}</span>
               </button>
             </div>
 

@@ -27,6 +27,7 @@ import { BeforeAfterSlider } from "./before-after-slider";
 import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
 import { ExifPanel } from "./exif-panel";
+import { JobTimeline } from "./job-timeline";
 import { useSwipe } from "@/hooks/use-swipe";
 import { getActionForKey } from "@/lib/keyboard-shortcuts";
 import { LazyThumb } from "./lazy-thumb";

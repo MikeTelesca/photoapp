@@ -170,16 +170,16 @@ function GridView({ photos, cols, onPhotoClick, jobId }: {
               />
             )}
             {p.status === "approved" && (
-              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold" title="Approved">✓</div>
+              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold" title="Approved">A</div>
             )}
             {p.status === "rejected" && (
-              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold" title="Rejected">✗</div>
+              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold" title="Rejected">R</div>
             )}
             {p.status === "failed" && (
               <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-bold" title="Failed after retries">!</div>
             )}
             {p.favorited && (
-              <div className="absolute top-1 left-1 text-amber-400 text-sm drop-shadow">★</div>
+              <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-graphite-900" title="Favorite" />
             )}
           </div>
         );
@@ -273,7 +273,7 @@ function RetouchRequestPopover({
         }`}
         title={hasRequest ? "Retouch request set" : "Request a specific retouch for this photo"}
       >
-        <span>✂</span>
+        <span>Crop</span>
         <span className="hidden sm:inline">Retouch Request{hasRequest ? " \u25CF" : ""}</span>
       </button>
       {open && (
@@ -2635,7 +2635,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-semibold"
                   title={job.clientApprovalNote || undefined}
                 >
-                  Client Approved ✅
+                  Client approved
                 </span>
               )}
               {job.clientApprovalStatus === "changes_requested" && (
@@ -2643,7 +2643,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[11px] font-semibold"
                   title={job.clientApprovalNote || undefined}
                 >
-                  Changes Requested 📝
+                  Changes requested
                 </span>
               )}
               {currentPhoto && (
@@ -2687,7 +2687,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                         className="text-[11px] px-1.5 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800"
                         title="Rename this photo's output filename"
                       >
-                        ✏ Rename
+                        Rename
                       </button>
                       {canReplace && (
                         <>
@@ -2705,7 +2705,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                             className="text-[11px] px-1.5 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800 disabled:opacity-50"
                             title="Replace this photo's source image (resets to pending for re-enhance)"
                           >
-                            {replacing ? "Uploading…" : "🔄 Replace"}
+                            {replacing ? "Uploading…" : "Replace"}
                           </button>
                         </>
                       )}
@@ -2715,7 +2715,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                         className="text-[11px] px-1.5 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800"
                         title="Move or copy this photo to another job"
                       >
-                        📤 Move/Copy
+                        Move or copy
                       </button>
                       <button
                         type="button"
@@ -2745,7 +2745,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                         className="text-[11px] px-1.5 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800"
                         title="Copy a public link to just this photo"
                       >
-                        🔗 Copy Link
+                        Copy link
                       </button>
                     </>
                   )}
@@ -2779,7 +2779,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             className={`text-xs px-2 py-1.5 rounded-md border ${focusMode ? "bg-cyan-500 text-white border-cyan-500" : "border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"}`}
             title="Toggle fullscreen focus mode (Shift+F)"
           >
-            ⛶ Focus
+            Focus
           </button>
           {/* Preset selector + edit prompt */}
           <div className="flex items-center gap-1.5 hidden md:flex">
@@ -2800,7 +2800,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50"
                 title="AI analyzes sample photos and suggests the best preset"
               >
-                {suggesting ? "Analyzing..." : "✨ Suggest preset"}
+                {suggesting ? "Analyzing..." : "Suggest preset"}
               </button>
               <InfoTooltip text="AI analyzes 3 sample photos and recommends the best preset for this property." position="bottom" />
             </div>
@@ -2816,7 +2816,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 }`}
                 title="Override the enhancement preset for this photo only"
               >
-                🎨 Override preset
+                Override preset
                 {currentPhoto?.presetOverride ? ` (${currentPhoto.presetOverride})` : ""}
               </button>
               {showPresetOverrideMenu && currentPhoto && (
@@ -2854,7 +2854,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50"
               title="AI suggests an ideal crop for the current photo"
             >
-              {cropping ? "Analyzing..." : "✂ Suggest crop"}
+              {cropping ? "Analyzing..." : "Suggest crop"}
             </button>
             <button
               onClick={() => setShowPromptEditor(!showPromptEditor)}
@@ -2876,7 +2876,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className={`text-xs px-2 py-1.5 rounded-md border ${compareSliderOn ? "bg-cyan-500 text-white border-cyan-500" : "border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"}`}
                 title="Before/after split slider"
               >
-                {compareSliderOn ? "↔ Compare on" : "↔ Compare"}
+                {compareSliderOn ? "Compare on" : "Compare"}
               </button>
             )}
             <button
@@ -2891,7 +2891,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               className={`text-xs px-3 py-1.5 rounded ${showWatermark ? "bg-amber-500 text-white" : "border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300"}`}
               title="Toggle watermark preview overlay"
             >
-              {showWatermark ? "🏷 Watermark on" : "🏷 Preview watermark"}
+              {showWatermark ? "Watermark on" : "Preview watermark"}
             </button>
           </div>
           {suggestion && (
@@ -2914,7 +2914,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               disabled={loadingTags}
               className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-60"
             >
-              {loadingTags ? "..." : "🪄 Suggest tags"}
+              {loadingTags ? "..." : "Suggest tags"}
             </button>
             {tagSuggestions.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
@@ -2936,7 +2936,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             className={`text-xs px-2 py-1.5 rounded-md border transition-colors ${showWatermarkPanel ? "border-cyan bg-cyan-50 text-cyan" : "border-graphite-200 bg-white text-graphite-700 hover:bg-graphite-50"}`}
             title="Watermark settings"
           >
-            {job.watermarkText ? "Watermark ✓" : "Watermark"}
+            {job.watermarkText ? "Watermark" : "Watermark"}
           </button>
           <ReingestButton jobId={job.id} />
           <button
@@ -2972,7 +2972,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             className="text-xs px-2 py-1.5 rounded-md bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-200"
             title="Re-run twilight detection on all photos in this job"
           >
-            🌆 Re-detect twilight
+            Re-detect twilight
           </button>
           <div className="text-right mr-2 hidden sm:block">
             <div className="text-xs font-semibold text-graphite-700 dark:text-graphite-200">
@@ -2988,22 +2988,22 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           <div className="flex items-center gap-1.5 hidden md:flex">
             {photos.filter(p => p.status === "approved").length > 0 && (
               <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">
-                ✓ {photos.filter(p => p.status === "approved").length}
+                {photos.filter(p => p.status === "approved").length} approved
               </span>
             )}
             {photos.filter(p => p.status === "rejected").length > 0 && (
               <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">
-                ✗ {photos.filter(p => p.status === "rejected").length}
+                {photos.filter(p => p.status === "rejected").length} rejected
               </span>
             )}
             {photos.filter(p => p.status === "edited").length > 0 && (
               <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 text-cyan">
-                ⏳ {photos.filter(p => p.status === "edited").length}
+                {photos.filter(p => p.status === "edited").length} edited
               </span>
             )}
             {photos.filter(p => p.status === "pending").length > 0 && (
               <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-200">
-                ○ {photos.filter(p => p.status === "pending").length}
+                {photos.filter(p => p.status === "pending").length} pending
               </span>
             )}
           </div>
@@ -3028,7 +3028,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               disabled={generating}
               className="text-xs px-3 py-1.5 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-60"
             >
-              {generating ? "Writing..." : "✨ Generate listing"}
+              {generating ? "Writing..." : "Generate listing"}
             </button>
           )}
           {photos.some(p => p.status === "approved") && (
@@ -3039,7 +3039,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               alert(`Generated ${data.success} captions (${data.failed} failed)`);
               window.location.reload();
             }} className="text-xs px-3 py-1.5 rounded border border-purple-500 text-purple-600 hover:bg-purple-50">
-              💬 Caption all
+              Caption all
             </button>
           )}
           <button
@@ -3047,7 +3047,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             disabled={autoCaptioningAll}
             className="text-xs px-3 py-1.5 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-60"
           >
-            {autoCaptioningAll ? "Writing..." : "✨ Auto-caption all"}
+            {autoCaptioningAll ? "Writing..." : "Auto-caption all"}
           </button>
           {job.status === "approved" && (
             <button
@@ -3063,12 +3063,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               download
               className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
             >
-              📄 PDF Gallery
+              PDF Gallery
             </a>
           )}
           <a href={`/api/jobs/${job.id}/contact-sheet`} download
             className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300">
-            📋 Contact sheet
+            Contact sheet
           </a>
           {(job.status === "review" || job.status === "approved") && (
             <JobColorPalette jobId={job.id} />
@@ -3076,12 +3076,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           <a href={`/api/jobs/${job.id}/annotation-pdf`} download
             className="text-xs px-3 py-1.5 rounded border border-amber-400 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
             title="Download PDF with pin annotations">
-            📌 Annotations PDF
+            Annotations PDF
           </a>
           <a href={`/api/jobs/${job.id}/photos-csv`} download
             className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
             title="Export photos metadata as CSV">
-            📊 Photos CSV
+            Photos CSV
           </a>
           {job.status === "approved" && (
             <div className="flex items-center gap-1">
@@ -3090,7 +3090,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 disabled={syncing}
                 className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-60"
               >
-                {syncing ? "Syncing..." : "📦 Sync to Dropbox"}
+                {syncing ? "Syncing..." : "Sync to Dropbox"}
               </button>
               <InfoTooltip text="Uploads approved photos to a shared Dropbox folder so your client can access them directly." position="bottom" />
             </div>
@@ -3102,7 +3102,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               rel="noopener noreferrer"
               className="text-xs text-cyan underline"
             >
-              View folder →
+              View folder
             </a>
           )}
           <SaveTemplateButton jobId={job.id} />
@@ -3130,7 +3130,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             }
             className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-40"
           >
-            ⟲ Undo ({undoStack.length})
+            Undo ({undoStack.length})
           </button>
           {slideshowPhotos.length > 0 && (
             <button
@@ -3138,7 +3138,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               className="text-xs px-3 py-1.5 rounded bg-purple-500 text-white font-semibold hover:bg-purple-600"
               title="Fullscreen slideshow of approved photos"
             >
-              ▶ Present ({slideshowPhotos.length})
+              Present ({slideshowPhotos.length})
             </button>
           )}
           <Button variant="approve" onClick={handleApproveAll} disabled={isUpdating}>
@@ -3234,7 +3234,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-2 py-1 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-60 whitespace-nowrap"
                 title="Approve selected photos"
               >
-                ✓ Approve
+                Approve
               </button>
 
               <button
@@ -3243,7 +3243,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-2 py-1 rounded bg-red-500 text-white font-semibold hover:bg-red-600 disabled:opacity-60 whitespace-nowrap"
                 title="Reject selected photos"
               >
-                ✗ Reject
+                Reject
               </button>
 
               <button
@@ -3252,7 +3252,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-2 py-1 rounded bg-amber-400 text-white font-semibold hover:bg-amber-500 disabled:opacity-60 whitespace-nowrap"
                 title="Favorite selected photos"
               >
-                ★ Favorite
+                Favorite
               </button>
 
               <button
@@ -3261,7 +3261,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-2 py-1 rounded bg-graphite-400 text-white font-semibold hover:bg-graphite-500 disabled:opacity-60 whitespace-nowrap"
                 title="Clear status from selected photos"
               >
-                ✕ Clear
+                Clear
               </button>
 
               <div className="flex gap-0.5">
@@ -3271,7 +3271,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
                   title="Rotate selected 90° clockwise"
                 >
-                  🔄 Rotate 90°
+                  Rotate 90°
                 </button>
                 <button
                   onClick={() => bulkRotate(-90)}
@@ -3279,7 +3279,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
                   title="Rotate selected 90° counter-clockwise"
                 >
-                  🔄 Rotate -90°
+                  Rotate -90°
                 </button>
                 <button
                   onClick={() => bulkRotate(180)}
@@ -3287,7 +3287,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
                   title="Flip selected photos 180°"
                 >
-                  🔄 Rotate 180°
+                  Rotate 180°
                 </button>
               </div>
 
@@ -3297,7 +3297,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-2 py-1 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-60 whitespace-nowrap"
                 title="Download selected photos as ZIP"
               >
-                📦 Download
+                Download
               </button>
 
               <div className="flex gap-1 items-center">
@@ -3319,7 +3319,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   className="text-xs px-2 py-1 rounded bg-slate-500 text-white font-semibold hover:bg-slate-600 disabled:opacity-60 whitespace-nowrap"
                   title="Add note to selected photos"
                 >
-                  📝 Add note
+                  Add note
                 </button>
               </div>
 
@@ -3329,7 +3329,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-2 py-1 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 disabled:opacity-60 whitespace-nowrap"
                 title="Edit caption / note / flag on selected photos"
               >
-                ✏ Edit Metadata
+                Edit metadata
               </button>
 
               <button
@@ -3338,7 +3338,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className="text-xs px-2 py-1 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-60 whitespace-nowrap"
                 title="Add or remove tags on selected photos"
               >
-                🏷 Tag
+                Tag
               </button>
 
               <button
@@ -3478,7 +3478,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {showMoreActions && (<>
       <details className="text-sm bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-700 px-7 py-3">
         <summary className="cursor-pointer text-xs text-graphite-500 dark:text-graphite-400 hover:text-cyan font-semibold">
-          🎯 Per-job custom instructions {customOverride ? "(set)" : ""}
+          Per-job custom instructions {customOverride ? "(set)" : ""}
         </summary>
         <div className="mt-3 space-y-2">
           <textarea
@@ -3493,7 +3493,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               Applied to all enhance + re-enhance for this job
             </span>
             <div className="flex items-center gap-2">
-              {overrideSaved && <span className="text-xs text-emerald-600 font-semibold">Saved ✓</span>}
+              {overrideSaved && <span className="text-xs text-emerald-600 font-semibold">Saved</span>}
               <button onClick={saveOverride} disabled={savingOverride}
                 className="text-xs px-3 py-1 rounded bg-cyan text-white font-semibold hover:bg-cyan-600 disabled:opacity-50">
                 {savingOverride ? "Saving..." : "Save"}
@@ -3506,7 +3506,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {/* Per-photo custom prompt override */}
       <details className="text-sm bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-700 px-7 py-3">
         <summary className="cursor-pointer text-xs text-graphite-500 dark:text-graphite-400 hover:text-cyan font-semibold">
-          🎯 Per-photo instructions {photoOverride ? "(set)" : ""}
+          Per-photo instructions {photoOverride ? "(set)" : ""}
         </summary>
         <div className="mt-2 space-y-2">
           <textarea
@@ -3647,15 +3647,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               }`}
               title="Show only favorited photos"
             >
-              ⭐ Only favorites
+              Only favorites
             </button>
             <div className="flex gap-0.5">
               {[
                 { v: "all" as const, l: "All" },
-                { v: "favorites" as const, l: "★" },
+                { v: "favorites" as const, l: "Fav" },
                 { v: "edited" as const, l: "New" },
-                { v: "approved" as const, l: "✓" },
-                { v: "rejected" as const, l: "✗" },
+                { v: "approved" as const, l: "OK" },
+                { v: "rejected" as const, l: "No" },
               ].map(opt => (
                 <button
                   key={opt.v}
@@ -3685,7 +3685,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               title="Reorder photos by MLS-standard sequence using AI room detection. Photos without auto-tags fall to the end."
               className="text-[9px] px-1.5 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 disabled:opacity-50 disabled:cursor-not-allowed w-full font-semibold"
             >
-              {sorting ? "Sorting..." : "🪄 Smart sort"}
+              {sorting ? "Sorting..." : "Smart sort"}
             </button>
             {/* Tag all photos button */}
             <button
@@ -3694,7 +3694,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               title="AI auto-tags all photos in this job that don't have tags yet"
               className="text-[9px] px-1.5 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 disabled:opacity-50 disabled:cursor-not-allowed w-full font-semibold"
             >
-              {tagging ? "Tagging..." : "🏷️ Tag all"}
+              {tagging ? "Tagging..." : "Tag all"}
             </button>
             {/* Select mode toggle */}
             <button
@@ -3819,12 +3819,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                           {/* Status overlay */}
                           {photo.status === "approved" && (
                             <div className="absolute inset-0 ring-2 ring-emerald-500 rounded">
-                              <div className="absolute top-1 right-1 bg-emerald-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✓</div>
+                              <div className="absolute top-1 right-1 bg-emerald-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">A</div>
                             </div>
                           )}
                           {photo.status === "rejected" && (
                             <div className="absolute inset-0 ring-2 ring-red-500 rounded bg-red-500/30">
-                              <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✗</div>
+                              <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">R</div>
                               {photo.rejectionReason && (
                                 <div className="absolute bottom-1 left-1 right-1 text-[8px] text-red-600 bg-white dark:bg-graphite-900/80 rounded px-1 py-0.5 truncate font-medium">
                                   {photo.rejectionReason}
@@ -3858,17 +3858,17 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                           <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
                         )}
                         {photo.favorited && (
-                          <div className="absolute top-1 right-1 text-amber-400 text-sm drop-shadow">★</div>
+                          <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-graphite-900" title="Favorite" />
                         )}
                         {photo.flagged && (
-                          <div className="absolute top-1 left-1 text-orange-400 text-sm drop-shadow z-10" title="Flagged">🚩</div>
+                          <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-orange-500 ring-2 ring-white dark:ring-graphite-900 z-10" title="Flagged" />
                         )}
                         {photo.retouchRequest && (
                           <div
                             className="absolute bottom-1 right-1 text-fuchsia-500 text-sm drop-shadow z-10 bg-white/80 dark:bg-graphite-900/80 rounded-full w-4 h-4 flex items-center justify-center leading-none"
                             title={`Retouch: ${photo.retouchRequest}`}
                           >
-                            ✂
+                            R
                           </div>
                         )}
                         {photo.presetOverride && (
@@ -3889,7 +3889,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                             const f = JSON.parse(photo.qualityFlags);
                             const hasIssue = f.blurry || f.underexposed || f.overexposed || f.lowContrast;
                             return hasIssue ? (
-                              <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-amber-700 bg-amber-100/90 rounded px-0.5">⚠</span>
+                              <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-amber-700 bg-amber-100/90 rounded px-0.5">!</span>
                             ) : null;
                           } catch { return null; }
                         })()}
@@ -3924,7 +3924,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                             }}
                           >
                             {selectedPhotoIds.has(photo.id) && (
-                              <span className="text-cyan text-sm font-bold">✓</span>
+                              <span className="text-cyan-600 dark:text-cyan-400 text-sm font-bold">Done</span>
                             )}
                           </div>
                         )}
@@ -4124,7 +4124,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       return warnings.length ? (
                         <div className="absolute bottom-2.5 left-2.5 z-10">
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">
-                            ⚠ {warnings.join(" · ")}
+                            {warnings.join(" · ")}
                           </span>
                         </div>
                       ) : null;
@@ -4139,7 +4139,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                     <div className="absolute top-2.5 right-2.5 z-20 max-w-[240px] pointer-events-none">
                       <div className="bg-amber-200 text-amber-900 text-xs px-3 py-2 rounded shadow-lg border border-amber-300 rotate-1 whitespace-pre-wrap break-words">
                         <div className="flex items-start gap-1">
-                          <span>📌</span>
+                          <span>Pin</span>
                           <span>{currentPhoto.note}</span>
                         </div>
                       </div>
@@ -4210,18 +4210,18 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   </button>
                   <button onClick={autoCaption} disabled={autoCaptioning}
                     className="text-purple-600 hover:underline text-[10px] whitespace-nowrap disabled:opacity-50">
-                    {autoCaptioning ? "Writing..." : "✨ Auto-caption"}
+                    {autoCaptioning ? "Writing..." : "Auto-caption"}
                   </button>
                 </div>
               ) : (
                 <>
                   <button onClick={generateCaption} disabled={generatingCaption}
                     className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50">
-                    {generatingCaption ? "Writing..." : "💬 Generate caption"}
+                    {generatingCaption ? "Writing..." : "Generate caption"}
                   </button>
                   <button onClick={autoCaption} disabled={autoCaptioning}
                     className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50">
-                    {autoCaptioning ? "Writing..." : "✨ Auto-caption"}
+                    {autoCaptioning ? "Writing..." : "Auto-caption"}
                   </button>
                 </>
               )}
@@ -4279,7 +4279,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             return (
               <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
                 <div className="text-xs text-amber-600 font-semibold">
-                  ★ {avg.toFixed(1)} client rating ({ratings.length})
+                  {avg.toFixed(1)} client rating ({ratings.length})
                 </div>
               </div>
             );
@@ -4310,7 +4310,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className={`text-xs px-3 py-1.5 rounded ${pinMode ? "bg-amber-500 text-white" : "border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300"}`}
                 title={pinMode ? "Click on the photo to drop a pin" : "Annotate photo with pins"}
               >
-                {pinMode ? "📍 Pin mode (click to add)" : "📍 Annotate"}
+                {pinMode ? "Pin mode (click to add)" : "Annotate"}
               </button>
               {/* EXIF metadata toggle */}
               <button
@@ -4318,7 +4318,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 className={`text-xs px-3 py-1.5 rounded ${exifPanelOpen ? "bg-cyan text-white" : "border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300"}`}
                 title="View detailed EXIF metadata"
               >
-                🔬 EXIF
+                EXIF
               </button>
               {/* View Mode Toggle */}
               <div className="flex gap-1 items-center">
@@ -4439,7 +4439,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <button onClick={detectOrientation} disabled={detectingOrientation || rotating || isUpdating || enhanceLoading}
                   className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
                   title="Detect orientation and suggest a rotation">
-                  {detectingOrientation ? "…" : "🔍 Detect"}
+                  {detectingOrientation ? "…" : "Detect"}
                 </button>
                 {orientationSuggestion && currentPhoto && orientationSuggestion.photoId === currentPhoto.id && (
                   <span className="flex items-center gap-1 ml-1 px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-[11px] text-amber-900 dark:text-amber-200">

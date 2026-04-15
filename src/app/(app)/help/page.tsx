@@ -1,5 +1,6 @@
 import { Topbar } from "@/components/layout/topbar";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { RestartTourButton } from "@/components/help/restart-tour-button";
 
 export default function HelpPage() {
   const faqs = [
@@ -126,6 +127,16 @@ export default function HelpPage() {
           </CardHeader>
           <div className="p-5 text-sm text-graphite-600 dark:text-graphite-300">
             <p>Email <a href="mailto:support@athmedia.ca" className="text-cyan font-semibold">support@athmedia.ca</a> with screenshots of any issues.</p>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Onboarding</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <p className="text-sm text-graphite-600 dark:text-graphite-300 mb-4">Restart the first-time user tour to see the workflow explained step-by-step.</p>
+            <RestartTourButton />
           </div>
         </Card>
       </div>

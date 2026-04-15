@@ -20,6 +20,23 @@ model User {
   updatedAt          DateTime @updatedAt
   jobs               Job[]
   jobTemplates       JobTemplate[]
+  clients            Client[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  notes     String?
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  jobs      Job[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
 }
 
 model Job {
@@ -43,6 +60,8 @@ model Job {
   watermarkOpacity  Float   @default(0.7)
   tags             String   @default("")  // comma-separated tags
   clientName       String?
+  clientId         String?
+  client           Client?  @relation(fields: [clientId], references: [id])
   shareToken          String?  @unique
   shareEnabled        Boolean  @default(false)
   listingDescription  String?

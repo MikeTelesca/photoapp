@@ -15,12 +15,23 @@ export async function GET(request: NextRequest) {
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
     // Find photos stuck in "processing" with no recent update and reset them to "pending"
+    // Skip photos that have already hit max retries
     const stuckPhotos = await prisma.photo.updateMany({
       where: {
         status: "processing",
         updatedAt: { lt: tenMinutesAgo },
+        retryCount: { lt: 3 },
       },
-      data: { status: "pending" },
+      data: { status: "pending", retryCount: { increment: 1 } },
+    });
+
+    // Find photos that exhausted retries and mark as failed
+    const failedPhotos = await prisma.photo.updateMany({
+      where: {
+        status: { in: ["pending", "processing"] },
+        retryCount: { gte: 3 },
+      },
+      data: { status: "failed" },
     });
 
     // Log recovery of stuck photos
@@ -29,6 +40,15 @@ export async function GET(request: NextRequest) {
         source: "stuck-recovery",
         message: `Recovered ${stuckPhotos.count} stuck photos from processing state`,
         metadata: { recoveredCount: stuckPhotos.count },
+      }).catch(() => {});
+    }
+
+    // Log failed photos
+    if (failedPhotos.count > 0) {
+      await logError({
+        source: "stuck-recovery",
+        message: `Marked ${failedPhotos.count} photos as failed after max retries`,
+        metadata: { failedCount: failedPhotos.count },
       }).catch(() => {});
     }
 
@@ -63,6 +83,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       resetStuckPhotos: stuckPhotos.count,
+      failedPhotos: failedPhotos.count,
       jobsMovedToReview: reviewCount,
       checkedJobs: activeJobs.length,
       timestamp: new Date().toISOString(),

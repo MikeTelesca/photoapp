@@ -110,6 +110,31 @@ OBJECT EDITS:
 Style reference: Architectural Digest. Premium, dramatic, aspirational, photorealistic.
 Output the edited image.`;
 
+  const mlsStandardPrompt = `You are performing REAL ESTATE PHOTO CORRECTION for MLS listings. Goal: clean, balanced, accurate representation suitable for any MLS system.
+
+MANDATORY CORRECTIONS:
+- STRAIGHTEN all vertical lines (walls, doorframes, windows, columns).
+- STRAIGHTEN all horizontal lines (floor lines, ceilings, countertops).
+- Fix lens distortion and barrel curve.
+- Subtle perspective correction (no dramatic warping).
+
+EDITING APPROACH:
+- Conservative exposure adjustments (preserve original feel).
+- Natural color reproduction — no oversaturation.
+- Mild window pull (recover blown highlights without compositing fake views).
+- Clean shadow detail without artificial appearance.
+- Sharp focus throughout.
+- Remove dust spots and minor lens artifacts.
+
+DO NOT:
+- Add fake objects, furniture, or scenery.
+- Replace existing skies (preserve original sky).
+- Heavily warm or cool the color cast.
+- Apply dramatic HDR effects.
+- Modify ceiling lines or architectural detail.
+
+OUTPUT: 4K, sharp, MLS-ready, neutral white balance.`;
+
   await prisma.preset.upsert({
     where: { slug: "standard" },
     update: { promptModifiers: standardPrompt },
@@ -144,7 +169,18 @@ Output the edited image.`;
     },
   });
 
-  console.log("Seeded:", { admin: admin.id, presets: 3 });
+  await prisma.preset.upsert({
+    where: { slug: "mls-standard" },
+    update: { promptModifiers: mlsStandardPrompt },
+    create: {
+      name: "MLS Standard",
+      slug: "mls-standard",
+      description: "Conservative MLS-compliant editing",
+      promptModifiers: mlsStandardPrompt,
+    },
+  });
+
+  console.log("Seeded:", { admin: admin.id, presets: 4 });
 }
 
 main()

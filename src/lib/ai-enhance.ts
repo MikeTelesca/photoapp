@@ -78,6 +78,33 @@ ONLY DO THESE SAFE ADJUSTMENTS:
 The output must be THE EXACT SAME SCENE — same sky, same grass, same view through windows — just with a premium color grade.
 
 Output the corrected image.`,
+
+  "mls-standard": `You are performing REAL ESTATE PHOTO CORRECTION for MLS listings. Goal: clean, balanced, accurate representation suitable for any MLS system. This is a LISTING PHOTO that must accurately represent the property. Do NOT embellish reality.
+
+STRICT RULES — DO NOT VIOLATE:
+- DO NOT add, remove, or change ANY physical content
+- DO NOT replace the sky, add clouds, or make grass greener than reality
+- DO NOT change what's visible through windows
+- DO NOT modify buildings, landscaping, or any objects
+- DO NOT add or remove anything structural
+
+MANDATORY CORRECTIONS:
+1. STRAIGHTEN all vertical lines (walls, doorframes, windows, columns) perfectly.
+2. STRAIGHTEN all horizontal lines (floor lines, ceilings, countertops).
+3. Fix lens distortion and barrel curve.
+4. Subtle perspective correction (no dramatic warping).
+
+EDITING APPROACH:
+5. Conservative exposure adjustments (preserve original feel).
+6. Natural color reproduction — no oversaturation.
+7. Mild window pull (recover blown highlights without compositing fake views).
+8. Clean shadow detail without artificial appearance.
+9. Sharp focus throughout.
+10. Remove dust spots and minor lens artifacts.
+
+The output must be THE EXACT SAME SCENE — same sky, same grass, same objects — just straightened, corrected, and ready for MLS.
+
+Output the corrected image.`,
 };
 
 const twilightExteriorPrompts: Record<string, string> = {

@@ -57,6 +57,7 @@ interface Photo {
   exifData: string | null;
   errorMessage: string | null;
   errorAttempts: number;
+  retryCount: number;
   qualityFlags?: string | null;
   autoTags?: string | null;
   rejectionReason?: string | null;
@@ -136,10 +137,13 @@ function GridView({ photos, cols, onPhotoClick, jobId }: {
               />
             )}
             {p.status === "approved" && (
-              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold">✓</div>
+              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold" title="Approved">✓</div>
             )}
             {p.status === "rejected" && (
-              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">✗</div>
+              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold" title="Rejected">✗</div>
+            )}
+            {p.status === "failed" && (
+              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-bold" title="Failed after retries">!</div>
             )}
             {p.isFavorite && (
               <div className="absolute top-1 left-1 text-amber-400 text-sm drop-shadow">★</div>
@@ -2187,6 +2191,45 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   {generatingCaption ? "Writing..." : "💬 Generate caption"}
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Failed Photo Banner */}
+          {currentPhoto?.status === "failed" && (
+            <div className="bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800 px-3 md:px-6 py-3">
+              <div className="flex flex-col gap-2">
+                <div>
+                  <strong className="text-red-800 dark:text-red-200">Enhance failed after multiple retries.</strong>
+                  <p className="text-xs text-red-700 dark:text-red-300 mt-1">The AI couldn't process this photo after {currentPhoto.retryCount} attempts. You can retry manually or skip it.</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/retry`, { method: "POST" });
+                      if (res.ok) {
+                        setJob(prev => ({
+                          ...prev,
+                          photos: prev.photos.map(p =>
+                            p.id === currentPhoto.id ? { ...p, status: "pending", retryCount: 0 } : p
+                          ),
+                        }));
+                        addToast("success", "Photo reset for retry");
+                      } else {
+                        addToast("error", "Failed to reset photo");
+                      }
+                    }}
+                    className="text-xs px-3 py-1.5 rounded bg-red-600 text-white font-semibold hover:bg-red-700"
+                  >
+                    Retry now
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    className="text-xs px-3 py-1.5 rounded border border-red-300 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 font-semibold"
+                  >
+                    Mark as rejected
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

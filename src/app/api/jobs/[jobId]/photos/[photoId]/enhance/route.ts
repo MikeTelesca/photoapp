@@ -260,6 +260,7 @@ export async function POST(
           status: "pending",
           errorMessage: uploadErr,
           errorAttempts: { increment: 1 },
+          retryCount: { increment: 1 },
         },
       });
       return NextResponse.json({
@@ -346,6 +347,7 @@ export async function POST(
         status: "pending",
         errorMessage: err.message || "Unknown error",
         errorAttempts: { increment: 1 },
+        retryCount: { increment: 1 },
       },
     }).catch(() => {});
     return NextResponse.json({ error: err.message }, { status: 500 });

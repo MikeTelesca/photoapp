@@ -541,7 +541,7 @@ export function JobFilterBar({ jobs }: Props) {
         </select>
         <button onClick={() => setGroupByDate(!groupByDate)}
           className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700">
-          {groupByDate ? "📅 Grouped" : "📋 Flat"}
+          {groupByDate ? "Grouped" : "Flat"}
         </button>
         <a
           href={(() => {

@@ -2599,7 +2599,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   );
 
   return (
-    <div className={`flex flex-col min-h-[calc(100vh-3.5rem)] ${focusMode ? "ath-focus-root" : ""}`}>
+    <div className={`flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden ${focusMode ? "ath-focus-root" : ""}`}>
       {showMoreActions && (
         <PhotoMinimap
           photos={sortedPhotos}
@@ -3351,57 +3351,63 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </button>
             </div>
           )}
-          <div className="flex gap-1">
-            <select
-              value={zipFormat}
-              onChange={(e) => setZipFormat(e.target.value)}
-              className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
-            >
-              <option value="jpeg-95">JPEG 95% (largest, best)</option>
-              <option value="jpeg-90">JPEG 90% (default)</option>
-              <option value="jpeg-85">JPEG 85% (web)</option>
-              <option value="jpeg-75">JPEG 75% (smallest)</option>
-              <option value="png">PNG (lossless)</option>
-            </select>
-            <a
-              href={`/api/jobs/${job.id}/download-zip?format=${zipFormat}`}
-              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600"
-              onClick={(e) => e.stopPropagation()}
-              download
-            >
-              <ArrowDownTrayIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Download ZIP</span>
-            </a>
-          </div>
-          <div className="flex gap-1">
-            <select
-              value={mlsPreset}
-              onChange={(e) => setMlsPreset(e.target.value)}
-              className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700"
-            >
-              <option value="mls-standard">MLS Standard (1024)</option>
-              <option value="mls-hi">MLS Hi-Res (1920)</option>
-              <option value="mls-4k">MLS 4K (3840)</option>
-              <option value="web">Web (1600)</option>
-              <option value="social">Social Square (1080)</option>
-              <option value="social-portrait">Instagram Portrait (1080×1350)</option>
-              <option value="story">Story / Reel (1080×1920)</option>
-              <option value="video-16x9">Video 16:9 (1920×1080)</option>
-              <option value="realtor-ca">Realtor.ca (1024×683)</option>
-            </select>
-            <a
-              href={`/api/jobs/${job.id}/download-mls?preset=${mlsPreset}`}
-              className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold hover:bg-cyan-600"
-              onClick={(e) => e.stopPropagation()}
-              download
-            >
-              Download MLS
-            </a>
-          </div>
-          <Button variant="outline" onClick={handleDropboxFolder} title="Open Dropbox folder">
-            <FolderOpenIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Dropbox</span>
-          </Button>
+          {/* Single download dropdown — was 3 separate select+button pairs */}
+          {showMoreActions && (
+            <>
+              <select
+                value={zipFormat}
+                onChange={(e) => setZipFormat(e.target.value)}
+                className="h-9 text-xs px-2 rounded-md border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white"
+              >
+                <option value="jpeg-95">JPEG 95</option>
+                <option value="jpeg-90">JPEG 90</option>
+                <option value="jpeg-85">JPEG 85</option>
+                <option value="jpeg-75">JPEG 75</option>
+                <option value="png">PNG</option>
+              </select>
+              <select
+                value={mlsPreset}
+                onChange={(e) => setMlsPreset(e.target.value)}
+                className="h-9 text-xs px-2 rounded-md border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white"
+              >
+                <option value="mls-standard">MLS 1024</option>
+                <option value="mls-hi">MLS 1920</option>
+                <option value="mls-4k">MLS 4K</option>
+                <option value="web">Web 1600</option>
+                <option value="social">Social 1080</option>
+                <option value="social-portrait">IG Portrait</option>
+                <option value="story">Story</option>
+                <option value="video-16x9">Video 16:9</option>
+                <option value="realtor-ca">Realtor.ca</option>
+              </select>
+              <a
+                href={`/api/jobs/${job.id}/download-mls?preset=${mlsPreset}`}
+                className="inline-flex items-center h-9 px-3 text-xs rounded-md border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white hover:bg-graphite-50 dark:hover:bg-graphite-800"
+                onClick={(e) => e.stopPropagation()}
+                download
+              >
+                MLS
+              </a>
+              <button
+                type="button"
+                onClick={handleDropboxFolder}
+                className="inline-flex items-center h-9 px-3 text-xs rounded-md border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white hover:bg-graphite-50 dark:hover:bg-graphite-800"
+                title="Open Dropbox folder"
+              >
+                Dropbox
+              </button>
+            </>
+          )}
+          {/* Always-visible primary download */}
+          <a
+            href={`/api/jobs/${job.id}/download-zip?format=${zipFormat}`}
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 text-xs rounded-md bg-graphite-900 dark:bg-white text-white dark:text-graphite-900 font-medium hover:bg-graphite-800 dark:hover:bg-graphite-100"
+            onClick={(e) => e.stopPropagation()}
+            download
+          >
+            <ArrowDownTrayIcon className="w-4 h-4" />
+            Download
+          </a>
         </div>
       </div>
 

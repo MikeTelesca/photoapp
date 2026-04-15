@@ -206,14 +206,13 @@ export default async function DashboardPage({
                 : "No jobs in flight."}
             </p>
           </div>
-          <QuickActions />
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
-          <StatCard label="Total jobs" value={stats.totalJobs} subtext="This week" icon={<FolderIcon className="w-[18px] h-[18px]" />} highlight />
-          <StatCard label="Processing" value={stats.processingJobs} subtext={stats.processingJobs > 0 ? "In progress" : "None"} icon={<ArrowPathIcon className="w-[18px] h-[18px]" />} iconColor="amber" />
-          <StatCard label="Needs review" value={stats.reviewJobs} subtext={`${stats.reviewJobs} propert${stats.reviewJobs === 1 ? "y" : "ies"}`} icon={<EyeIcon className="w-[18px] h-[18px]" />} iconColor="cyan" />
-          <StatCard label="Approved today" value={stats.approvedToday} subtext="Today" icon={<CheckCircleIcon className="w-[18px] h-[18px]" />} iconColor="green" />
+          <StatCard label="Total jobs" value={stats.totalJobs} subtext="This week" icon={<FolderIcon className="w-[18px] h-[18px]" />} />
+          <StatCard label="Processing" value={stats.processingJobs} subtext={stats.processingJobs > 0 ? "In progress" : "None"} icon={<ArrowPathIcon className="w-[18px] h-[18px]" />} />
+          <StatCard label="Needs review" value={stats.reviewJobs} subtext={`${stats.reviewJobs} propert${stats.reviewJobs === 1 ? "y" : "ies"}`} icon={<EyeIcon className="w-[18px] h-[18px]" />} />
+          <StatCard label="Approved today" value={stats.approvedToday} subtext="Today" icon={<CheckCircleIcon className="w-[18px] h-[18px]" />} />
         </div>
 
         <JobList jobs={jobs} />

@@ -142,6 +142,7 @@ model Photo {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   comments             PhotoComment[]
+  ratings              PhotoRating[]
 
   @@index([jobId, status])
   @@index([jobId, orderIndex])
@@ -153,6 +154,17 @@ model PhotoComment {
   photo       Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
   authorName  String
   message     String
+  createdAt   DateTime @default(now())
+
+  @@index([photoId])
+}
+
+model PhotoRating {
+  id          String   @id @default(cuid())
+  photoId     String
+  photo       Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  authorName  String
+  rating      Int      // 1-5
   createdAt   DateTime @default(now())
 
   @@index([photoId])

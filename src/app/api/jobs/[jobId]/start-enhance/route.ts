@@ -134,14 +134,18 @@ export async function POST(
     // Build Sky instruction based on job's skyStyle
     // NOTE: "as-is" is the default - AI must not hallucinate sky/clouds/scenery
     const skyInstructions: Record<string, string> = {
-      "blue-clouds": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is clearly overcast/dull/gray, you MAY replace ONLY the sky area with a clear blue sky with scattered white clouds. DO NOT touch anything below the horizon line. DO NOT add clouds to an already-clear sky. If the photo is INTERIOR or has no sky visible, do NOT modify anything.",
-      "clear-blue": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is clearly overcast/dull, you MAY replace ONLY the sky area with a pure clear blue sky. DO NOT touch anything below the horizon. If INTERIOR or no sky visible, do NOT modify.",
-      "golden-hour": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is dull, you MAY replace ONLY the sky with a warm golden hour sky. DO NOT touch anything below the horizon. If INTERIOR, do NOT modify.",
-      "dramatic": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is dull, you MAY replace ONLY the sky with a dramatic deep blue sky with bold clouds. DO NOT touch anything below the horizon. If INTERIOR, do NOT modify.",
+      "blue-clouds": "SKY ONLY: If the photo has a visible overcast/dull sky, you MAY replace ONLY THE PIXELS that are sky (above the rooflines/horizon) with clear blue sky and scattered white clouds. ABSOLUTE RULES: (1) NEVER touch dirt, dirt patches, construction zones, gravel, or driveways - leave them EXACTLY as they appear. (2) NEVER replace ground, lawns, driveways, or roads with anything else. (3) NEVER add grass where there is dirt. (4) ONLY modify the sky pixels themselves, nothing else.",
+      "clear-blue": "SKY ONLY: If the photo has a visible overcast/dull sky, you MAY replace ONLY the sky pixels with pure clear blue sky. ABSOLUTE RULES: NEVER touch ground, dirt, driveways, grass, or anything below the rooflines. ONLY modify sky pixels.",
+      "golden-hour": "SKY ONLY: If the photo has a visible dull sky, you MAY replace ONLY the sky pixels with a warm golden hour sky. ABSOLUTE RULES: NEVER touch ground, dirt, driveways, grass, or anything below the rooflines. ONLY modify sky pixels.",
+      "dramatic": "SKY ONLY: If the photo has a visible dull sky, you MAY replace ONLY the sky pixels with a dramatic deep blue sky with bold clouds. ABSOLUTE RULES: NEVER touch ground, dirt, driveways, grass, or anything below the rooflines. ONLY modify sky pixels.",
       "overcast-soft": "Do NOT modify the sky.",
       "as-is": "Do NOT modify or replace the sky. Keep the original sky exactly as it appears. Do not add clouds. Do not brighten the sky.",
     };
-    const skyInstruction = skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"];
+    // CRITICAL: only apply sky instruction to EXTERIOR photos
+    // Interior photos must NEVER have sky replacement (windows look like sky to AI)
+    const skyInstruction = analysis.isExterior
+      ? (skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"])
+      : "INTERIOR PHOTO DETECTED: Do NOT replace, modify, or add anything to windows, sky areas, or anything visible through glass. Do NOT add clouds, sky, grass, trees, or scenery anywhere. Keep all windows and views EXACTLY as they appear in the original.";
 
     const combinedInstructions = [tvInstruction, skyInstruction].join("\n");
     const fullPrompt = customPresetPrompt

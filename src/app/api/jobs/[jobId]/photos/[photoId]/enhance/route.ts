@@ -113,14 +113,18 @@ export async function POST(
 
       // Build Sky instruction — "as-is" default to prevent AI hallucinating sky/scenery
       const skyInstructions: Record<string, string> = {
-        "blue-clouds": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is clearly overcast/dull/gray, you MAY replace ONLY the sky area with a clear blue sky with scattered white clouds. DO NOT touch anything below the horizon line. DO NOT add clouds to an already-clear sky. If the photo is INTERIOR or has no sky visible, do NOT modify anything.",
-        "clear-blue": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is clearly overcast/dull, you MAY replace ONLY the sky area with a pure clear blue sky. DO NOT touch anything below the horizon. If INTERIOR or no sky visible, do NOT modify.",
-        "golden-hour": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is dull, you MAY replace ONLY the sky with a warm golden hour sky. DO NOT touch anything below the horizon. If INTERIOR, do NOT modify.",
-        "dramatic": "OPTIONAL SKY ENHANCEMENT (only if photo is an EXTERIOR with visible sky): If the existing sky is dull, you MAY replace ONLY the sky with a dramatic deep blue sky with bold clouds. DO NOT touch anything below the horizon. If INTERIOR, do NOT modify.",
+        "blue-clouds": "SKY ONLY: You MAY replace ONLY the sky pixels (above rooflines/horizon) with clear blue sky and scattered white clouds. ABSOLUTE: NEVER touch ground, dirt, driveways, lawns, or anything else. NEVER add grass where there is dirt.",
+        "clear-blue": "SKY ONLY: You MAY replace ONLY the sky pixels with pure clear blue sky. ABSOLUTE: NEVER touch ground, dirt, driveways, grass.",
+        "golden-hour": "SKY ONLY: You MAY replace ONLY the sky pixels with a warm golden hour sky. ABSOLUTE: NEVER touch ground, dirt, driveways, grass.",
+        "dramatic": "SKY ONLY: You MAY replace ONLY the sky pixels with a dramatic deep blue sky with bold clouds. ABSOLUTE: NEVER touch ground, dirt, driveways, grass.",
         "overcast-soft": "Do NOT modify the sky.",
-        "as-is": "Do NOT modify or replace the sky. Keep the original sky exactly as it appears. Do not add clouds. Do not brighten the sky.",
+        "as-is": "Do NOT modify or replace the sky. Keep the original sky exactly as it appears.",
       };
-      const skyInstruction = skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"];
+      // CRITICAL: only apply sky instruction to EXTERIOR photos
+      const isExt = photo.isExterior;
+      const skyInstruction = isExt
+        ? (skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"])
+        : "INTERIOR PHOTO: Do NOT replace, modify, or add anything to windows, sky areas, or anything visible through glass. Do NOT add clouds, sky, grass, trees, or scenery. Keep all windows EXACTLY as they appear.";
 
       const additionalInstructions = [tvInstruction, skyInstruction];
       if (customInstructions) additionalInstructions.push(customInstructions);

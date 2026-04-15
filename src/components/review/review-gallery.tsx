@@ -75,6 +75,7 @@ interface Photo {
   rejectionReason?: string | null;
   note?: string | null;
   caption?: string | null;
+  colorLabel?: string | null;
   ratings?: { id: string; authorName: string; rating: number; createdAt: string }[];
   createdAt: string;
   updatedAt: string;
@@ -209,6 +210,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
   const twilightMenuRef = useRef<HTMLDivElement>(null);
   const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
+  const [colorLabelFilter, setColorLabelFilter] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"order" | "name" | "date" | "flagged" | "rejected">("order");
   const [sorting, setSorting] = useState(false);
   const [tagging, setTagging] = useState(false);
@@ -706,6 +708,42 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       }
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
+    }
+  }, [currentPhoto]);
+
+  const handleColorLabel = useCallback(async (color: string | null) => {
+    if (!currentPhoto) return;
+    const prevColor = currentPhoto.colorLabel ?? null;
+    // Optimistic update
+    setJob((prev) => ({
+      ...prev,
+      photos: prev.photos.map((p) =>
+        p.id === currentPhoto.id ? { ...p, colorLabel: color } : p
+      ),
+    }));
+    try {
+      const res = await fetch(`/api/photos/${currentPhoto.id}/color-label`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ color }),
+      });
+      if (!res.ok) {
+        // revert
+        setJob((prev) => ({
+          ...prev,
+          photos: prev.photos.map((p) =>
+            p.id === currentPhoto.id ? { ...p, colorLabel: prevColor } : p
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to set color label:", error);
+      setJob((prev) => ({
+        ...prev,
+        photos: prev.photos.map((p) =>
+          p.id === currentPhoto.id ? { ...p, colorLabel: prevColor } : p
+        ),
+      }));
     }
   }, [currentPhoto]);
 
@@ -1545,6 +1583,41 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           break;
       }
 
+      // Color label shortcuts (Shift+1..6 = set color, Shift+0 = clear)
+      // Using Shift modifier to avoid conflict with 1-4 zoom shortcuts.
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const colorMap: Record<string, string | null> = {
+          "!": "red",      // Shift+1
+          "@": "amber",    // Shift+2
+          "#": "emerald",  // Shift+3
+          "$": "blue",     // Shift+4
+          "%": "purple",   // Shift+5
+          "^": "pink",     // Shift+6
+          ")": null,       // Shift+0
+        };
+        if (Object.prototype.hasOwnProperty.call(colorMap, e.key)) {
+          e.preventDefault();
+          handleColorLabel(colorMap[e.key]);
+          return;
+        }
+        // Fallback for layouts where shifted digits don't produce symbols:
+        // use e.code (Digit1..Digit6, Digit0)
+        const codeMap: Record<string, string | null> = {
+          Digit1: "red",
+          Digit2: "amber",
+          Digit3: "emerald",
+          Digit4: "blue",
+          Digit5: "purple",
+          Digit6: "pink",
+          Digit0: null,
+        };
+        if (Object.prototype.hasOwnProperty.call(codeMap, e.code)) {
+          e.preventDefault();
+          handleColorLabel(codeMap[e.code]);
+          return;
+        }
+      }
+
       // Handle zoom level shortcuts (1, 2, 3, 4)
       if (e.key === "1") {
         e.preventDefault();
@@ -1602,7 +1675,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleApprove, handleReject, handleRegenerate, handleToggleFlag, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay]);
+  }, [handleApprove, handleReject, handleRegenerate, handleToggleFlag, handleColorLabel, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay]);
 
   // Close twilight menu when clicking outside
   useEffect(() => {
@@ -2035,6 +2108,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             shareViewCount={job.shareViewCount}
             shareLastViewedAt={job.shareLastViewedAt}
           />
+          <JobTimeline jobId={job.id} />
           {slideshowPhotos.length > 0 && (
             <button
               onClick={() => setSlideshowOpen(true)}
@@ -2606,6 +2680,35 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 {selectedPhotoIds.size} selected
               </div>
             )}
+            {/* Color label filter */}
+            <div className="flex gap-0.5 items-center justify-between px-0.5" title="Filter by color label">
+              {[
+                { c: "red", bg: "bg-red-500" },
+                { c: "amber", bg: "bg-amber-500" },
+                { c: "emerald", bg: "bg-emerald-500" },
+                { c: "blue", bg: "bg-blue-500" },
+                { c: "purple", bg: "bg-purple-500" },
+                { c: "pink", bg: "bg-pink-500" },
+              ].map(({ c, bg }) => (
+                <button
+                  key={c}
+                  onClick={() => setColorLabelFilter(colorLabelFilter === c ? null : c)}
+                  className={`w-3 h-3 rounded-full ${bg} transition-all ${
+                    colorLabelFilter === c ? "ring-2 ring-offset-1 ring-graphite-700 dark:ring-white scale-125" : "opacity-60 hover:opacity-100"
+                  }`}
+                  title={`Filter: ${c}`}
+                  aria-label={`Filter by ${c}`}
+                />
+              ))}
+              <button
+                onClick={() => setColorLabelFilter(null)}
+                className={`text-[9px] leading-none w-3 h-3 rounded-full border border-graphite-300 dark:border-graphite-600 flex items-center justify-center ${
+                  colorLabelFilter === null ? "opacity-100" : "opacity-50 hover:opacity-100"
+                }`}
+                title="Clear color filter"
+                aria-label="Clear color filter"
+              >×</button>
+            </div>
             {/* Room type filter */}
             {allTags.length > 0 && (
               <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}
@@ -2623,6 +2726,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 {sortedPhotos.map((photo, idx) => {
                   if (thumbFilter === "favorites" && !photo.favorited) return null;
                   if (thumbFilter !== "all" && thumbFilter !== "favorites" && photo.status !== thumbFilter) return null;
+                  if (colorLabelFilter && photo.colorLabel !== colorLabelFilter) return null;
                   if (tagFilter) {
                     try {
                       const tags = photo.autoTags ? JSON.parse(photo.autoTags) : [];

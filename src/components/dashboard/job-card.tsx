@@ -13,9 +13,11 @@ import { EditTagsButton } from "@/components/dashboard/edit-tags-button";
 import { ArchiveButton } from "@/components/dashboard/archive-button";
 import { EtaBadge } from "@/components/dashboard/eta-badge";
 import { PinButton } from "@/components/dashboard/pin-button";
+import { SnoozeButton } from "@/components/dashboard/snooze-button";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { formatJobNumber } from "@/lib/job-number";
 import { tagColor } from "@/lib/tag-color";
+import { checkStale } from "@/lib/job-stale";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -105,6 +107,15 @@ function JobCardInternal({ job }: JobCardProps) {
                 Low
               </span>
             )}
+            {(() => {
+              const stale = checkStale({ status: job.status, createdAt: job.createdAt, updatedAt: job.updatedAt });
+              if (!stale.isStale) return null;
+              return (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold uppercase tracking-wide" title={stale.reason}>
+                  ⚠ Stale
+                </span>
+              );
+            })()}
           </div>
           <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{job.address}</div>
           <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">

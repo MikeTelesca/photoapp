@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { sendEmail, welcomeTemplate } from "@/lib/email";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Create user
     const hashedPassword = await bcrypt.hash(password, 10);
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         name,
         email: email.toLowerCase(),
@@ -42,6 +43,21 @@ export async function POST(request: NextRequest) {
       where: { id: invite.id },
       data: { usedAt: new Date() },
     });
+
+    // Send welcome email
+    try {
+      const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
+      await sendEmail({
+        to: user.email,
+        subject: "Welcome to ATH AI Editor 🎉",
+        html: welcomeTemplate({
+          name: user.name || "there",
+          loginUrl: `${baseUrl}/login`,
+        }),
+      });
+    } catch (err) {
+      console.error("[welcome-email] failed:", err);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

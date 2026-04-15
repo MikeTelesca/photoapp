@@ -19,6 +19,36 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
   }
 }
 
+export function welcomeTemplate(opts: { name: string; loginUrl: string }) {
+  return `
+    <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+      <h1 style="color: #111; font-size: 28px;">Welcome to ATH AI Editor, ${escapeHtml(opts.name)} 👋</h1>
+      <p style="color: #555; font-size: 16px; line-height: 1.6;">
+        You just signed up for the fastest way to batch-edit real estate photos. Here's what to do next:
+      </p>
+      <ol style="color: #444; font-size: 15px; line-height: 1.7;">
+        <li><strong>Create your first job</strong> — paste a Dropbox shared folder link or upload files directly.</li>
+        <li><strong>Let the AI enhance them</strong> — HDR merge, window pull, straightened lines, professional finish.</li>
+        <li><strong>Review & download</strong> — approve/reject with A/R keys, download ZIP when ready.</li>
+      </ol>
+      <p style="margin-top: 28px;">
+        <a href="${opts.loginUrl}" style="display: inline-block; padding: 12px 24px; background: #06b6d4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Open your dashboard</a>
+      </p>
+      <h3 style="color: #111; margin-top: 32px; font-size: 16px;">Quick tips</h3>
+      <ul style="color: #555; font-size: 14px; line-height: 1.6;">
+        <li>Bracketed HDR (3 or 5 exposures per angle) is auto-detected</li>
+        <li>Use the Prompt Playground to test prompts before full jobs</li>
+        <li>Share a preview link with your realtor client — no login required for them</li>
+        <li>Settings → Keyboard shortcuts to rebind for your workflow</li>
+      </ul>
+      <p style="color: #999; font-size: 13px; margin-top: 40px;">
+        Questions? Reply to this email or visit the Help page. We read every message.<br>
+        — ATH Media
+      </p>
+    </div>
+  `;
+}
+
 export function jobCompleteTemplate(opts: { address: string; photoCount: number; jobUrl: string }) {
   return `
     <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
@@ -30,4 +60,8 @@ export function jobCompleteTemplate(opts: { address: string; photoCount: number;
       <p style="color: #999; font-size: 13px; margin-top: 40px;">ATH Media · AI Photo Editor</p>
     </div>
   `;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }

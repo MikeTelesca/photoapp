@@ -38,6 +38,10 @@ export interface Job {
   archivedAt?: Date | string | null;
   pinnedAt?: Date | string | null;
   snoozedUntil?: Date | string | null;
+  reminderAt?: Date | string | null;
+  reminderNote?: string | null;
+  coverPhotoId?: string | null;
+  coverPhotoUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

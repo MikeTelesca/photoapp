@@ -105,6 +105,14 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
       take: 20,
     });
 
+    // Fetch cover photos
+    const coverIds = dbJobs.map(j => j.coverPhotoId).filter(Boolean) as string[];
+    const coverPhotos = coverIds.length > 0 ? await prisma.photo.findMany({
+      where: { id: { in: coverIds } },
+      select: { id: true, editedUrl: true, originalUrl: true },
+    }) : [];
+    const coverMap = new Map(coverPhotos.map(p => [p.id, p.editedUrl || p.originalUrl]));
+
     const jobs = dbJobs.map((j) => ({
       id: j.id,
       address: j.address,
@@ -125,6 +133,8 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
       snoozedUntil: j.snoozedUntil,
       createdAt: j.createdAt,
       updatedAt: j.updatedAt,
+      coverPhotoId: j.coverPhotoId,
+      coverPhotoUrl: j.coverPhotoId ? coverMap.get(j.coverPhotoId) : null,
     }));
 
     // Sort by pinned status, then by priority, then by creation date

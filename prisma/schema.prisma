@@ -123,7 +123,11 @@ model Job {
   invoiceSentAt       DateTime?
   pinnedAt            DateTime?
   snoozedUntil        DateTime?
+  reminderAt          DateTime?
+  reminderNote        String?
+  reminderSent        Boolean  @default(false)
   trackedTimeSeconds  Int      @default(0)
+  coverPhotoId        String?
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)

@@ -86,7 +86,12 @@ function JobCardInternal({ job }: JobCardProps) {
     <>
       <Wrapper className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0">
         <div className="flex items-center gap-3">
-        <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
+        {job.coverPhotoUrl ? (
+          <img src={job.coverPhotoUrl} alt=""
+            className="w-10 h-10 object-cover rounded shadow-sm flex-shrink-0" />
+        ) : (
+          <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
+        )}
         <div>
           <div className="flex gap-1 items-center mb-0.5">
             {job.sequenceNumber && (

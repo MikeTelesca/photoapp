@@ -49,7 +49,10 @@ export async function POST(
     }
   }
 
-  const prompt = `You are a professional real estate copywriter. Write a compelling MLS listing description (200-350 words) for this property based on the photos.
+  const body = await request.json().catch(() => ({}));
+  const feedback = body?.feedback;
+
+  let prompt = `You are a professional real estate copywriter. Write a compelling MLS listing description (200-350 words) for this property based on the photos.
 
 Property address: ${job.address}
 
@@ -59,9 +62,18 @@ Guidelines:
 - Mention specific rooms and their key features
 - End with a call to action ("Schedule your showing today" etc.)
 - Do NOT make up facts you can't see (bedroom counts, square footage, neighborhood specifics)
-- Keep sentences varied in length
+- Keep sentences varied in length`;
 
-Write ONLY the description text. No preamble, no bullet points unless natural, no markdown headers.`;
+  if (feedback) {
+    prompt += `\n\nPREVIOUS DESCRIPTION (regenerate with this feedback in mind):
+"${job.listingDescription || ""}"
+
+USER FEEDBACK: ${feedback}
+
+Apply the feedback while keeping the description grounded in the actual photos. Don't fabricate details.`;
+  }
+
+  prompt += "\n\nWrite ONLY the description text. No preamble, no bullet points unless natural, no markdown headers.";
 
   const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {

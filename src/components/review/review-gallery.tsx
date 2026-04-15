@@ -43,6 +43,7 @@ import { LazyThumb } from "./lazy-thumb";
 import { Slideshow } from "./slideshow";
 import { PromptLinter } from "@/components/presets/prompt-linter";
 import { TimeTracker } from "./time-tracker";
+import { ReminderButton } from "./reminder-button";
 
 interface Photo {
   id: string;
@@ -96,6 +97,8 @@ interface Job {
   listingDescription?: string | null;
   sequenceNumber?: number | null;
   trackedTimeSeconds?: number;
+  reminderAt?: Date | string | null;
+  reminderNote?: string | null;
   createdAt?: string;
   photographer: { name: string };
   photos: Photo[];
@@ -243,6 +246,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [translating, setTranslating] = useState(false);
   const [translation, setTranslation] = useState<{ lang: string; text: string } | null>(null);
   const [translateLang, setTranslateLang] = useState("es");
+  const [feedback, setFeedback] = useState("");
 
   // Crop suggestion state
   const [cropSuggestion, setCropSuggestion] = useState<{ x: number; y: number; width: number; height: number; reasoning: string } | null>(null);
@@ -656,6 +660,24 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [currentPhoto, job.id]);
 
+  const handleSetAsCover = useCallback(async () => {
+    if (!currentPhoto) return;
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/cover-photo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoId: currentPhoto.id }),
+      });
+      if (res.ok) {
+        addToast("success", "Set as job cover photo");
+      } else {
+        addToast("error", "Failed to set cover photo");
+      }
+    } catch (error) {
+      console.error("Failed to set cover photo:", error);
+      addToast("error", "Failed to set cover photo");
+    }
+  }, [currentPhoto, job.id, addToast]);
 
   const rotate = useCallback(async (degrees: number) => {
     if (!currentPhoto) return;
@@ -1037,11 +1059,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   async function generateDescription() {
     setGenerating(true);
     try {
-      const res = await fetch(`/api/jobs/${job.id}/generate-description`, { method: "POST" });
+      const res = await fetch(`/api/jobs/${job.id}/generate-description`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedback: feedback || undefined }),
+      });
       const data = await res.json();
       if (res.ok) {
         setDescription(data.description);
-        setShowDescModal(true);
+        if (!showDescModal) setShowDescModal(true);
+        setFeedback("");
       } else {
         alert(data.error || "Failed to generate");
       }
@@ -1546,6 +1573,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </a>
           )}
           <SaveTemplateButton jobId={job.id} />
+          <ReminderButton jobId={job.id} reminderAt={job.reminderAt} reminderNote={job.reminderNote} />
           <ShareButton
             jobId={job.id}
             initialToken={job.shareToken ?? null}
@@ -2676,6 +2704,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   </div>
                 )}
               </div>
+              <button
+                onClick={handleSetAsCover}
+                disabled={isUpdating || enhanceLoading || !currentPhoto}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-graphite-100 text-graphite-700 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-200 dark:hover:bg-graphite-700 transition-colors disabled:opacity-50"
+                title="Set as job cover/thumbnail"
+              >
+                <span>🖼</span>
+                <span className="hidden sm:inline">Set as cover</span>
+              </button>
             </div>
 
             <div className="hidden md:flex gap-1.5 text-[10px] text-graphite-400">
@@ -2825,6 +2862,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <div className="text-sm text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">
                   {translation.text}
                 </div>
+              </div>
+            )}
+
+            {/* Regenerate with Feedback */}
+            {description && (
+              <div className="mt-3 space-y-2 border-t border-graphite-100 dark:border-graphite-800 pt-3">
+                <div className="text-xs font-semibold text-graphite-700 dark:text-graphite-300">Regenerate with feedback:</div>
+                <div className="flex flex-wrap gap-1">
+                  {["Make it shorter (under 200 words)", "Make it longer with more detail", "More luxury/upscale tone", "More casual/friendly tone", "Focus more on lifestyle (entertaining, family)", "Focus more on architectural details", "Less salesy, more factual"].map(p => (
+                    <button key={p} onClick={() => setFeedback(p)}
+                      className={`text-[10px] px-2 py-0.5 rounded transition-colors ${feedback === p ? "bg-cyan text-white" : "bg-graphite-100 dark:bg-graphite-800 text-graphite-600 dark:text-graphite-300 hover:bg-graphite-200 dark:hover:bg-graphite-700"}`}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
+                <input type="text" value={feedback} onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="Or type custom feedback..."
+                  className="w-full text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan" />
+                <button onClick={generateDescription} disabled={generating}
+                  className="text-xs px-3 py-1.5 rounded bg-purple-500 text-white font-semibold w-full disabled:opacity-50 hover:bg-purple-600 transition-colors">
+                  {generating ? "Regenerating..." : `🔄 Regenerate${feedback ? " with feedback" : ""}`}
+                </button>
               </div>
             )}
 

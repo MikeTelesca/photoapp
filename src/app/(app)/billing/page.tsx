@@ -53,27 +53,27 @@ export default async function BillingPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <div className="p-4">
-              <div className="text-xs text-graphite-400 mb-1">YTD Jobs</div>
+              <div className="text-xs text-graphite-400 dark:text-graphite-500 mb-1">YTD Jobs</div>
               <div className="text-2xl font-bold text-graphite-900 dark:text-white">{ytd.jobs}</div>
             </div>
           </Card>
           <Card>
             <div className="p-4">
-              <div className="text-xs text-graphite-400 mb-1">YTD Photos</div>
+              <div className="text-xs text-graphite-400 dark:text-graphite-500 mb-1">YTD Photos</div>
               <div className="text-2xl font-bold text-graphite-900 dark:text-white">{ytd.photos}</div>
             </div>
           </Card>
           <Card>
             <div className="p-4">
-              <div className="text-xs text-graphite-400 mb-1">YTD Cost</div>
+              <div className="text-xs text-graphite-400 dark:text-graphite-500 mb-1">YTD Cost</div>
               <div className="text-2xl font-bold text-graphite-900 dark:text-white">${ytd.cost.toFixed(2)}</div>
             </div>
           </Card>
           <Card>
             <div className="p-4">
-              <div className="text-xs text-graphite-400 mb-1">This month (projected)</div>
+              <div className="text-xs text-graphite-400 dark:text-graphite-500 mb-1">This month (projected)</div>
               <div className="text-2xl font-bold text-cyan">${projected.toFixed(2)}</div>
-              <div className="text-xs text-graphite-500 mt-1">so far: ${cur.cost.toFixed(2)}</div>
+              <div className="text-xs text-graphite-500 dark:text-graphite-400 mt-1">so far: ${cur.cost.toFixed(2)}</div>
             </div>
           </Card>
         </div>
@@ -83,7 +83,7 @@ export default async function BillingPage() {
             <h2 className="text-sm font-semibold text-graphite-900 dark:text-white mb-4">Monthly breakdown</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-xs text-graphite-400 border-b border-graphite-100 dark:border-graphite-800">
+                <thead className="text-xs text-graphite-400 dark:text-graphite-500 border-b border-graphite-100 dark:border-graphite-800">
                   <tr>
                     <th className="text-left py-3 px-2 font-medium">Month</th>
                     <th className="text-right py-3 px-2 font-medium">Jobs</th>
@@ -107,7 +107,7 @@ export default async function BillingPage() {
                 </tbody>
               </table>
               {months.length === 0 && (
-                <div className="text-center text-graphite-400 py-8 text-sm">No billing data yet</div>
+                <div className="text-center text-graphite-400 dark:text-graphite-500 py-8 text-sm">No billing data yet</div>
               )}
             </div>
           </div>

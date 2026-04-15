@@ -57,11 +57,11 @@ function JobCardInternal({ job }: JobCardProps) {
       );
 
   return (
-    <Wrapper className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 border-b border-graphite-50 last:border-b-0">
+    <Wrapper className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0">
       <div className="flex items-center gap-3">
         <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
         <div>
-          <div className="text-[13.5px] font-semibold text-graphite-900">{job.address}</div>
+          <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{job.address}</div>
           <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">
             <span>{job.photographerName}</span>
             <span>{formatTime(job.createdAt)}</span>
@@ -80,7 +80,7 @@ function JobCardInternal({ job }: JobCardProps) {
             </Badge>
           </div>
           {job.clientName && (
-            <div className="text-[11px] text-graphite-500 mt-0.5">{job.clientName}</div>
+            <div className="text-[11px] text-graphite-500 dark:text-graphite-400 mt-0.5">{job.clientName}</div>
           )}
           {job.tags && (
             <div className="flex gap-1 mt-1 items-center">

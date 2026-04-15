@@ -75,16 +75,16 @@ export default function HelpPage() {
           </CardHeader>
           <div className="p-5 space-y-3 text-sm">
             <div>
-              <strong className="text-graphite-900">1. Create a job</strong> — Click "New Job" and paste your Dropbox shared folder link (or upload files directly). Pick a preset.
+              <strong className="text-graphite-900 dark:text-white">1. Create a job</strong> — Click "New Job" and paste your Dropbox shared folder link (or upload files directly). Pick a preset.
             </div>
             <div>
-              <strong className="text-graphite-900">2. Click "Start Processing"</strong> — App pulls photos from Dropbox and groups them into bracket sets.
+              <strong className="text-graphite-900 dark:text-white">2. Click "Start Processing"</strong> — App pulls photos from Dropbox and groups them into bracket sets.
             </div>
             <div>
-              <strong className="text-graphite-900">3. Click "Enhance All"</strong> — AI processes each photo (HDR merge + color correction).
+              <strong className="text-graphite-900 dark:text-white">3. Click "Enhance All"</strong> — AI processes each photo (HDR merge + color correction).
             </div>
             <div>
-              <strong className="text-graphite-900">4. Review & approve</strong> — Use A/R keys, navigate with arrows. Click Download when done.
+              <strong className="text-graphite-900 dark:text-white">4. Review & approve</strong> — Use A/R keys, navigate with arrows. Click Download when done.
             </div>
           </div>
         </Card>
@@ -93,14 +93,14 @@ export default function HelpPage() {
           <CardHeader>
             <CardTitle>Frequently Asked Questions</CardTitle>
           </CardHeader>
-          <div className="divide-y divide-graphite-100">
+          <div className="divide-y divide-graphite-100 dark:divide-graphite-800">
             {faqs.map((faq, i) => (
-              <details key={i} className="px-5 py-4 group">
-                <summary className="font-semibold text-graphite-900 text-sm cursor-pointer hover:text-cyan flex items-center justify-between list-none">
+              <details key={i} className="px-5 py-4 group hover:bg-graphite-50 dark:hover:bg-graphite-800/30 transition-colors">
+                <summary className="font-semibold text-graphite-900 dark:text-white text-sm cursor-pointer hover:text-cyan flex items-center justify-between list-none">
                   <span>{faq.q}</span>
-                  <span className="text-graphite-400 group-open:rotate-180 transition-transform">▼</span>
+                  <span className="text-graphite-400 dark:text-graphite-500 group-open:rotate-180 transition-transform">▼</span>
                 </summary>
-                <div className="text-sm text-graphite-600 mt-3 leading-relaxed">{faq.a}</div>
+                <div className="text-sm text-graphite-600 dark:text-graphite-300 mt-3 leading-relaxed">{faq.a}</div>
               </details>
             ))}
           </div>
@@ -112,10 +112,10 @@ export default function HelpPage() {
           </CardHeader>
           <div className="p-5">
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex justify-between"><span>Approve current photo</span><kbd className="px-2 py-0.5 bg-graphite-100 rounded text-xs">A</kbd></div>
-              <div className="flex justify-between"><span>Reject current photo</span><kbd className="px-2 py-0.5 bg-graphite-100 rounded text-xs">R</kbd></div>
-              <div className="flex justify-between"><span>Next photo</span><kbd className="px-2 py-0.5 bg-graphite-100 rounded text-xs">→</kbd></div>
-              <div className="flex justify-between"><span>Previous photo</span><kbd className="px-2 py-0.5 bg-graphite-100 rounded text-xs">←</kbd></div>
+              <div className="flex justify-between"><span>Approve current photo</span><kbd className="px-2 py-0.5 bg-graphite-100 dark:bg-graphite-800 text-graphite-900 dark:text-white rounded text-xs">A</kbd></div>
+              <div className="flex justify-between"><span>Reject current photo</span><kbd className="px-2 py-0.5 bg-graphite-100 dark:bg-graphite-800 text-graphite-900 dark:text-white rounded text-xs">R</kbd></div>
+              <div className="flex justify-between"><span>Next photo</span><kbd className="px-2 py-0.5 bg-graphite-100 dark:bg-graphite-800 text-graphite-900 dark:text-white rounded text-xs">→</kbd></div>
+              <div className="flex justify-between"><span>Previous photo</span><kbd className="px-2 py-0.5 bg-graphite-100 dark:bg-graphite-800 text-graphite-900 dark:text-white rounded text-xs">←</kbd></div>
             </div>
           </div>
         </Card>
@@ -124,7 +124,7 @@ export default function HelpPage() {
           <CardHeader>
             <CardTitle>Need more help?</CardTitle>
           </CardHeader>
-          <div className="p-5 text-sm text-graphite-600">
+          <div className="p-5 text-sm text-graphite-600 dark:text-graphite-300">
             <p>Email <a href="mailto:support@athmedia.ca" className="text-cyan font-semibold">support@athmedia.ca</a> with screenshots of any issues.</p>
           </div>
         </Card>

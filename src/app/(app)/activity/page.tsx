@@ -29,10 +29,10 @@ export default async function ActivityPage() {
               <h2 className="text-sm font-semibold text-graphite-900 dark:text-white">
                 Recent activity ({logs.length})
               </h2>
-              <span className="text-xs text-graphite-400">Last 200 events</span>
+              <span className="text-xs text-graphite-400 dark:text-graphite-500">Last 200 events</span>
             </div>
             {logs.length === 0 ? (
-              <div className="text-center py-8 text-sm text-graphite-400">
+              <div className="text-center py-8 text-sm text-graphite-400 dark:text-graphite-500">
                 No activity yet
               </div>
             ) : (
@@ -47,13 +47,13 @@ export default async function ActivityPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-4">
-                      <div className="text-graphite-400 font-mono">
+                      <div className="text-graphite-400 dark:text-graphite-500 font-mono">
                         {formatTime(log.createdAt)}
                       </div>
                       <div className="flex-1 font-semibold text-graphite-800 dark:text-graphite-100">
                         {log.type}
                       </div>
-                      <div className="text-graphite-500 text-[11px]">
+                      <div className="text-graphite-500 dark:text-graphite-400 text-[11px]">
                         {log.userId ? `User: ${log.userId.slice(0, 8)}` : "System"}
                       </div>
                     </div>
@@ -63,7 +63,7 @@ export default async function ActivityPage() {
                       </div>
                     )}
                     {log.metadata && (
-                      <div className="text-graphite-500 font-mono text-[10px] bg-graphite-50 dark:bg-graphite-900 p-2 rounded border border-graphite-100 dark:border-graphite-800 overflow-x-auto">
+                      <div className="text-graphite-500 dark:text-graphite-400 font-mono text-[10px] bg-graphite-50 dark:bg-graphite-900 p-2 rounded border border-graphite-100 dark:border-graphite-800 overflow-x-auto">
                         {typeof log.metadata === "string"
                           ? log.metadata
                           : JSON.stringify(log.metadata, null, 2)}

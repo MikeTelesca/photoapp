@@ -137,29 +137,29 @@ export function JobFilterBar({ jobs }: Props) {
           </button>
         </div>
       )}
-      <div className="flex gap-2 px-5 py-3 border-b border-graphite-50 bg-graphite-50/30">
+      <div className="flex gap-2 px-5 py-3 border-b border-graphite-50 dark:border-graphite-800 bg-graphite-50/30 dark:bg-graphite-900/30">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search address, client, photographer..."
-          className="flex-1 px-3 py-1.5 text-sm rounded border border-graphite-200 bg-white focus:outline-none focus:border-cyan"
+          className="flex-1 px-3 py-1.5 text-sm rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-white placeholder:text-graphite-400 dark:placeholder:text-graphite-500 focus:outline-none focus:border-cyan"
         />
         <select value={status} onChange={(e) => setStatus(e.target.value)}
-          className="px-2 py-1.5 text-sm rounded border border-graphite-200 bg-white">
+          className="px-2 py-1.5 text-sm rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-white">
           {statuses.map(s => <option key={s} value={s}>{s === "all" ? "All statuses" : s}</option>)}
         </select>
         <select value={preset} onChange={(e) => setPreset(e.target.value)}
-          className="px-2 py-1.5 text-sm rounded border border-graphite-200 bg-white">
+          className="px-2 py-1.5 text-sm rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-white">
           {presets.map(p => <option key={p} value={p}>{p === "all" ? "All presets" : p}</option>)}
         </select>
       </div>
       {allTags.length > 0 && (
-        <div className="flex gap-1 flex-wrap px-5 py-2 border-b border-graphite-50">
+        <div className="flex gap-1 flex-wrap px-5 py-2 border-b border-graphite-50 dark:border-graphite-800">
           <button
             onClick={() => setActiveTag(null)}
             className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-wide font-semibold ${
-              activeTag === null ? "bg-cyan text-white" : "bg-graphite-100 text-graphite-600 hover:bg-graphite-200"
+              activeTag === null ? "bg-cyan text-white" : "bg-graphite-100 dark:bg-graphite-800 text-graphite-600 dark:text-graphite-300 hover:bg-graphite-200 dark:hover:bg-graphite-700"
             }`}
           >
             All
@@ -178,7 +178,7 @@ export function JobFilterBar({ jobs }: Props) {
         </div>
       )}
       {filtered.length === 0 ? (
-        <div className="px-5 py-8 text-center text-sm text-graphite-400">
+        <div className="px-5 py-8 text-center text-sm text-graphite-400 dark:text-graphite-500">
           No jobs match your filters
         </div>
       ) : (

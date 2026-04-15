@@ -12,7 +12,7 @@ const colors: Record<string, string> = {
 
 export function ProgressBar({ value, color = "amber", className = "" }: ProgressBarProps) {
   return (
-    <div className={`w-[72px] h-1 bg-graphite-100 rounded-sm ${className}`}>
+    <div className={`w-[72px] h-1 bg-graphite-100 dark:bg-graphite-800 rounded-sm ${className}`}>
       <div
         className={`h-1 rounded-sm transition-all duration-300 ${colors[color]}`}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}

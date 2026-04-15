@@ -23,24 +23,24 @@ export default async function TemplatesPage() {
         {templates.length === 0 ? (
           <Card>
             <div className="p-12 text-center">
-              <BookmarkIcon className="w-10 h-10 text-graphite-300 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-graphite-600 mb-1">No templates yet</p>
-              <p className="text-xs text-graphite-400">
+              <BookmarkIcon className="w-10 h-10 text-graphite-300 dark:text-graphite-600 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-graphite-600 dark:text-graphite-300 mb-1">No templates yet</p>
+              <p className="text-xs text-graphite-400 dark:text-graphite-500">
                 Save a job as a template from the Jobs page using the bookmark icon on any job card.
               </p>
             </div>
           </Card>
         ) : (
           <Card>
-            <div className="divide-y divide-graphite-100">
+            <div className="divide-y divide-graphite-100 dark:divide-graphite-800">
               {templates.map((t) => (
                 <div
                   key={t.id}
-                  className="flex items-center justify-between px-5 py-4"
+                  className="flex items-center justify-between px-5 py-4 hover:bg-graphite-50 dark:hover:bg-graphite-800 transition-colors"
                 >
                   <div>
-                    <div className="text-[13.5px] font-semibold text-graphite-900">{t.name}</div>
-                    <div className="flex gap-3 text-xs text-graphite-400 mt-0.5 flex-wrap">
+                    <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{t.name}</div>
+                    <div className="flex gap-3 text-xs text-graphite-400 dark:text-graphite-500 mt-0.5 flex-wrap">
                       <span className="capitalize">{t.preset}</span>
                       {t.photographerName && <span>{t.photographerName}</span>}
                       {t.clientName && <span>{t.clientName}</span>}
@@ -55,7 +55,7 @@ export default async function TemplatesPage() {
                       )}
                     </div>
                     {t.notes && (
-                      <p className="text-xs text-graphite-500 mt-1 line-clamp-1">{t.notes}</p>
+                      <p className="text-xs text-graphite-500 dark:text-graphite-400 mt-1 line-clamp-1">{t.notes}</p>
                     )}
                   </div>
                   <DeleteTemplateButton templateId={t.id} />
@@ -64,7 +64,7 @@ export default async function TemplatesPage() {
             </div>
           </Card>
         )}
-        <p className="mt-4 text-xs text-graphite-400">
+        <p className="mt-4 text-xs text-graphite-400 dark:text-graphite-500">
           Templates are applied when creating a new job. Pick a template from the dropdown at the top of the New Job form.
         </p>
       </div>

@@ -16,6 +16,7 @@ import {
   TagIcon,
 } from "@heroicons/react/24/outline";
 import { TemplatePicker } from "@/components/jobs/template-picker";
+import { ClientPicker } from "@/components/jobs/client-picker";
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -37,6 +38,7 @@ export default function NewJobPage() {
   const [watermarkSize, setWatermarkSize] = useState(32);
   const [watermarkOpacity, setWatermarkOpacity] = useState(0.7);
   const [clientName, setClientName] = useState("");
+  const [clientId, setClientId] = useState<string | null>(null);
   const [tags, setTags] = useState("");
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
@@ -149,6 +151,7 @@ export default function NewJobPage() {
           watermarkSize,
           watermarkOpacity,
           clientName: clientName.trim() || null,
+          clientId: clientId || null,
           tags: tags.trim(),
         }),
       });
@@ -203,7 +206,7 @@ export default function NewJobPage() {
     if (t.tvStyle) setTvStyle(t.tvStyle);
     if (t.skyStyle) setSkyStyle(t.skyStyle);
     if (t.watermarkText) setWatermarkText(t.watermarkText);
-    if (t.clientName) setClientName(t.clientName);
+    if (t.clientName) { setClientName(t.clientName); setClientId(null); }
     if (t.tags) setTags(t.tags);
   }
 
@@ -231,18 +234,18 @@ export default function NewJobPage() {
               />
             </div>
 
-            {/* Client Name */}
+            {/* Client */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 dark:text-white mb-2">
                 <UserIcon className="w-4 h-4 text-graphite-500" />
-                Client Name <span className="text-xs font-normal text-graphite-400">(optional)</span>
+                Client <span className="text-xs font-normal text-graphite-400">(optional)</span>
               </label>
-              <input
-                type="text"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="e.g. John Smith Realty"
-                className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
+              <ClientPicker
+                value={clientId}
+                onChange={(id, name) => {
+                  setClientId(id);
+                  setClientName(name);
+                }}
               />
             </div>
 

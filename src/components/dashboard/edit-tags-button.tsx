@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { TagAutocomplete } from "@/components/jobs/tag-autocomplete";
 
 export function EditTagsButton({ jobId, initial }: { jobId: string; initial: string }) {
   const [editing, setEditing] = useState(false);
@@ -18,16 +19,16 @@ export function EditTagsButton({ jobId, initial }: { jobId: string; initial: str
   if (editing) {
     return (
       <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-        <input
+        <TagAutocomplete
           autoFocus
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={setValue}
+          placeholder="comma,separated,tags"
+          className="text-[10px] px-1 py-0.5 rounded border border-graphite-300 w-32"
           onKeyDown={(e) => {
             if (e.key === "Enter") save();
             if (e.key === "Escape") setEditing(false);
           }}
-          placeholder="comma,separated,tags"
-          className="text-[10px] px-1 py-0.5 rounded border border-graphite-300 w-32"
         />
         <button
           onClick={save}

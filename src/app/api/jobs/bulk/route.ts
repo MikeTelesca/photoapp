@@ -129,6 +129,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ count });
     }
 
+    if (action === "archive") {
+      const res = await prisma.job.updateMany({
+        where: { id: { in: ids }, photographerId: userId },
+        data: { archivedAt: new Date() },
+      });
+      return NextResponse.json({ count: res.count });
+    }
+
+    if (action === "unarchive") {
+      const res = await prisma.job.updateMany({
+        where: { id: { in: ids }, photographerId: userId },
+        data: { archivedAt: null },
+      });
+      return NextResponse.json({ count: res.count });
+    }
+
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (error) {
     console.error("Failed to perform bulk action:", error);

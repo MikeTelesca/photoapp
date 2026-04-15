@@ -110,6 +110,35 @@ export function JobFilterBar({ jobs }: Props) {
     }
   };
 
+  const bulkArchive = async () => {
+    if (selected.size === 0) return;
+
+    if (!window.confirm(`Archive ${selected.size} selected jobs? They'll be hidden from the dashboard but stay searchable.`)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/jobs/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "archive", ids: Array.from(selected) }),
+      });
+
+      if (res.ok) {
+        setSelected(new Set());
+        window.location.reload();
+      } else {
+        alert("Failed to archive jobs");
+      }
+    } catch (error) {
+      console.error("Error archiving jobs:", error);
+      alert("Error archiving jobs");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const addBulkTag = async () => {
     if (!bulkTag.trim() || selected.size === 0) return;
 
@@ -146,6 +175,13 @@ export function JobFilterBar({ jobs }: Props) {
             className="px-3 py-1 rounded bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50"
           >
             Approve
+          </button>
+          <button
+            onClick={bulkArchive}
+            disabled={isLoading}
+            className="px-3 py-1 rounded bg-graphite-600 text-white text-xs font-semibold hover:bg-graphite-700 disabled:opacity-50"
+          >
+            📦 Archive
           </button>
           <button
             onClick={bulkDelete}

@@ -19,6 +19,7 @@ export function ShareButton({
   shareViewCount,
   shareLastViewedAt,
   initialPasswordSet,
+  initialExpiresAt,
 }: {
   jobId: string;
   initialToken: string | null;
@@ -26,10 +27,15 @@ export function ShareButton({
   shareViewCount?: number;
   shareLastViewedAt?: string | null;
   initialPasswordSet?: boolean;
+  initialExpiresAt?: string | null;
 }) {
   const [token, setToken] = useState(initialToken);
   const [enabled, setEnabled] = useState(initialEnabled);
   const [passwordSet, setPasswordSet] = useState(!!initialPasswordSet);
+  const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt ?? null);
+  const [expiryOpen, setExpiryOpen] = useState(false);
+  const [customDate, setCustomDate] = useState("");
+  const [savingExpiry, setSavingExpiry] = useState(false);
   const [copied, setCopied] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
@@ -84,18 +90,25 @@ export function ShareButton({
     }
   }
 
-  async function setExpiry() {
-    const days = window.prompt("Expire in how many days? (leave blank for no expiry)");
-    if (days === null) return;
-    const expiresAt = days && parseInt(days) > 0
-      ? new Date(Date.now() + parseInt(days) * 24 * 60 * 60 * 1000).toISOString()
-      : null;
-    await fetch(`/api/jobs/${jobId}/share`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ expiresAt }),
-    });
-    alert(expiresAt ? `Link will expire on ${new Date(expiresAt).toLocaleDateString()}` : "Expiry removed");
+  async function saveExpiry(iso: string | null) {
+    setSavingExpiry(true);
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/share/expiry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expiresAt: iso }),
+      });
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setExpiresAt(data.shareExpiresAt ?? null);
+        setExpiryOpen(false);
+        setCustomDate("");
+      } else {
+        alert("Failed to update expiry");
+      }
+    } finally {
+      setSavingExpiry(false);
+    }
   }
 
   async function disable() {
@@ -201,10 +214,15 @@ export function ShareButton({
           🔒 Password{passwordSet ? " (set)" : ""}
         </button>
         <button
-          onClick={setExpiry}
-          className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+          onClick={() => setExpiryOpen(true)}
+          title={expiresAt ? `Expires ${new Date(expiresAt).toLocaleString()}` : "No expiry"}
+          className={`text-xs px-3 py-1.5 rounded border ${
+            expiresAt
+              ? "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+              : "border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+          }`}
         >
-          ⏰ Set expiry
+          ⏰ {expiresAt ? `Expires ${new Date(expiresAt).toLocaleDateString()}` : "Set expiry"}
         </button>
         <button
           onClick={() => setAnalyticsOpen(true)}
@@ -302,6 +320,96 @@ export function ShareButton({
                 className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold disabled:opacity-50"
               >
                 {sending ? "Sending..." : "Send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {expiryOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => !savingExpiry && setExpiryOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-graphite-900 rounded-lg p-6 max-w-sm w-full space-y-3"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold dark:text-white">Share link expiry</h2>
+            {expiresAt ? (
+              <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 rounded px-2 py-1.5">
+                Current expiry: {new Date(expiresAt).toLocaleString()}
+                {new Date(expiresAt) < new Date() && " (expired)"}
+              </div>
+            ) : (
+              <div className="text-xs text-graphite-500 dark:text-graphite-400">
+                No expiry set — link never expires.
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <button
+                disabled={savingExpiry}
+                onClick={() => saveExpiry(null)}
+                className="text-xs px-3 py-2 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800 text-left disabled:opacity-50"
+              >
+                No expiry
+              </button>
+              <button
+                disabled={savingExpiry}
+                onClick={() => saveExpiry(new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString())}
+                className="text-xs px-3 py-2 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800 text-left disabled:opacity-50"
+              >
+                24 hours
+              </button>
+              <button
+                disabled={savingExpiry}
+                onClick={() => saveExpiry(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())}
+                className="text-xs px-3 py-2 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800 text-left disabled:opacity-50"
+              >
+                7 days
+              </button>
+              <button
+                disabled={savingExpiry}
+                onClick={() => saveExpiry(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())}
+                className="text-xs px-3 py-2 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800 text-left disabled:opacity-50"
+              >
+                30 days
+              </button>
+              <div className="pt-2 border-t border-graphite-100 dark:border-graphite-800">
+                <label className="text-[11px] font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wide">
+                  Custom date
+                </label>
+                <div className="flex gap-2 mt-1">
+                  <input
+                    type="datetime-local"
+                    value={customDate}
+                    onChange={e => setCustomDate(e.target.value)}
+                    className="flex-1 text-sm px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
+                  />
+                  <button
+                    disabled={savingExpiry || !customDate}
+                    onClick={() => {
+                      const d = new Date(customDate);
+                      if (isNaN(d.getTime())) {
+                        alert("Invalid date");
+                        return;
+                      }
+                      saveExpiry(d.toISOString());
+                    }}
+                    className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold disabled:opacity-50"
+                  >
+                    Set
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                disabled={savingExpiry}
+                onClick={() => setExpiryOpen(false)}
+                className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 disabled:opacity-50"
+              >
+                Close
               </button>
             </div>
           </div>

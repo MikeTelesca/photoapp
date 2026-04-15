@@ -111,6 +111,7 @@ interface Job {
   shareViewCount?: number;
   shareLastViewedAt?: string | null;
   sharePasswordSet?: boolean;
+  shareExpiresAt?: string | null;
   clientApprovalStatus?: string | null;
   clientApprovedAt?: string | null;
   clientApprovalNote?: string | null;
@@ -3036,6 +3037,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             shareViewCount={job.shareViewCount}
             shareLastViewedAt={job.shareLastViewedAt}
             initialPasswordSet={job.sharePasswordSet ?? false}
+            initialExpiresAt={job.shareExpiresAt ?? null}
           />
           <JobTimeline jobId={job.id} />
           <button

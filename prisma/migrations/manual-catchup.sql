@@ -407,3 +407,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS "User_referralCode_key" ON "User"("referralCod
 
 -- Wave 111: Per-photo preset override (applies a different enhancement preset to one photo)
 ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "presetOverride" TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Share link expiry timestamp
+-- ---------------------------------------------------------------------------
+ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "shareExpiresAt" TIMESTAMP(3);

@@ -30,6 +30,7 @@ interface Photo {
   isExterior: boolean;
   isTwilight: boolean;
   twilightInstructions: string | null;
+  twilightStyle?: string | null;
   customInstructions: string | null;
   detections: string;
   exifData: string | null;
@@ -936,18 +937,56 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <ArrowPathIcon className="w-4 h-4" />
                 <span className="hidden sm:inline">Regenerate</span>
               </button>
-              <button
-                onClick={handleTwilight}
-                disabled={isUpdating || enhanceLoading}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
-                  currentPhoto?.isTwilight
-                    ? "bg-purple-600 text-white hover:bg-purple-700"
-                    : "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                }`}
-              >
-                <MoonIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">{currentPhoto?.isTwilight ? "Remove Twilight" : "Twilight"}</span>
-              </button>
+              <div className="relative" ref={twilightMenuRef}>
+                {currentPhoto?.isTwilight ? (
+                  <button
+                    onClick={async () => {
+                      if (!currentPhoto) return;
+                      await updatePhoto(currentPhoto.id, { isTwilight: false, twilightInstructions: null });
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-purple-600 text-white hover:bg-purple-700"
+                  >
+                    <MoonIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">Remove Twilight</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setTwilightMenuOpen(!twilightMenuOpen)}
+                    disabled={isUpdating || enhanceLoading}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-purple-100 text-purple-600 hover:bg-purple-200 disabled:opacity-50"
+                  >
+                    <MoonIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">Twilight</span>
+                  </button>
+                )}
+
+                {twilightMenuOpen && !currentPhoto?.isTwilight && (
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-graphite-200 rounded-xl shadow-lg overflow-hidden z-30">
+                    {[
+                      { value: "warm-dusk", label: "Warm Dusk", desc: "Golden hour glow" },
+                      { value: "blue-hour", label: "Blue Hour", desc: "Cobalt + warm" },
+                      { value: "deep-night", label: "Deep Night", desc: "All lights on" },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={async () => {
+                          setTwilightMenuOpen(false);
+                          await fetch(`/api/jobs/${job.id}/photos/${currentPhoto?.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ twilightStyle: opt.value }),
+                          });
+                          handleTwilight();
+                        }}
+                        className="block w-full text-left px-3 py-2 hover:bg-graphite-50 border-b border-graphite-100 last:border-b-0"
+                      >
+                        <div className="text-xs font-semibold text-graphite-900">{opt.label}</div>
+                        <div className="text-[10px] text-graphite-400">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="hidden md:flex gap-1.5 text-[10px] text-graphite-400">

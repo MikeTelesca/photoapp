@@ -58,44 +58,55 @@ function LoginPageInner() {
     }
   }
 
+  const inputClass =
+    "w-full h-10 px-3 rounded-md border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-900 text-sm text-graphite-900 dark:text-white placeholder:text-graphite-400 dark:placeholder:text-graphite-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors disabled:opacity-50";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-graphite-50 via-white to-cyan-50/40 dark:from-graphite-950 dark:via-graphite-950 dark:to-cyan-950/20 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-cyan-700 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20 mb-4">
-            <CameraIcon className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-graphite-900 dark:text-white tracking-tight">ATH AI Editor</h1>
-          <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-1">Real estate photo editing, automated.</p>
+    <div className="min-h-screen bg-graphite-50 dark:bg-graphite-950 flex items-center justify-center px-4">
+      <div className="w-full max-w-[380px]">
+        <div className="mb-8">
+          <h1 className="text-xl font-semibold tracking-tight text-graphite-900 dark:text-white">
+            ATH AI Editor
+          </h1>
+          <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-1">
+            Sign in to continue.
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-graphite-200 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-graphite-900 mb-4">Sign in</h2>
-
+        <div className="bg-white dark:bg-graphite-900 rounded-lg border border-graphite-200 dark:border-graphite-800 p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-graphite-700 mb-1.5 block">Email</label>
+              <label className="text-xs font-medium text-graphite-600 dark:text-graphite-300 mb-1.5 block">
+                Email
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@yourstudio.com"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
+                className={inputClass}
                 required
                 disabled={show2FA}
               />
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-medium text-graphite-700">Password</label>
-                <Link href="/forgot" className="text-xs text-cyan hover:underline">Forgot password?</Link>
+                <label className="text-xs font-medium text-graphite-600 dark:text-graphite-300">
+                  Password
+                </label>
+                <Link
+                  href="/forgot"
+                  className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline"
+                >
+                  Forgot?
+                </Link>
               </div>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
+                placeholder="••••••••"
+                className={inputClass}
                 required
                 disabled={show2FA}
               />
@@ -103,7 +114,7 @@ function LoginPageInner() {
 
             {show2FA && (
               <div>
-                <label className="text-sm font-medium text-graphite-700 mb-1.5 block">
+                <label className="text-xs font-medium text-graphite-600 dark:text-graphite-300 mb-1.5 block">
                   Authenticator code
                 </label>
                 <input
@@ -114,31 +125,30 @@ function LoginPageInner() {
                   onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
                   maxLength={6}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors font-mono tracking-widest"
+                  className={`${inputClass} font-mono tracking-widest text-center`}
                   autoFocus
                   required
                 />
-                <p className="text-xs text-graphite-400 mt-1">
-                  Enter the 6-digit code from your authenticator app.
-                </p>
               </div>
             )}
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</div>
+              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 px-3 py-2 rounded-md">
+                {error}
+              </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 rounded-lg bg-gradient-to-br from-graphite-900 to-graphite-700 text-white text-sm font-semibold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+              className="w-full h-10 rounded-md bg-graphite-900 dark:bg-white text-white dark:text-graphite-900 text-sm font-medium hover:bg-graphite-800 dark:hover:bg-graphite-100 transition-colors disabled:opacity-50"
             >
               {isLoading
                 ? show2FA
-                  ? "Verifying..."
-                  : "Signing in..."
+                  ? "Verifying…"
+                  : "Signing in…"
                 : show2FA
-                ? "Verify & sign in"
+                ? "Verify and sign in"
                 : "Sign in"}
             </button>
 
@@ -150,14 +160,13 @@ function LoginPageInner() {
                   setTwoFactorCode("");
                   setError("");
                 }}
-                className="w-full text-xs text-graphite-400 hover:text-graphite-600 transition"
+                className="w-full text-xs text-graphite-500 dark:text-graphite-400 hover:text-graphite-900 dark:hover:text-white transition-colors"
               >
                 Back
               </button>
             )}
           </form>
         </div>
-
       </div>
     </div>
   );

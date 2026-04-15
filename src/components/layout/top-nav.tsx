@@ -11,7 +11,6 @@ type NavItem = {
   label: string;
   href: string;
   desc?: string;
-  icon?: string;
   adminOnly?: boolean;
 };
 
@@ -21,31 +20,31 @@ const groups: Record<string, NavGroup> = {
   Jobs: {
     label: "Jobs",
     items: [
-      { label: "Dashboard", href: "/dashboard", desc: "All active jobs", icon: "🗂" },
-      { label: "Needs review", href: "/dashboard?status=review", desc: "Waiting on you", icon: "👀" },
-      { label: "Processing", href: "/dashboard?status=processing", desc: "AI working", icon: "⚙" },
-      { label: "Completed", href: "/dashboard?status=approved", desc: "Delivered", icon: "✅" },
-      { label: "Templates", href: "/templates", desc: "Reusable job presets", icon: "📋" },
-      { label: "Calendar", href: "/calendar", desc: "Jobs by date", icon: "📅" },
-      { label: "Trash", href: "/trash", desc: "Recover deleted", icon: "🗑" },
+      { label: "Dashboard", href: "/dashboard", desc: "All active jobs" },
+      { label: "Needs review", href: "/dashboard?status=review", desc: "Waiting on you" },
+      { label: "Processing", href: "/dashboard?status=processing", desc: "AI working" },
+      { label: "Completed", href: "/dashboard?status=approved", desc: "Delivered" },
+      { label: "Templates", href: "/templates", desc: "Reusable job presets" },
+      { label: "Calendar", href: "/calendar", desc: "Jobs by date" },
+      { label: "Trash", href: "/trash", desc: "Recover deleted" },
     ],
   },
   Tools: {
     label: "Tools",
     items: [
-      { label: "Presets", href: "/presets", desc: "Editing style library", icon: "🎨" },
-      { label: "Playground", href: "/playground", desc: "Test prompts on one photo", icon: "🧪" },
-      { label: "Search", href: "/search", desc: "Find any job or photo", icon: "🔎" },
+      { label: "Presets", href: "/presets", desc: "Editing style library" },
+      { label: "Playground", href: "/playground", desc: "Test prompts on one photo" },
+      { label: "Search", href: "/search", desc: "Find any job or photo" },
     ],
   },
   Admin: {
     label: "Admin",
     items: [
-      { label: "Users", href: "/admin/users", desc: "Manage accounts", icon: "👤", adminOnly: true },
-      { label: "Photographers", href: "/photographers", desc: "Team roster", icon: "📷", adminOnly: true },
-      { label: "Analytics", href: "/analytics", desc: "Usage & cost trends", icon: "📈", adminOnly: true },
-      { label: "Activity", href: "/activity", desc: "Recent actions", icon: "⏱", adminOnly: true },
-      { label: "Billing", href: "/billing", desc: "Invoices & costs", icon: "💳" },
+      { label: "Users", href: "/admin/users", desc: "Manage accounts", adminOnly: true },
+      { label: "Photographers", href: "/photographers", desc: "Team roster", adminOnly: true },
+      { label: "Analytics", href: "/analytics", desc: "Usage and cost trends", adminOnly: true },
+      { label: "Activity", href: "/activity", desc: "Recent actions", adminOnly: true },
+      { label: "Billing", href: "/billing", desc: "Invoices and costs" },
     ],
   },
 };
@@ -54,7 +53,7 @@ export function TopNav() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [open, setOpen] = useState<string | null>(null);
-  const navRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const isAdmin = session?.user?.role === "admin";
 
   useEffect(() => setOpen(null), [pathname]);
@@ -79,11 +78,11 @@ export function TopNav() {
     return name === "Admin" ? items.filter((i) => !i.adminOnly || isAdmin) : items;
   }
 
-  const triggers = [
+  const triggers: Array<{ key: string; label: string; dropdown?: true; href?: string }> = [
     { key: "Jobs", label: "Jobs", dropdown: true },
     { key: "Clients", label: "Clients", href: "/clients" },
     { key: "Tools", label: "Tools", dropdown: true },
-    ...(isAdmin ? [{ key: "Admin", label: "Admin", dropdown: true }] : []),
+    ...(isAdmin ? [{ key: "Admin", label: "Admin", dropdown: true as const }] : []),
     { key: "Settings", label: "Settings", href: "/settings" },
   ];
 
@@ -95,7 +94,7 @@ export function TopNav() {
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center gap-6">
         <Link
           href="/dashboard"
-          className="font-semibold text-graphite-900 dark:text-white text-sm tracking-tight hover:text-cyan"
+          className="font-semibold text-graphite-900 dark:text-white text-sm tracking-tight hover:text-cyan transition-colors"
         >
           ATH AI Editor
         </Link>
@@ -111,7 +110,7 @@ export function TopNav() {
                     className={`px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors ${
                       active
                         ? "bg-graphite-100 dark:bg-graphite-800 text-graphite-900 dark:text-white"
-                        : "text-graphite-600 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-900"
+                        : "text-graphite-600 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-900 hover:text-graphite-900 dark:hover:text-white"
                     }`}
                   >
                     {t.label}
@@ -126,29 +125,21 @@ export function TopNav() {
                     </svg>
                   </button>
                   {active && (
-                    <div className="absolute left-0 mt-2 min-w-[320px] rounded-xl border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-950 shadow-xl p-2">
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-graphite-400 dark:text-graphite-500 px-3 pt-2 pb-1">
-                        {groups[t.key].label}
-                      </div>
+                    <div className="absolute left-0 mt-2 min-w-[280px] rounded-xl border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-950 shadow-xl p-2">
                       {groupItems(t.key).map((i) => (
                         <Link
                           key={i.href}
                           href={i.href}
-                          className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-900"
+                          className="block rounded-lg px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-900"
                         >
-                          <span className="text-lg leading-none mt-0.5" aria-hidden>
-                            {i.icon}
+                          <span className="block text-sm font-medium text-graphite-900 dark:text-white">
+                            {i.label}
                           </span>
-                          <span className="flex-1">
-                            <span className="block text-sm font-medium text-graphite-900 dark:text-white">
-                              {i.label}
+                          {i.desc && (
+                            <span className="block text-xs text-graphite-500 dark:text-graphite-400 mt-0.5">
+                              {i.desc}
                             </span>
-                            {i.desc && (
-                              <span className="block text-xs text-graphite-500 dark:text-graphite-400">
-                                {i.desc}
-                              </span>
-                            )}
-                          </span>
+                          )}
                         </Link>
                       ))}
                     </div>
@@ -164,7 +155,7 @@ export function TopNav() {
                 className={`px-3 py-1.5 rounded-md transition-colors ${
                   isCurrent
                     ? "bg-graphite-100 dark:bg-graphite-800 text-graphite-900 dark:text-white"
-                    : "text-graphite-600 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-900"
+                    : "text-graphite-600 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-900 hover:text-graphite-900 dark:hover:text-white"
                 }`}
               >
                 {t.label}
@@ -177,16 +168,16 @@ export function TopNav() {
           <DarkModeToggle />
           <Link
             href="/jobs/new"
-            className="px-3 py-1.5 rounded-md bg-cyan-500 text-white font-medium hover:bg-cyan-600"
+            className="px-3 py-1.5 rounded-md bg-graphite-900 dark:bg-white text-white dark:text-graphite-900 font-medium hover:bg-graphite-800 dark:hover:bg-graphite-100 transition-colors"
           >
-            + New job
+            New job
           </Link>
           {session?.user && (
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setOpen(open === "user" ? null : "user")}
-                className="w-8 h-8 rounded-full bg-graphite-200 dark:bg-graphite-800 text-xs font-semibold text-graphite-700 dark:text-graphite-200 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-graphite-200 dark:bg-graphite-800 text-xs font-semibold text-graphite-700 dark:text-graphite-200 flex items-center justify-center hover:bg-graphite-300 dark:hover:bg-graphite-700 transition-colors"
                 title={session.user.email ?? undefined}
               >
                 {(session.user.name?.[0] ?? session.user.email?.[0] ?? "?").toUpperCase()}
@@ -196,16 +187,13 @@ export function TopNav() {
                   <div className="px-3 py-2 text-xs text-graphite-500 dark:text-graphite-400 truncate">
                     {session.user.email}
                   </div>
-                  <Link href="/settings" className="block rounded-md px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-900">
+                  <Link href="/settings" className="block rounded-md px-3 py-2 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-900">
                     Settings
-                  </Link>
-                  <Link href="/help" className="block rounded-md px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-900">
-                    Help
                   </Link>
                   <button
                     type="button"
                     onClick={() => signOut()}
-                    className="w-full text-left rounded-md px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-900 text-red-600"
+                    className="w-full text-left rounded-md px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                   >
                     Sign out
                   </button>

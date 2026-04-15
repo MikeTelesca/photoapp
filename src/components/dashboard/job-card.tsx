@@ -192,11 +192,11 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
               </span>
             )}
             {job.pinnedAt && (
-              <span className="text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400 font-semibold">📌 Pinned</span>
+              <span className="text-[10px] uppercase tracking-wide font-medium text-graphite-600 dark:text-graphite-300">Pinned</span>
             )}
             {job.priority === "high" && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-bold uppercase tracking-wide">
-                🔴 High
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 font-medium uppercase tracking-wide">
+                High
               </span>
             )}
             {job.priority === "low" && (
@@ -204,15 +204,12 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
                 Low
               </span>
             )}
-            {job.seasonalStyle === "twilight" && (
-              <span className="text-[10px] title='Twilight style detected'">🌆</span>
-            )}
             {(() => {
               const stale = checkStale({ status: job.status, createdAt: job.createdAt, updatedAt: job.updatedAt });
               if (!stale.isStale) return null;
               return (
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold uppercase tracking-wide" title={stale.reason}>
-                  ⚠ Stale
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-medium uppercase tracking-wide" title={stale.reason}>
+                  Stale
                 </span>
               );
             })()}
@@ -232,16 +229,16 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             <span>
               {job.totalPhotos} photos{job.twilightCount > 0 ? ` · ${job.twilightCount} twilight` : ""}
               {job.approvedPhotos > 0 && (
-                <span className="ml-1 text-emerald-600 font-semibold">· {job.approvedPhotos} ✓</span>
+                <span className="ml-1 text-emerald-600 dark:text-emerald-400">· {job.approvedPhotos} approved</span>
               )}
               {job.rejectedPhotos > 0 && (
-                <span className="ml-1 text-red-600 font-semibold">· {job.rejectedPhotos} ✗</span>
+                <span className="ml-1 text-red-600 dark:text-red-400">· {job.rejectedPhotos} rejected</span>
               )}
             </span>
             {job.cost > 0 && <span>${job.cost.toFixed(2)}</span>}
             {job.trackedTimeSeconds && job.trackedTimeSeconds > 0 && (
               <span className="text-[10px] text-graphite-500 dark:text-graphite-400">
-                ⏱ {Math.round(job.trackedTimeSeconds / 60)}m
+                {Math.round(job.trackedTimeSeconds / 60)}m tracked
               </span>
             )}
             {job.status === "pending" ? (
@@ -382,7 +379,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
-            <span className="text-graphite-300 text-base">›</span>
+            <span className="text-graphite-300 dark:text-graphite-600 text-base">›</span>
           </>
         )}
         {job.status === "pending" && (
@@ -408,8 +405,8 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
           <>
             <span {...statusHoverHandlers} className="text-xs font-semibold text-emerald-600">Approved</span>
             {job.lockedAt && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold uppercase tracking-wide">
-                🔒 Locked
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-graphite-100 dark:bg-graphite-800 text-graphite-600 dark:text-graphite-300 font-medium uppercase tracking-wide">
+                Locked
               </span>
             )}
             <LockButton jobId={job.id} locked={!!job.lockedAt} />
@@ -441,7 +438,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
-            <span className="text-graphite-300 text-base">›</span>
+            <span className="text-graphite-300 dark:text-graphite-600 text-base">›</span>
           </>
         )}
       </div>

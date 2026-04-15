@@ -39,6 +39,9 @@ export function ZoomableImage({ src, alt, zoom, pan, onZoomChange, onPanChange, 
   }
 
   function handleWheel(e: WheelEvent) {
+    // Only zoom when pinch-zooming (ctrlKey) or holding Cmd/Ctrl.
+    // Plain mouse wheel = let the page scroll normally.
+    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     const delta = e.deltaY < 0 ? 0.25 : -0.25;
     const newZoom = Math.min(8, Math.max(1, zoom + delta));
@@ -74,10 +77,13 @@ export function ZoomableImage({ src, alt, zoom, pan, onZoomChange, onPanChange, 
         src={src}
         alt={alt}
         draggable={false}
-        className="absolute top-1/2 left-1/2 max-w-none transition-transform duration-100 ease-out select-none"
+        className="absolute top-1/2 left-1/2 transition-transform duration-100 ease-out select-none"
         style={{
+          // Fit the whole image inside the viewport. No auto-crop.
+          maxWidth: "100%",
+          maxHeight: "100%",
           width: "auto",
-          height: "100%",
+          height: "auto",
           transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           transformOrigin: "center center",
         }}

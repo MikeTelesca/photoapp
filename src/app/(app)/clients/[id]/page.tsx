@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { EnvelopeIcon, PhoneIcon, BuildingOfficeIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 import { ClientDetailActions } from "@/components/clients/client-detail-actions";
+import { MergeClientButton } from "@/components/clients/merge-client-button";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +87,10 @@ export default async function ClientDetailPage({ params }: Props) {
           <div className="p-5">
             <div className="flex items-start justify-between mb-4">
               <h2 className="text-base font-bold text-graphite-900 dark:text-white">{client.name}</h2>
-              <ClientDetailActions client={client} />
+              <div className="flex flex-col gap-3 items-end">
+                <ClientDetailActions client={client} />
+                <MergeClientButton clientId={client.id} clientName={client.name} />
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {client.email && (

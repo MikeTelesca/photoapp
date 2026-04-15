@@ -57,6 +57,7 @@ interface Photo {
   autoTags?: string | null;
   rejectionReason?: string | null;
   note?: string | null;
+  caption?: string | null;
   ratings?: { id: string; authorName: string; rating: number; createdAt: string }[];
   createdAt: string;
   updatedAt: string;
@@ -224,6 +225,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   // Rotation state
   const [rotating, setRotating] = useState(false);
+
+  // Caption state
+  const [generatingCaption, setGeneratingCaption] = useState(false);
 
   // Dropbox sync state
   const [syncing, setSyncing] = useState(false);
@@ -942,6 +946,25 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function generateCaption() {
+    if (!currentPhoto) return;
+    setGeneratingCaption(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/caption`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setJob(prev => ({
+          ...prev,
+          photos: prev.photos.map(p =>
+            p.id === currentPhoto.id ? { ...p, caption: data.caption } : p
+          ),
+        }));
+      }
+    } finally {
+      setGeneratingCaption(false);
+    }
+  }
+
   const handleApproveAll = useCallback(async () => {
     setIsUpdating(true);
     try {
@@ -1291,6 +1314,17 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               className="text-xs px-3 py-1.5 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-60"
             >
               {generating ? "Writing..." : "✨ Generate listing"}
+            </button>
+          )}
+          {photos.some(p => p.status === "approved") && (
+            <button onClick={async () => {
+              if (!confirm(`Generate captions for all approved photos without one? (Costs ~$0.001 each)`)) return;
+              const res = await fetch(`/api/jobs/${job.id}/captions`, { method: "POST" });
+              const data = await res.json();
+              alert(`Generated ${data.success} captions (${data.failed} failed)`);
+              window.location.reload();
+            }} className="text-xs px-3 py-1.5 rounded border border-purple-500 text-purple-600 hover:bg-purple-50">
+              💬 Caption all
             </button>
           )}
           {job.status === "approved" && (
@@ -2086,6 +2120,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {currentPhoto && (
             <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
               <PhotoNote jobId={job.id} photoId={currentPhoto.id} initialNote={currentPhoto.note} />
+            </div>
+          )}
+
+          {/* Photo Caption */}
+          {currentPhoto && (
+            <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2 flex items-center gap-2 flex-wrap">
+              {currentPhoto.caption ? (
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="text-xs px-2 py-1 rounded bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-300 italic flex-1 min-w-0 truncate">
+                    &ldquo;{currentPhoto.caption}&rdquo;
+                  </span>
+                  <button onClick={generateCaption} disabled={generatingCaption}
+                    className="ml-1 text-cyan hover:underline text-[10px] whitespace-nowrap disabled:opacity-50">
+                    {generatingCaption ? "Writing..." : "regenerate"}
+                  </button>
+                </div>
+              ) : (
+                <button onClick={generateCaption} disabled={generatingCaption}
+                  className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50">
+                  {generatingCaption ? "Writing..." : "💬 Generate caption"}
+                </button>
+              )}
             </div>
           )}
 

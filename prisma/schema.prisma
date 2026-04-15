@@ -110,6 +110,7 @@ model Job {
   dropboxSyncedAt     DateTime?
   invoicePaidAt       DateTime?
   invoiceSentAt       DateTime?
+  pinnedAt            DateTime?
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id])
@@ -150,6 +151,7 @@ model Photo {
   autoTags             String?  // JSON array of detected tags: ["kitchen", "interior", "bright"]
   rejectionReason      String?
   note                 String?
+  caption              String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   comments             PhotoComment[]

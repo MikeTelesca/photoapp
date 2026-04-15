@@ -6,6 +6,7 @@ import {
   ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { MaintenanceActions } from "@/components/settings/maintenance-actions";
+import { AccountForm } from "@/components/settings/account-form";
 
 export const dynamic = "force-dynamic";
 
@@ -26,19 +27,12 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle>Account</CardTitle>
           </CardHeader>
-          <div className="p-5 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-graphite-500">Name</span>
-              <span className="text-sm font-semibold text-graphite-900">{session?.user?.name || "—"}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-graphite-500">Email</span>
-              <span className="text-sm font-semibold text-graphite-900">{session?.user?.email || "—"}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-graphite-500">Role</span>
-              <span className="text-sm font-semibold text-graphite-900 capitalize">{(session?.user as any)?.role || "—"}</span>
-            </div>
+          <div className="p-5">
+            <AccountForm
+              initialName={session?.user?.name || ""}
+              email={session?.user?.email || ""}
+              role={(session?.user as any)?.role || ""}
+            />
           </div>
         </Card>
 

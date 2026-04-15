@@ -87,6 +87,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
   const twilightMenuRef = useRef<HTMLDivElement>(null);
   const [thumbFilter, setThumbFilter] = useState<"all" | "pending" | "edited" | "approved" | "rejected">("all");
+  const [showHelpOverlay, setShowHelpOverlay] = useState(false);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -503,6 +504,31 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         case "R":
           handleReject();
           break;
+        case "e":
+        case "E":
+          handleRegenerate();
+          break;
+        case "s":
+        case "S":
+          setCompareMode(m => m === "split" ? "slider" : "split");
+          break;
+        case "z":
+        case "Z":
+          setZoom(z => z === 1 ? 2 : 1);
+          setPan({ x: 0, y: 0 });
+          break;
+        case "Escape":
+          if (showPromptEditor || showMobileNav || twilightMenuOpen || showHelpOverlay) {
+            setShowPromptEditor(false);
+            setShowMobileNav(false);
+            setTwilightMenuOpen(false);
+            setShowHelpOverlay(false);
+          }
+          break;
+        case "?":
+          e.preventDefault();
+          setShowHelpOverlay(prev => !prev);
+          break;
         case "ArrowRight":
           goNext();
           break;
@@ -513,7 +539,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleApprove, handleReject, goNext, goPrev]);
+  }, [handleApprove, handleReject, handleRegenerate, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay]);
 
   // Close twilight menu when clicking outside
   useEffect(() => {
@@ -1176,6 +1202,62 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
         </div>
       </div>
+
+      {/* Keyboard Shortcuts Help Overlay */}
+      {showHelpOverlay && (
+        <div
+          className="fixed inset-0 z-40 bg-black/20"
+          onClick={() => setShowHelpOverlay(false)}
+        />
+      )}
+      {showHelpOverlay && (
+        <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg border border-graphite-200 p-4 w-48">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-graphite-900">Keyboard Shortcuts</h3>
+            <button
+              onClick={() => setShowHelpOverlay(false)}
+              className="text-graphite-400 hover:text-graphite-600 text-lg"
+            >
+              ×
+            </button>
+          </div>
+          <div className="space-y-2 text-sm text-graphite-700">
+            <div className="flex justify-between">
+              <span className="font-semibold text-graphite-900">A</span>
+              <span>Approve</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-graphite-900">R</span>
+              <span>Reject</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-graphite-900">E</span>
+              <span>Re-enhance</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-graphite-900">S</span>
+              <span>Toggle slider</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-graphite-900">Z</span>
+              <span>Toggle zoom</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-graphite-900">← →</span>
+              <span>Navigate</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-graphite-900">?</span>
+              <span>Toggle help</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-graphite-900">Esc</span>
+              <span>Close overlay</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <KeyboardHint />
     </div>
   );

@@ -68,6 +68,9 @@ export function Topbar({ title, subtitle }: TopbarProps) {
             />
           </div>
         </form>
+        <a href="/api/jobs/export" download>
+          <Button variant="outline">Export CSV</Button>
+        </a>
         <Button variant="outline">Import</Button>
         <Link href="/jobs/new">
           <Button>

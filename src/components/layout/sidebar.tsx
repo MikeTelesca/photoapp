@@ -30,6 +30,7 @@ import {
   BeakerIcon,
   MegaphoneIcon,
   AdjustmentsHorizontalIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -61,6 +62,7 @@ const settingsItems = [
 ];
 
 const helpItems = [
+  { label: "What's new", href: "/whats-new", icon: SparklesIcon },
   { label: "Help", href: "/help", icon: QuestionMarkCircleIcon },
 ];
 

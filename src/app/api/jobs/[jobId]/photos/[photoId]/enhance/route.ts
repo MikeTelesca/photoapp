@@ -69,7 +69,7 @@ export async function POST(
     const monthlyCost = monthlyCostResult._sum.cost || 0;
 
     const userRecord = await prisma.user.findUnique({ where: { id: job.photographerId } });
-    const limit = (userRecord as any)?.monthlyAiCostLimit ?? 50;
+    const limit = userRecord?.monthlyAiCostLimit ?? 50;
 
     if (monthlyCost + AI_COST_PER_IMAGE > limit) {
       return NextResponse.json({
@@ -134,7 +134,7 @@ export async function POST(
     let result;
 
     if (makeTwilight) {
-      const twilightStyle = (photo as any).twilightStyle || "warm-dusk";
+      const twilightStyle = photo.twilightStyle || "warm-dusk";
       result = await convertToTwilight(bracketBuffers, mimeType, photo.isExterior, customInstructions, twilightStyle);
     } else {
       // Analyze photo for detections
@@ -159,7 +159,7 @@ export async function POST(
         art: "If there's a TV, replace the screen with modern abstract artwork - colorful, tasteful, gallery-quality.",
         off: "Leave any TV screens exactly as they are - do not modify TV screens at all.",
       };
-      const tvInstruction = tvInstructions[(job as any).tvStyle || "netflix"] || tvInstructions.netflix;
+      const tvInstruction = tvInstructions[job.tvStyle || "netflix"] || tvInstructions.netflix;
 
       // Build Sky instruction — "as-is" default to prevent AI hallucinating sky/scenery
       const skyInstructions: Record<string, string> = {
@@ -173,7 +173,7 @@ export async function POST(
       // CRITICAL: only apply sky instruction to EXTERIOR photos
       const isExt = photo.isExterior;
       const skyInstruction = isExt
-        ? (skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"])
+        ? (skyInstructions[job.skyStyle || "as-is"] || skyInstructions["as-is"])
         : "INTERIOR PHOTO: Do NOT replace, modify, or add anything to windows, sky areas, or anything visible through glass. Do NOT add clouds, sky, grass, trees, or scenery. Keep all windows EXACTLY as they appear.";
 
       const hdrInstruction = bracketBuffers.length > 1
@@ -256,7 +256,7 @@ export async function POST(
       }, { status: 500 });
     }
 
-    log.info("[enhance] completed", { jobId, photoId, model: (result as any).model });
+    log.info("[enhance] completed", { jobId, photoId });
 
     await prisma.photo.update({
       where: { id: photoId },

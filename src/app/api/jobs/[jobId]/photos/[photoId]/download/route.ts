@@ -45,7 +45,7 @@ export async function GET(
     }
 
     // Apply watermark if configured
-    const watermarkText = (photo.job as any).watermarkText;
+    const watermarkText = photo.job.watermarkText;
     if (watermarkText && watermarkText.trim().length > 0) {
       const sharp = (await import("sharp")).default;
       const meta = await sharp(buffer).metadata();

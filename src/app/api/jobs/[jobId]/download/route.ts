@@ -44,7 +44,7 @@ export async function GET(
         .replace(/[^a-zA-Z0-9]/g, "_")
         .substring(0, 40);
 
-      const watermarkText = (job as any).watermarkText as string | null;
+      const watermarkText = job.watermarkText as string | null;
       let sharpLib: any = null;
       if (watermarkText && watermarkText.trim().length > 0) {
         sharpLib = (await import("sharp")).default;

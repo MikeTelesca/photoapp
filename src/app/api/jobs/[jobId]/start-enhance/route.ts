@@ -67,7 +67,7 @@ export async function POST(
     const monthlyCost = monthlyCostResult._sum.cost || 0;
 
     const user = await prisma.user.findUnique({ where: { id: job.photographerId } });
-    const limit = (user as any)?.monthlyAiCostLimit ?? 50;
+    const limit = user?.monthlyAiCostLimit ?? 50;
 
     if (monthlyCost + AI_COST_PER_IMAGE > limit) {
       return NextResponse.json({
@@ -221,7 +221,7 @@ export async function POST(
       art: "If there's a TV, replace the screen with modern abstract artwork - colorful, tasteful, gallery-quality.",
       off: "Leave any TV screens exactly as they are - do not modify TV screens at all.",
     };
-    const tvInstruction = tvInstructions[(job as any).tvStyle || "netflix"] || tvInstructions.netflix;
+    const tvInstruction = tvInstructions[job.tvStyle || "netflix"] || tvInstructions.netflix;
 
     // Build Sky instruction based on job's skyStyle
     // NOTE: "as-is" is the default - AI must not hallucinate sky/clouds/scenery
@@ -236,7 +236,7 @@ export async function POST(
     // CRITICAL: only apply sky instruction to EXTERIOR photos
     // Interior photos must NEVER have sky replacement (windows look like sky to AI)
     const skyInstruction = analysis.isExterior
-      ? (skyInstructions[(job as any).skyStyle || "as-is"] || skyInstructions["as-is"])
+      ? (skyInstructions[job.skyStyle || "as-is"] || skyInstructions["as-is"])
       : "INTERIOR PHOTO DETECTED: Do NOT replace, modify, or add anything to windows, sky areas, or anything visible through glass. Do NOT add clouds, sky, grass, trees, or scenery anywhere. Keep all windows and views EXACTLY as they appear in the original.";
 
     // HDR merge instruction - tells Gemini to fuse the multiple bracket exposures
@@ -351,7 +351,7 @@ export async function POST(
       data: { editedUrl, status: "edited", errorMessage: null, errorAttempts: 0 },
     });
 
-    log.info("[start-enhance] completed", { jobId, photoId: photo.id, model: (result as any).model });
+    log.info("[start-enhance] completed", { jobId, photoId: photo.id });
 
     await logActivity({
       type: "photo_enhanced",

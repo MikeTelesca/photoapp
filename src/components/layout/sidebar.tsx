@@ -65,6 +65,7 @@ export function Sidebar() {
         {/* Close button on mobile */}
         <button
           onClick={() => setIsOpen(false)}
+          aria-label="Close navigation menu"
           className="ml-auto md:hidden p-1 text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-300"
         >
           <XMarkIcon className="w-5 h-5" />
@@ -137,6 +138,7 @@ export function Sidebar() {
                 : "text-graphite-500 dark:text-graphite-400 hover:text-graphite-700 dark:hover:text-graphite-200"
             }`}
             title="Light mode"
+            aria-label="Switch to light mode"
           >
             <SunIcon className="w-3.5 h-3.5" />
           </button>
@@ -148,6 +150,7 @@ export function Sidebar() {
                 : "text-graphite-500 dark:text-graphite-400 hover:text-graphite-700 dark:hover:text-graphite-200"
             }`}
             title="Dark mode"
+            aria-label="Switch to dark mode"
           >
             <MoonIcon className="w-3.5 h-3.5" />
           </button>
@@ -159,6 +162,7 @@ export function Sidebar() {
                 : "text-graphite-500 dark:text-graphite-400 hover:text-graphite-700 dark:hover:text-graphite-200"
             }`}
             title="System default"
+            aria-label="Use system theme"
           >
             <ComputerDesktopIcon className="w-3.5 h-3.5" />
           </button>
@@ -195,7 +199,7 @@ export function Sidebar() {
       {/* Mobile header - shows only on small screens */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <button onClick={() => setIsOpen(true)} className="p-1">
+          <button onClick={() => setIsOpen(true)} aria-label="Open navigation menu" className="p-1">
             <Bars3Icon className="w-6 h-6 text-graphite-700 dark:text-graphite-300" />
           </button>
           <span className="text-base font-bold text-graphite-900 dark:text-white">PhotoApp</span>

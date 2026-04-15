@@ -77,12 +77,12 @@ function JobCardInternal({ job }: JobCardProps) {
               {job.preset.charAt(0).toUpperCase() + job.preset.slice(1)}
             </Badge>
           </div>
-          {(job as any).clientName && (
-            <div className="text-[11px] text-graphite-500 mt-0.5">{(job as any).clientName}</div>
+          {job.clientName && (
+            <div className="text-[11px] text-graphite-500 mt-0.5">{job.clientName}</div>
           )}
-          {(job as any).tags && (
+          {job.tags && (
             <div className="flex gap-1 mt-1">
-              {((job as any).tags as string).split(",").map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
+              {job.tags.split(",").map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
                 <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan font-semibold uppercase tracking-wide">
                   {tag}
                 </span>

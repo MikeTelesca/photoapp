@@ -49,6 +49,13 @@ interface Job {
   totalPhotos: number;
   approvedPhotos: number;
   rejectedPhotos: number;
+  notes?: string | null;
+  clientName?: string | null;
+  tags?: string | null;
+  watermarkText?: string | null;
+  dropboxUrl?: string | null;
+  tvStyle?: string | null;
+  skyStyle?: string | null;
   photographer: { name: string };
   photos: Photo[];
 }
@@ -68,7 +75,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   // Preset switcher
   const [presets, setPresets] = useState<Array<{ id: string; slug: string; name: string; promptModifiers: string }>>([]);
-  const [currentPreset, setCurrentPreset] = useState<string>((initialJob as any).preset || "standard");
+  const [currentPreset, setCurrentPreset] = useState<string>(initialJob.preset || "standard");
   const [editedPrompt, setEditedPrompt] = useState<string>("");
   const [showPromptEditor, setShowPromptEditor] = useState(false);
   const [savingPreset, setSavingPreset] = useState(false);
@@ -615,7 +622,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               {compareMode === "split" ? "Slider View" : "Split View"}
             </button>
           </div>
-          <NotesPopover jobId={job.id} initialNotes={(job as any).notes ?? null} />
+          <NotesPopover jobId={job.id} initialNotes={job.notes ?? null} />
           <ReingestButton jobId={job.id} />
           <button
             onClick={async () => {
@@ -802,14 +809,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {/* Filter pills */}
           <div className="flex gap-0.5 p-1 border-b border-graphite-200 flex-shrink-0">
             {[
-              { v: "all", l: "All" },
-              { v: "edited", l: "New" },
-              { v: "approved", l: "✓" },
-              { v: "rejected", l: "✗" },
+              { v: "all" as const, l: "All" },
+              { v: "edited" as const, l: "New" },
+              { v: "approved" as const, l: "✓" },
+              { v: "rejected" as const, l: "✗" },
             ].map(opt => (
               <button
                 key={opt.v}
-                onClick={() => setThumbFilter(opt.v as any)}
+                onClick={() => setThumbFilter(opt.v)}
                 className={`flex-1 text-[9px] font-semibold py-1 rounded ${
                   thumbFilter === opt.v ? "bg-graphite-900 text-white" : "text-graphite-500 hover:bg-graphite-100"
                 }`}

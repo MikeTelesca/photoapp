@@ -26,6 +26,7 @@ import {
   ClockIcon,
   HeartIcon,
   ExclamationTriangleIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -33,6 +34,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
+  { label: "Search", href: "/search", icon: MagnifyingGlassIcon },
   { label: "Needs Review", href: "/dashboard?filter=review", icon: EyeIcon },
   { label: "Processing", href: "/dashboard?filter=processing", icon: ArrowPathIcon },
   { label: "Completed", href: "/dashboard?filter=approved", icon: CheckCircleIcon },

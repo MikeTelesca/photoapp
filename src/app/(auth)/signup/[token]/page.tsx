@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { CameraIcon } from "@heroicons/react/24/outline";
+import { PasswordStrength } from "@/components/ui/password-strength";
 
 export default function SignupPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
@@ -98,6 +99,7 @@ export default function SignupPage({ params }: { params: Promise<{ token: string
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8}
                 placeholder="At least 8 characters"
                 className="w-full px-3.5 py-2.5 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan" />
+              <PasswordStrength password={password} />
             </div>
             {error && <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</div>}
             <button type="submit" disabled={submitting}

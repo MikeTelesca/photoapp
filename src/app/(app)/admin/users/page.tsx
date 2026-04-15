@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { redirect } from "next/navigation";
 import { RoleToggleButton } from "./_components/role-toggle-button";
 import { ImpersonateButton } from "./_components/impersonate-button";
+import { SeedDemoButton } from "@/components/admin/seed-demo-button";
 
 export const metadata = {
   title: "User Management",
@@ -26,6 +27,9 @@ export default async function AdminUsersPage() {
     <>
       <Topbar title="User Management" subtitle="Manage user accounts and roles" />
       <div className="p-6 max-w-7xl mx-auto">
+        <div className="mb-4 flex justify-end">
+          <SeedDemoButton />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>All Users</CardTitle>

@@ -33,6 +33,7 @@ model Job {
   rejectedPhotos   Int      @default(0)
   twilightCount    Int      @default(0)
   cost             Float    @default(0)
+  notes            String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id])

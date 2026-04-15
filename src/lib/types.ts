@@ -16,6 +16,7 @@ export interface Job {
   rejectedPhotos: number;
   twilightCount: number;
   cost: number;
+  notes?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

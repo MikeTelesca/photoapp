@@ -62,10 +62,14 @@ async function getStats(where: object) {
   }
 }
 
-async function getJobs(where: object): Promise<Job[]> {
+async function getJobs(where: object, search?: string): Promise<Job[]> {
   try {
+    const baseWhere: any = { ...where, status: { not: "deleted" } };
+    if (search) {
+      baseWhere.address = { contains: search, mode: "insensitive" };
+    }
     const dbJobs = await prisma.job.findMany({
-      where: { ...where, status: { not: "deleted" } },
+      where: baseWhere,
       include: {
         photographer: {
           select: { name: true },
@@ -144,7 +148,14 @@ function formatTime(date: Date): string {
   return `${days} days ago`;
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string }>;
+}) {
+  const params = await searchParams;
+  const search = params.search;
+
   const session = await auth();
   const userId = (session?.user as any)?.id;
   const userRole = (session?.user as any)?.role;
@@ -152,7 +163,7 @@ export default async function DashboardPage() {
 
   const [stats, jobs, activity] = await Promise.all([
     getStats(where),
-    getJobs(where),
+    getJobs(where, search),
     getRecentActivity(),
   ]);
 

@@ -54,7 +54,7 @@ export async function PATCH(
 
     // Mass assignment defense: whitelist allowed fields
     const allowed: Record<string, any> = {};
-    const allowedFields = ["address", "preset", "tvStyle", "skyStyle", "seasonalStyle", "priority", "notes", "watermarkText", "watermarkPosition", "watermarkSize", "watermarkOpacity", "clientName", "tags"] as const;
+    const allowedFields = ["address", "preset", "tvStyle", "skyStyle", "seasonalStyle", "priority", "notes", "watermarkText", "watermarkPosition", "watermarkSize", "watermarkOpacity", "clientName", "tags", "customPromptOverride"] as const;
     for (const field of allowedFields) {
       if (body[field] !== undefined) allowed[field] = body[field];
     }

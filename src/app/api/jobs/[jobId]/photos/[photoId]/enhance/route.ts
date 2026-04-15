@@ -55,13 +55,16 @@ export async function POST(
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { customInstructions, makeTwilight } = body as {
+    const { customInstructions: requestCustomInstructions, makeTwilight } = body as {
       customInstructions?: string;
       makeTwilight?: boolean;
     };
 
     const photo = await prisma.photo.findUnique({ where: { id: photoId } });
     const job = await prisma.job.findUnique({ where: { id: jobId } });
+
+    // Prefer job's customPromptOverride, fall back to per-request customInstructions
+    const customInstructions = job?.customPromptOverride || requestCustomInstructions || null;
 
     if (!photo || !job) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

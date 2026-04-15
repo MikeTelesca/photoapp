@@ -42,6 +42,7 @@ import { getActionForKey } from "@/lib/keyboard-shortcuts";
 import { LazyThumb } from "./lazy-thumb";
 import { Slideshow } from "./slideshow";
 import { PromptLinter } from "@/components/presets/prompt-linter";
+import { TimeTracker } from "./time-tracker";
 
 interface Photo {
   id: string;
@@ -80,6 +81,7 @@ interface Job {
   approvedPhotos: number;
   rejectedPhotos: number;
   notes?: string | null;
+  customPromptOverride?: string | null;
   clientName?: string | null;
   tags?: string | null;
   watermarkText?: string | null;
@@ -93,6 +95,7 @@ interface Job {
   shareEnabled?: boolean;
   listingDescription?: string | null;
   sequenceNumber?: number | null;
+  trackedTimeSeconds?: number;
   createdAt?: string;
   photographer: { name: string };
   photos: Photo[];
@@ -193,6 +196,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const twilightMenuRef = useRef<HTMLDivElement>(null);
   const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
   const [sortBy, setSortBy] = useState<"order" | "name" | "date" | "flagged" | "rejected">("order");
+  const [sorting, setSorting] = useState(false);
   const [tagFilter, setTagFilter] = useState<string>("");
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
   const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
@@ -223,6 +227,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [wmSize, setWmSize] = useState(initialJob.watermarkSize ?? 32);
   const [wmOpacity, setWmOpacity] = useState(initialJob.watermarkOpacity ?? 0.7);
   const [savingWatermark, setSavingWatermark] = useState(false);
+
+  // Custom prompt override state
+  const [customOverride, setCustomOverride] = useState(initialJob.customPromptOverride || "");
+  const [savingOverride, setSavingOverride] = useState(false);
+  const [overrideSaved, setOverrideSaved] = useState(false);
 
   // Swipe hint state
   const [showSwipeHint, setShowSwipeHint] = useState(false);
@@ -460,6 +469,30 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       }
     } finally {
       setSavingWatermark(false);
+    }
+  }
+
+  async function saveOverride() {
+    setSavingOverride(true);
+    setOverrideSaved(false);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customPromptOverride: customOverride.trim() || null }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setJob(updated);
+        setOverrideSaved(true);
+        setTimeout(() => setOverrideSaved(false), 2000);
+      } else {
+        addToast("error", "Failed to save custom instructions");
+      }
+    } catch (e: any) {
+      addToast("error", e.message || "Failed to save custom instructions");
+    } finally {
+      setSavingOverride(false);
     }
   }
 
@@ -1261,6 +1294,17 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     });
   }
 
+  async function handleSmartSort() {
+    if (!confirm("Reorder all photos in MLS-recommended sequence (exterior \u2192 kitchen \u2192 living \u2192 bedrooms \u2192 bathrooms)? This will overwrite the current order.")) return;
+    setSorting(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/smart-order`, { method: "POST" });
+      if (res.ok) window.location.reload();
+    } finally {
+      setSorting(false);
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen">
       {/* Top Bar */}
@@ -1771,6 +1815,34 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         </div>
       )}
 
+      {/* Per-job custom prompt override */}
+      <details className="text-sm bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-700 px-7 py-3">
+        <summary className="cursor-pointer text-xs text-graphite-500 dark:text-graphite-400 hover:text-cyan font-semibold">
+          🎯 Per-job custom instructions {customOverride ? "(set)" : ""}
+        </summary>
+        <div className="mt-3 space-y-2">
+          <textarea
+            value={customOverride}
+            onChange={(e) => setCustomOverride(e.target.value)}
+            rows={3}
+            placeholder="Special instructions just for this job (e.g. 'Preserve original sky color', 'Avoid warming kitchen')"
+            className="w-full text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
+          />
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] text-graphite-400">
+              Applied to all enhance + re-enhance for this job
+            </span>
+            <div className="flex items-center gap-2">
+              {overrideSaved && <span className="text-xs text-emerald-600 font-semibold">Saved ✓</span>}
+              <button onClick={saveOverride} disabled={savingOverride}
+                className="text-xs px-3 py-1 rounded bg-cyan text-white font-semibold hover:bg-cyan-600 disabled:opacity-50">
+                {savingOverride ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </details>
+
       {/* Watermark Settings Panel */}
       {showWatermarkPanel && (
         <div className="bg-graphite-50 dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-700 px-7 py-4">
@@ -1913,6 +1985,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <option value="flagged">Quality flagged first</option>
               <option value="rejected">Rejected first</option>
             </select>
+            {/* Smart sort button */}
+            <button
+              onClick={handleSmartSort}
+              disabled={sorting}
+              title="Reorder photos by MLS-standard sequence using AI room detection. Photos without auto-tags fall to the end."
+              className="text-[9px] px-1.5 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 disabled:opacity-50 disabled:cursor-not-allowed w-full font-semibold"
+            >
+              {sorting ? "Sorting..." : "🪄 Smart sort"}
+            </button>
             {/* Select mode toggle */}
             <button
               onClick={() => {
@@ -2429,6 +2510,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               >
                 Next pending
               </button>
+              <TimeTracker jobId={job.id} initialSeconds={job.trackedTimeSeconds || 0} />
             </div>
 
             <div className="flex items-center gap-2">

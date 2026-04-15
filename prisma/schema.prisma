@@ -108,6 +108,7 @@ model Job {
   clientName       String?
   clientId         String?
   client           Client?  @relation(fields: [clientId], references: [id])
+  customPromptOverride String?  // per-job custom instructions for AI enhance
   sequenceNumber   Int?     // auto-incrementing per user
   shareToken          String?  @unique
   shareEnabled        Boolean  @default(false)
@@ -122,6 +123,7 @@ model Job {
   invoiceSentAt       DateTime?
   pinnedAt            DateTime?
   snoozedUntil        DateTime?
+  trackedTimeSeconds  Int      @default(0)
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)

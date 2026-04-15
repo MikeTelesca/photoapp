@@ -131,6 +131,11 @@ function JobCardInternal({ job }: JobCardProps) {
               )}
             </span>
             {job.cost > 0 && <span>${job.cost.toFixed(2)}</span>}
+            {job.trackedTimeSeconds && job.trackedTimeSeconds > 0 && (
+              <span className="text-[10px] text-graphite-500 dark:text-graphite-400">
+                ⏱ {Math.round(job.trackedTimeSeconds / 60)}m
+              </span>
+            )}
             <Badge variant={job.preset === "luxury" ? "luxury" : "standard"}>
               {job.preset.charAt(0).toUpperCase() + job.preset.slice(1)}
             </Badge>

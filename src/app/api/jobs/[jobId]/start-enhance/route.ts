@@ -327,9 +327,14 @@ export async function POST(
       : "";
 
     const combinedInstructions = [hdrInstruction, tvInstruction, skyInstruction].filter(Boolean).join("\n");
-    const fullPrompt = customPresetPrompt
-      ? `${customPresetPrompt}\n\n${combinedInstructions}`
-      : combinedInstructions;
+
+    // Prefer custom prompt override if set, otherwise use preset prompt
+    const customInstructions = job.customPromptOverride || null;
+    let fullPrompt = customInstructions
+      ? customInstructions
+      : (customPresetPrompt
+          ? `${customPresetPrompt}\n\n${combinedInstructions}`
+          : combinedInstructions);
 
     // Enhance the photo - pass ALL brackets for HDR merge
     const result = await enhancePhoto(validBrackets, mimeType, job.preset, fullPrompt, job.seasonalStyle, user?.promptPrefix);

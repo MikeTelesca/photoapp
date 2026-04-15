@@ -31,6 +31,7 @@ export interface Job {
   dropboxUrl?: string | null;
   listingDescription?: string | null;
   sequenceNumber?: number | null;
+  trackedTimeSeconds?: number;
   archivedAt?: Date | string | null;
   pinnedAt?: Date | string | null;
   snoozedUntil?: Date | string | null;

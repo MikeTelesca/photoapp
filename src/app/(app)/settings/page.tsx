@@ -5,11 +5,13 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
+import { MaintenanceActions } from "@/components/settings/maintenance-actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const session = await auth();
+  const userRole = (session?.user as any)?.role;
 
   const dropboxRefreshToken = !!process.env.DROPBOX_REFRESH_TOKEN;
   const dropboxConnected = dropboxRefreshToken || !!process.env.DROPBOX_ACCESS_TOKEN;
@@ -98,6 +100,24 @@ export default async function SettingsPage() {
             </div>
           </div>
         </Card>
+
+        {/* Maintenance — admin only */}
+        {userRole === "admin" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance</CardTitle>
+            </CardHeader>
+            <div className="p-5 space-y-3">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="text-sm font-semibold text-graphite-900">Stuck Photo Recovery</div>
+                  <div className="text-xs text-graphite-400">Reset photos stuck in &ldquo;processing&rdquo; for more than 5 minutes back to pending</div>
+                </div>
+                <MaintenanceActions />
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* App Info */}
         <Card>

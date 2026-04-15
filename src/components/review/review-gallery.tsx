@@ -13,6 +13,8 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
+import { KeyboardHint } from "./keyboard-hint";
 
 interface Photo {
   id: string;
@@ -368,13 +370,25 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   }, [photos, job.id]);
 
   const handleApproveAll = useCallback(async () => {
-    const pending = photos.filter(
-      (p) => p.status !== "approved" && p.status !== "rejected"
-    );
-    for (const photo of pending) {
-      await updatePhoto(photo.id, { status: "approved" });
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/approve-all`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        // Update local state - mark all "edited" photos as "approved"
+        setJob(prev => ({
+          ...prev,
+          photos: prev.photos.map(p => p.status === "edited" ? { ...p, status: "approved" } : p),
+        }));
+      }
+    } catch (err) {
+      console.error("Approve all failed:", err);
+    } finally {
+      setIsUpdating(false);
     }
-  }, [photos, updatePhoto]);
+  }, [job.id]);
 
   const handleQuickTag = (tag: string) => {
     setCustomInstruction(tag);

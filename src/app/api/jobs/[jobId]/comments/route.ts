@@ -14,7 +14,21 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     include: { author: { select: { name: true, email: true } } },
   }).catch(() => []);
 
-  return NextResponse.json({ comments });
+  // Fetch reactions for each comment
+  const commentsWithReactions = await Promise.all(
+    comments.map(async (comment) => {
+      const reactions = await prisma.commentReaction.findMany({
+        where: { commentId: comment.id, commentType: "job" },
+      });
+      const grouped: Record<string, number> = {};
+      for (const r of reactions) {
+        grouped[r.emoji] = (grouped[r.emoji] || 0) + 1;
+      }
+      return { ...comment, reactions: grouped };
+    })
+  );
+
+  return NextResponse.json({ comments: commentsWithReactions });
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {

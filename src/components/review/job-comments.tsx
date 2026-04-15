@@ -1,11 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Reactions } from "@/components/comments/reactions";
 
 interface Comment {
   id: string;
   body: string;
   createdAt: string;
   author?: { name?: string | null; email?: string | null } | null;
+  reactions?: Record<string, number>;
 }
 
 export function JobComments({ jobId }: { jobId: string }) {
@@ -95,6 +97,7 @@ export function JobComments({ jobId }: { jobId: string }) {
                     </div>
                   </div>
                   <div className="text-graphite-700 dark:text-graphite-300 whitespace-pre-wrap">{renderBody(c.body)}</div>
+                  <Reactions commentId={c.id} commentType="job" initialReactions={c.reactions} />
                 </li>
               ))}
             </ul>

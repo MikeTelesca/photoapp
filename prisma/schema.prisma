@@ -437,3 +437,16 @@ model ShareRequest {
 
   @@index([jobId, createdAt])
 }
+
+model CommentReaction {
+  id          String   @id @default(cuid())
+  commentId   String
+  commentType String   // "job" | "photo"
+  emoji       String   // 👍 ❤️ 🎉 😂 👏 🔥
+  authorId    String?  // userId or null for anonymous (share page reactions)
+  authorName  String?  // for anonymous (display name)
+  createdAt   DateTime @default(now())
+
+  @@unique([commentId, commentType, authorId, emoji])
+  @@index([commentId, commentType])
+}

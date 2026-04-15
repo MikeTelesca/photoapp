@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
+import { Reactions } from "@/components/comments/reactions";
 
-interface Comment { id: string; authorName: string; message: string; createdAt: string | Date; }
+interface Comment { id: string; authorName: string; message: string; createdAt: string | Date; reactions?: Record<string, number>; }
 
 interface Props {
   token: string;

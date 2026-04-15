@@ -31,6 +31,7 @@ export default async function AnalyticsPage() {
     photographers,
     topPhotographers,
     jobs30d,
+    photographerStats,
   ] = await Promise.all([
     prisma.job.count({ where: { status: { not: "deleted" } } }),
     prisma.job.count({
@@ -57,6 +58,17 @@ export default async function AnalyticsPage() {
     prisma.job.findMany({
       where: { createdAt: { gte: thirtyDaysAgo }, status: { not: "deleted" } },
       select: { createdAt: true, cost: true },
+    }),
+    prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        jobs: {
+          where: { createdAt: { gte: startOfMonth } },
+          select: { totalPhotos: true, approvedPhotos: true, cost: true, status: true },
+        },
+      },
     }),
   ]);
 
@@ -115,6 +127,21 @@ export default async function AnalyticsPage() {
   ];
 
   const projectedTotal = forecast.reduce((s, f) => s + f.cost, 0);
+
+  // Compute photographer leaderboard
+  const leaderboard = photographerStats
+    .map((u) => ({
+      id: u.id,
+      name: u.name || u.email,
+      jobCount: u.jobs.length,
+      photoCount: u.jobs.reduce((s, j) => s + j.totalPhotos, 0),
+      approvedCount: u.jobs.reduce((s, j) => s + j.approvedPhotos, 0),
+      totalCost: u.jobs.reduce((s, j) => s + j.cost, 0),
+      completedJobs: u.jobs.filter((j) => j.status === "approved").length,
+    }))
+    .filter((s) => s.jobCount > 0)
+    .sort((a, b) => b.photoCount - a.photoCount)
+    .slice(0, 10);
 
   return (
     <>
@@ -237,6 +264,47 @@ export default async function AnalyticsPage() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-3 dark:text-white">
+              Leaderboard — This month
+            </h2>
+            {leaderboard.length === 0 ? (
+              <div className="text-center py-8 text-sm text-graphite-400">No data yet this month</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="text-xs text-graphite-400 border-b border-graphite-100 dark:border-graphite-800">
+                  <tr>
+                    <th className="text-left py-2">#</th>
+                    <th className="text-left">Photographer</th>
+                    <th className="text-right">Jobs</th>
+                    <th className="text-right">Photos</th>
+                    <th className="text-right">Approved</th>
+                    <th className="text-right">Spend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((row, i) => (
+                    <tr key={row.id} className="border-b border-graphite-50 dark:border-graphite-800">
+                      <td className="py-2 w-8">
+                        {i === 0 && <span className="text-amber-500">🥇</span>}
+                        {i === 1 && <span className="text-graphite-400">🥈</span>}
+                        {i === 2 && <span className="text-amber-700">🥉</span>}
+                        {i >= 3 && <span className="text-graphite-400">{i + 1}</span>}
+                      </td>
+                      <td className="font-medium dark:text-white">{row.name}</td>
+                      <td className="text-right">{row.jobCount}</td>
+                      <td className="text-right">{row.photoCount}</td>
+                      <td className="text-right text-emerald-600 dark:text-emerald-400">{row.approvedCount}</td>
+                      <td className="text-right font-semibold">${row.totalCost.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         </Card>

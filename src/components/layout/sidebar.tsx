@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -20,7 +20,7 @@ import {
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
-  { label: "Needs Review", href: "/dashboard?filter=review", icon: EyeIcon, badge: 5 },
+  { label: "Needs Review", href: "/dashboard?filter=review", icon: EyeIcon },
   { label: "Processing", href: "/dashboard?filter=processing", icon: ArrowPathIcon },
   { label: "Completed", href: "/dashboard?filter=approved", icon: CheckCircleIcon },
 ];
@@ -36,6 +36,19 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [needsReviewCount, setNeedsReviewCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchCount = () => {
+      fetch("/api/stats")
+        .then(r => r.json())
+        .then(data => setNeedsReviewCount(data.reviewJobs ?? null))
+        .catch(() => {});
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000); // Every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   const sidebarContent = (
     <>
@@ -57,7 +70,7 @@ export function Sidebar() {
         <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Menu</div>
         {menuItems.map((item) => {
           const isActive = item.href === "/dashboard"
-            ? pathname === "/dashboard" && !item.badge
+            ? pathname === "/dashboard"
             : pathname === item.href;
           return (
             <Link
@@ -72,9 +85,9 @@ export function Sidebar() {
             >
               <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
               {item.label}
-              {item.badge && (
+              {item.label === "Needs Review" && needsReviewCount !== null && needsReviewCount > 0 && (
                 <span className="ml-auto bg-cyan text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                  {item.badge}
+                  {needsReviewCount}
                 </span>
               )}
             </Link>

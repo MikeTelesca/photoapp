@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { MaintenanceActions } from "@/components/settings/maintenance-actions";
 import { AccountForm } from "@/components/settings/account-form";
+import { NotificationToggle } from "@/components/settings/notification-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,22 @@ export default async function SettingsPage() {
                   <span className="text-xs font-semibold">Not configured</span>
                 </div>
               )}
+            </div>
+          </div>
+        </Card>
+
+        {/* Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-graphite-900">Browser Notifications</div>
+                <div className="text-xs text-graphite-400">Get notified when jobs finish, even on another tab</div>
+              </div>
+              <NotificationToggle />
             </div>
           </div>
         </Card>

@@ -5,6 +5,7 @@ import { JobList } from "@/components/dashboard/job-list";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { CostTracker } from "@/components/dashboard/cost-tracker";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { NotificationHandler } from "@/components/notifications/notification-handler";
 import {
   FolderIcon,
   ArrowPathIcon,
@@ -129,6 +130,13 @@ export default async function DashboardPage({
   return (
     <>
       <AutoRefresh enabled={stats.processingJobs > 0} />
+      <NotificationHandler jobs={jobs.map(j => ({
+        id: j.id,
+        address: j.address,
+        totalPhotos: j.totalPhotos,
+        processedPhotos: j.processedPhotos,
+        status: j.status,
+      }))} />
       <Topbar title="Dashboard" subtitle="Manage your photo editing jobs" />
       <div className="p-6">
         {/* Stats */}

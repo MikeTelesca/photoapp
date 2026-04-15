@@ -10,17 +10,46 @@ import { ServiceWorkerRegister } from "@/components/pwa/sw-register";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "PhotoApp",
-  description: "AI-powered real estate photo editing",
+  title: {
+    default: "ATH AI Photo Editor",
+    template: "%s · ATH AI Editor",
+  },
+  description: "AI-powered batch photo editing for real estate photographers. HDR merging, professional editing, instant delivery.",
+  applicationName: "ATH AI Editor",
+  keywords: ["real estate photography", "HDR", "AI photo editing", "MLS photos", "Gemini AI"],
+  authors: [{ name: "ATH Media" }],
+  creator: "ATH Media",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "PhotoApp",
+    title: "ATH AI Editor",
   },
   icons: {
     icon: "/icon-192.png",
     apple: "/icon-192.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app",
+    title: "ATH AI Photo Editor",
+    description: "AI-powered batch photo editing for real estate photographers.",
+    siteName: "ATH AI Editor",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "ATH AI Photo Editor",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ATH AI Photo Editor",
+    description: "AI-powered batch photo editing for real estate.",
+    images: ["/opengraph-image.png"],
   },
 };
 

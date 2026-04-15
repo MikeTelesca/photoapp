@@ -20,6 +20,7 @@ export const SHORTCUTS: Shortcut[] = [
 ];
 
 const STORAGE_KEY = "keyboard-bindings-v1";
+const DISABLE_KEY = "shortcuts-disabled";
 
 export function loadBindings(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -41,7 +42,19 @@ export function getKey(id: string): string {
   return bindings[id] || def;
 }
 
+export function shortcutsDisabled(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(DISABLE_KEY) === "true";
+}
+
+export function setShortcutsDisabled(disabled: boolean) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(DISABLE_KEY, String(disabled));
+}
+
 export function getActionForKey(key: string): string | null {
+  if (shortcutsDisabled()) return null;
+
   const bindings = loadBindings();
   // Check custom bindings first
   for (const [id, k] of Object.entries(bindings)) {

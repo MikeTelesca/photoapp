@@ -1,12 +1,15 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { shortcutsDisabled } from "@/lib/keyboard-shortcuts";
 
 export function useGlobalShortcuts() {
   const router = useRouter();
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (shortcutsDisabled()) return;
+
       // Don't fire while typing in inputs
       const target = e.target as HTMLElement;
       if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable) {

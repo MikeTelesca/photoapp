@@ -39,7 +39,7 @@ import { JobComments } from "./job-comments";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { playApproveSound, playRejectSound, playFavoriteSound } from "@/lib/sounds";
 import { useSwipe } from "@/hooks/use-swipe";
-import { getActionForKey } from "@/lib/keyboard-shortcuts";
+import { getActionForKey, shortcutsDisabled } from "@/lib/keyboard-shortcuts";
 import { LazyThumb } from "./lazy-thumb";
 import { Slideshow } from "./slideshow";
 import { PromptLinter } from "@/components/presets/prompt-linter";
@@ -1381,6 +1381,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (shortcutsDisabled()) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       const action = getActionForKey(e.key);

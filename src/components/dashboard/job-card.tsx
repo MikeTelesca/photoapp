@@ -18,6 +18,7 @@ import { CopyJobLinkButton } from "@/components/dashboard/copy-job-link-button";
 import { InlinePresetSwitch } from "@/components/dashboard/inline-preset-switch";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { ColorLabelPicker } from "@/components/dashboard/color-label-picker";
+import { JobHoverPreview } from "@/components/dashboard/job-hover-preview";
 import { formatJobNumber } from "@/lib/job-number";
 import { tagColor } from "@/lib/tag-color";
 import { checkStale } from "@/lib/job-stale";
@@ -39,6 +40,8 @@ const dotColors: Record<string, string> = {
 function JobCardInternal({ job, density = "normal" }: JobCardProps) {
   const [isStarting, setIsStarting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
+  const canPreview = ["processing", "review", "approved"].includes(job.status);
   const progress = job.totalPhotos > 0 ? Math.round((job.processedPhotos / job.totalPhotos) * 100) : 0;
   const padding = density === "compact" ? "px-5 py-2" : density === "comfortable" ? "px-5 py-5" : "px-5 py-3.5";
 
@@ -142,7 +145,13 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
               );
             })()}
           </div>
-          <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{job.address}</div>
+          <div
+            onMouseEnter={(e) => canPreview && setHover({ x: e.clientX, y: e.clientY })}
+            onMouseMove={(e) => canPreview && hover && setHover({ x: e.clientX, y: e.clientY })}
+            onMouseLeave={() => setHover(null)}
+          >
+            <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{job.address}</div>
+          </div>
           <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">
             <span>{job.photographerName}</span>
             <span>{formatTime(job.createdAt)}</span>
@@ -261,6 +270,9 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
         )}
       </div>
     </Wrapper>
+    {hover && canPreview && (
+      <JobHoverPreview jobId={job.id} visible={true} x={hover.x} y={hover.y} />
+    )}
     <InvoicePreviewModal jobId={job.id} open={previewOpen} onClose={() => setPreviewOpen(false)} />
     </>
   );

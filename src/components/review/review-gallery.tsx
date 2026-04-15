@@ -219,6 +219,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Rotation state
   const [rotating, setRotating] = useState(false);
 
+  // Dropbox sync state
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ ok: boolean; uploaded: number; failed: number; folderPath: string; shareLink: string | null } | null>(null);
+
   // Load view mode from localStorage on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -826,6 +830,29 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [job.id, addToast]);
 
+  async function syncToDropbox() {
+    if (!confirm("Upload all approved photos to a Dropbox folder?")) return;
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/sync-dropbox`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncResult(data);
+        addToast("success", `Synced ${data.uploaded} photo${data.uploaded === 1 ? "" : "s"} to Dropbox`);
+        if (data.shareLink) {
+          await navigator.clipboard.writeText(data.shareLink).catch(() => {});
+        }
+      } else {
+        alert(data.error || "Sync failed");
+      }
+    } catch (err: any) {
+      alert(`Sync failed: ${err.message}`);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   async function generateDescription() {
     setGenerating(true);
     try {
@@ -1237,6 +1264,25 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
             >
               📄 PDF Gallery
+            </a>
+          )}
+          {job.status === "approved" && (
+            <button
+              onClick={syncToDropbox}
+              disabled={syncing}
+              className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-60"
+            >
+              {syncing ? "Syncing..." : "📦 Sync to Dropbox"}
+            </button>
+          )}
+          {syncResult?.shareLink && (
+            <a
+              href={syncResult.shareLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-cyan underline"
+            >
+              View folder →
             </a>
           )}
           <ShareButton

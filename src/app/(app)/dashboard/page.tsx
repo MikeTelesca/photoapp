@@ -17,6 +17,7 @@ import { GreetingWidget } from "@/components/dashboard/greeting-widget";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { PhotoStatsWidget } from "@/components/dashboard/photo-stats-widget";
+import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 import {
   FolderIcon,
   ArrowPathIcon,
@@ -243,6 +244,11 @@ export default async function DashboardPage({
             iconColor="green"
           />
         </div>
+
+        {/* Activity heatmap */}
+        <WidgetWrapper widgetKey="activity-heatmap">
+          <ActivityHeatmap />
+        </WidgetWrapper>
 
         {/* Grid: Jobs + Right Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">

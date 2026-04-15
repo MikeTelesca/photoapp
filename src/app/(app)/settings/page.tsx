@@ -18,6 +18,7 @@ import { TwoFactorForm } from "@/components/settings/two-factor-form";
 import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload";
 import { AccentPicker } from "@/components/settings/accent-picker";
 import { NotificationPrefs } from "@/components/settings/notification-prefs";
+import { TimezonePicker } from "@/components/settings/timezone-picker";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export default async function SettingsPage() {
   let slackWebhookUrl: string | null = null;
   let twoFactorEnabled = false;
   let watermarkLogoPath: string | null = null;
+  let userTimezone: string | null = null;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -61,6 +63,7 @@ export default async function SettingsPage() {
         invoiceRate: true,
         invoicePrefix: true,
         watermarkLogoPath: true,
+        timezone: true,
       },
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
@@ -71,6 +74,7 @@ export default async function SettingsPage() {
     notifyPhotoFailed = user?.notifyPhotoFailed ?? true;
     twoFactorEnabled = user?.twoFactorEnabled ?? false;
     watermarkLogoPath = user?.watermarkLogoPath ?? null;
+    userTimezone = user?.timezone ?? null;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -144,6 +148,17 @@ export default async function SettingsPage() {
           </div>
         </Card>
         {/* Two-Factor Authentication */}
+
+        {/* Timezone */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Timezone</CardTitle>
+          </CardHeader>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 dark:text-white">Display timezone</h2>
+            <TimezonePicker initial={userTimezone} />
+          </div>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Two-Factor Authentication</CardTitle>

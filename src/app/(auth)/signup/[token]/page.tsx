@@ -41,7 +41,8 @@ export default function SignupPage({ params }: { params: Promise<{ token: string
       });
       const data = await res.json();
       if (res.ok) {
-        router.push("/login?signup=success");
+        // After successful signup, redirect to guided first job flow
+        router.push("/login?email=" + encodeURIComponent(email));
       } else {
         setError(data.error || "Signup failed");
       }

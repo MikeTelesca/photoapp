@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { addToHistory, getHistory, clearHistory } from "@/lib/search-history";
 
 interface JobResult { id: string; address: string; clientName?: string | null; status: string; totalPhotos: number; }
 interface ClientResult { id: string; name: string; email?: string | null; company?: string | null; }
@@ -28,6 +29,7 @@ export function CommandPalette() {
   const [clients, setClients] = useState<ClientResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [history, setHistory] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -53,12 +55,13 @@ export function CommandPalette() {
     return () => window.removeEventListener("open-command-palette", openHandler);
   }, []);
 
-  // Focus input when opened
+  // Focus input when opened & load history
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
       setQuery("");
       setSelectedIdx(0);
+      setHistory(getHistory());
     }
   }, [open]);
 
@@ -107,6 +110,13 @@ export function CommandPalette() {
     setSelectedIdx(0);
   }, [query]);
 
+  function recordQuery() {
+    if (query && query.length >= 2) {
+      addToHistory(query);
+      setHistory(getHistory());
+    }
+  }
+
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -116,6 +126,7 @@ export function CommandPalette() {
       setSelectedIdx(i => Math.max(i - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
+      recordQuery();
       const r = allResults[selectedIdx];
       if (r) {
         setOpen(false);
@@ -145,7 +156,23 @@ export function CommandPalette() {
           className="w-full px-4 py-3 text-sm bg-transparent border-b border-graphite-100 dark:border-graphite-800 focus:outline-none dark:text-white"
         />
         <div className="max-h-[60vh] overflow-y-auto">
-          {allResults.length === 0 ? (
+          {!query && history.length > 0 ? (
+            <>
+              <div className="flex justify-between items-center px-3 py-1.5 text-[10px] text-graphite-400 uppercase tracking-wide">
+                <span>Recent searches</span>
+                <button onClick={() => { clearHistory(); setHistory([]); }}
+                  className="text-graphite-400 hover:text-red-500 normal-case">
+                  Clear
+                </button>
+              </div>
+              {history.map(h => (
+                <button key={h} onClick={() => { setQuery(h); }}
+                  className="block w-full text-left px-3 py-1.5 text-xs hover:bg-graphite-50 dark:hover:bg-graphite-800 dark:text-graphite-300">
+                  🕓 {h}
+                </button>
+              ))}
+            </>
+          ) : allResults.length === 0 ? (
             <div className="px-4 py-8 text-center text-xs text-graphite-400">
               {loading ? "Searching..." : query ? "No matches" : "Type to search"}
             </div>
@@ -155,7 +182,7 @@ export function CommandPalette() {
                 <li key={`${r.type}-${r.href}-${i}`}>
                   <Link
                     href={r.href}
-                    onClick={() => setOpen(false)}
+                    onClick={() => { recordQuery(); setOpen(false); }}
                     className={`flex items-center gap-3 px-4 py-2 text-sm ${
                       i === selectedIdx ? "bg-cyan-50 dark:bg-cyan-900/20" : ""
                     } hover:bg-graphite-50 dark:hover:bg-graphite-800`}

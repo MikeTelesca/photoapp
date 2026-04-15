@@ -2,6 +2,7 @@
 import { useState, useMemo, useEffect } from "react";
 import type { Job } from "@/lib/types";
 import { tagColor } from "@/lib/tag-color";
+import { loadFilters, saveFilter, deleteFilter, type SavedFilter } from "@/lib/dashboard-filters";
 import { JobCard } from "./job-card";
 
 interface Props {
@@ -35,12 +36,20 @@ export function JobFilterBar({ jobs }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [bulkTag, setBulkTag] = useState("");
   const [groupByDate, setGroupByDate] = useState(true);
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const [filterName, setFilterName] = useState("");
 
   // Load groupByDate preference from localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = localStorage.getItem("dashboard-group-by-date");
     if (saved === "false") setGroupByDate(false);
+  }, []);
+
+  // Load saved filters from localStorage
+  useEffect(() => {
+    setSavedFilters(loadFilters());
   }, []);
 
   // Save groupByDate preference to localStorage
@@ -211,6 +220,38 @@ export function JobFilterBar({ jobs }: Props) {
     }
   };
 
+  function applyFilter(f: SavedFilter) {
+    setSearch(f.search || "");
+    setStatus(f.status || "all");
+    setPreset(f.preset || "all");
+    setActiveTag(f.tag || null);
+  }
+
+  function saveCurrent() {
+    if (!filterName.trim()) return;
+    // Only save if there's at least one filter active
+    if (!search && status === "all" && preset === "all" && !activeTag) {
+      alert("No filters active to save");
+      return;
+    }
+    const created = saveFilter({
+      name: filterName.trim(),
+      search,
+      status: status === "all" ? undefined : status,
+      preset: preset === "all" ? undefined : preset,
+      tag: activeTag || undefined,
+    });
+    setSavedFilters([created, ...savedFilters]);
+    setFilterName("");
+    setShowSavePrompt(false);
+  }
+
+  function removeFilter(id: string) {
+    if (!confirm("Delete this saved filter?")) return;
+    deleteFilter(id);
+    setSavedFilters(loadFilters());
+  }
+
   return (
     <div>
       {selected.size > 0 && (
@@ -313,6 +354,33 @@ export function JobFilterBar({ jobs }: Props) {
               </button>
             );
           })}
+        </div>
+      )}
+      {(savedFilters.length > 0 || (search || status !== "all" || preset !== "all" || activeTag)) && (
+        <div className="flex flex-wrap gap-1 px-5 py-2 border-b border-graphite-50 dark:border-graphite-800 items-center">
+          <span className="text-[10px] uppercase tracking-wide font-semibold text-graphite-500">Saved:</span>
+          {savedFilters.map(f => (
+            <span key={f.id} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-cyan-50 dark:bg-cyan-900/20 text-cyan">
+              <button onClick={() => applyFilter(f)} className="hover:underline">{f.name}</button>
+              <button onClick={() => removeFilter(f.id)} className="text-graphite-400 hover:text-red-500">×</button>
+            </span>
+          ))}
+          {(search || status !== "all" || preset !== "all" || activeTag) && !showSavePrompt && savedFilters.length < 10 && (
+            <button onClick={() => setShowSavePrompt(true)}
+              className="text-[10px] px-2 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 text-graphite-500 hover:bg-graphite-50 dark:hover:bg-graphite-800">
+              + Save current
+            </button>
+          )}
+          {showSavePrompt && (
+            <span className="inline-flex items-center gap-1">
+              <input autoFocus value={filterName} onChange={(e) => setFilterName(e.target.value)}
+                placeholder="Filter name"
+                onKeyDown={(e) => { if (e.key === "Enter") saveCurrent(); if (e.key === "Escape") setShowSavePrompt(false); }}
+                className="text-[10px] px-2 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white w-32 focus:outline-none focus:border-cyan" />
+              <button onClick={saveCurrent} className="text-[10px] text-cyan font-semibold hover:text-cyan-600">Save</button>
+              <button onClick={() => setShowSavePrompt(false)} className="text-[10px] text-graphite-400 hover:text-graphite-500">×</button>
+            </span>
+          )}
         </div>
       )}
       {filtered.length === 0 ? (

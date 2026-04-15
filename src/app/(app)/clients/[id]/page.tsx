@@ -26,6 +26,7 @@ export default async function ClientDetailPage({ params }: Props) {
     phone: string | null;
     company: string | null;
     notes: string | null;
+    defaultPreset: string | null;
     ownerId: string;
     createdAt: Date;
     jobs: Array<{

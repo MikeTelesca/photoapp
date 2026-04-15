@@ -164,6 +164,7 @@ function JobCardInternal({ job }: JobCardProps) {
         {job.status === "review" && (
           <>
             <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
@@ -181,6 +182,7 @@ function JobCardInternal({ job }: JobCardProps) {
             >
               {isStarting ? "Starting..." : "Start Processing"}
             </Button>
+            <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
@@ -210,6 +212,7 @@ function JobCardInternal({ job }: JobCardProps) {
               PDF
             </a>
             <ArchiveButton jobId={job.id} archived={!!job.archivedAt} />
+            <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />

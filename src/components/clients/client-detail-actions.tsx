@@ -12,6 +12,7 @@ interface Client {
   phone: string | null;
   company: string | null;
   notes: string | null;
+  defaultPreset: string | null;
 }
 
 export function ClientDetailActions({ client }: { client: Client }) {
@@ -26,6 +27,7 @@ export function ClientDetailActions({ client }: { client: Client }) {
     phone: client.phone || "",
     company: client.company || "",
     notes: client.notes || "",
+    defaultPreset: client.defaultPreset || "",
   });
 
   async function handleSave() {
@@ -116,6 +118,22 @@ export function ClientDetailActions({ client }: { client: Client }) {
               rows={2}
               className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 text-sm dark:bg-graphite-800 dark:text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan resize-none"
             />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-semibold text-graphite-700 dark:text-graphite-300 mb-1">Default Preset (optional)</label>
+            <select
+              value={form.defaultPreset}
+              onChange={(e) => setForm({ ...form, defaultPreset: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 text-sm dark:bg-graphite-800 dark:text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
+            >
+              <option value="">— None —</option>
+              <option value="mls-standard">MLS Standard</option>
+              <option value="standard">Standard</option>
+              <option value="bright">Bright & Airy</option>
+              <option value="luxury">Luxury</option>
+              <option value="flambient">Flambient</option>
+            </select>
+            <div className="text-[11px] text-graphite-400 dark:text-graphite-500 mt-1">Auto-applied when this client is selected on a new job</div>
           </div>
         </div>
         {error && (

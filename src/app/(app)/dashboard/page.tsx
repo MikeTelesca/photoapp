@@ -74,12 +74,22 @@ async function getStats(where: object) {
 
 async function getJobs(where: object, search?: string, tag?: string): Promise<Job[]> {
   try {
-    const baseWhere: any = { ...where, status: { not: "deleted" }, archivedAt: null };
+    const baseWhere: any = {
+      AND: [
+        { ...where, status: { not: "deleted" }, archivedAt: null },
+        {
+          OR: [
+            { snoozedUntil: null },
+            { snoozedUntil: { lte: new Date() } },
+          ],
+        },
+      ],
+    };
     if (search) {
-      baseWhere.address = { contains: search, mode: "insensitive" };
+      baseWhere.AND[0].address = { contains: search, mode: "insensitive" };
     }
     if (tag) {
-      baseWhere.tags = { contains: tag, mode: "insensitive" };
+      baseWhere.AND[0].tags = { contains: tag, mode: "insensitive" };
     }
     const dbJobs = await prisma.job.findMany({
       where: baseWhere,
@@ -112,6 +122,7 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
       clientName: j.clientName,
       tags: j.tags,
       pinnedAt: j.pinnedAt,
+      snoozedUntil: j.snoozedUntil,
       createdAt: j.createdAt,
       updatedAt: j.updatedAt,
     }));

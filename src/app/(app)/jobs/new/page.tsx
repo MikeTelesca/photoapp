@@ -422,9 +422,12 @@ function NewJobPageInner() {
               </label>
               <ClientPicker
                 value={clientId}
-                onChange={(id, name) => {
+                onChange={(id, name, defaultPreset) => {
                   setClientId(id);
                   setClientName(name);
+                  if (defaultPreset) {
+                    setPreset(defaultPreset);
+                  }
                 }}
               />
             </div>

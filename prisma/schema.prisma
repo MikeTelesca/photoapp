@@ -73,6 +73,7 @@ model Client {
   phone     String?
   company   String?
   notes     String?
+  defaultPreset String?
   ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   jobs      Job[]
@@ -120,6 +121,7 @@ model Job {
   invoicePaidAt       DateTime?
   invoiceSentAt       DateTime?
   pinnedAt            DateTime?
+  snoozedUntil        DateTime?
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)

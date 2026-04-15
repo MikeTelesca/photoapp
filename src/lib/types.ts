@@ -33,6 +33,7 @@ export interface Job {
   sequenceNumber?: number | null;
   archivedAt?: Date | string | null;
   pinnedAt?: Date | string | null;
+  snoozedUntil?: Date | string | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -6,11 +6,12 @@ interface Client {
   id: string;
   name: string;
   email?: string | null;
+  defaultPreset?: string | null;
 }
 
 interface Props {
   value: string | null;
-  onChange: (clientId: string | null, clientName: string) => void;
+  onChange: (clientId: string | null, clientName: string, defaultPreset?: string | null) => void;
 }
 
 export function ClientPicker({ value, onChange }: Props) {
@@ -39,7 +40,7 @@ export function ClientPicker({ value, onChange }: Props) {
     if (res.ok) {
       const client = await res.json();
       setClients([...clients, client]);
-      onChange(client.id, client.name);
+      onChange(client.id, client.name, client.defaultPreset);
       setNewName("");
       setCreating(false);
     }
@@ -53,7 +54,7 @@ export function ClientPicker({ value, onChange }: Props) {
         value={value || ""}
         onChange={(e) => {
           const c = clients.find((c) => c.id === e.target.value);
-          onChange(e.target.value || null, c?.name || "");
+          onChange(e.target.value || null, c?.name || "", c?.defaultPreset || null);
         }}
         className="flex-1 text-sm px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
       >

@@ -115,6 +115,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   const photos = job.photos;
   const currentPhoto = photos[currentIndex];
+
+  // Pre-populate custom instruction from saved photo value when navigating
+  useEffect(() => {
+    if (currentPhoto?.customInstructions) {
+      setCustomInstruction(currentPhoto.customInstructions);
+    } else {
+      setCustomInstruction("");
+    }
+  }, [currentPhoto?.id, currentPhoto?.customInstructions]);
   const approvedCount = photos.filter((p) => p.status === "approved").length;
   const rejectedCount = photos.filter((p) => p.status === "rejected").length;
   const progress = photos.length > 0 ? Math.round((approvedCount / photos.length) * 100) : 0;
@@ -246,7 +255,6 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         next.delete(photoId);
         return next;
       });
-      setCustomInstruction("");
     }
   }, [currentPhoto, job.id, customInstruction]);
 
@@ -302,7 +310,6 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       setEnhanceErrors((prev) => ({ ...prev, [photoId]: err.message || "Network error" }));
     } finally {
       setEnhancingIds((prev) => { const n = new Set(prev); n.delete(photoId); return n; });
-      setCustomInstruction("");
     }
   }, [currentPhoto, job.id, customInstruction, updatePhoto]);
 
@@ -588,6 +595,36 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <CheckCircleIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Approve All</span>
           </Button>
+          <button
+            onClick={async () => {
+              if (!confirm("Reject all pending and edited photos?")) return;
+              const r = await fetch(`/api/jobs/${job.id}/reject-all-pending`, { method: "POST" });
+              if (r.ok) {
+                const d = await r.json();
+                addToast("success", `Rejected ${d.rejected} photos`);
+                window.location.reload();
+              }
+            }}
+            className="text-xs px-2 py-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
+            title="Reject all unfinished photos"
+          >
+            Reject All
+          </button>
+          <button
+            onClick={async () => {
+              if (!confirm("Re-enhance ALL edited photos? This costs more credits.")) return;
+              const r = await fetch(`/api/jobs/${job.id}/reset-edited`, { method: "POST" });
+              if (r.ok) {
+                const d = await r.json();
+                addToast("info", `Reset ${d.reset} photos for re-enhancement. Click Enhance All to process.`);
+                window.location.reload();
+              }
+            }}
+            className="text-xs px-2 py-1.5 rounded-md bg-cyan-50 text-cyan hover:bg-cyan-100"
+            title="Re-run AI on all edited photos"
+          >
+            Re-Enhance All
+          </button>
           <Button onClick={handleDownload}>
             <ArrowDownTrayIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Download</span>
@@ -837,6 +874,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   of {photos.length}
                 </span>
               </div>
+              <button
+                onClick={() => {
+                  const nextIdx = photos.findIndex((p, i) => i > currentIndex && p.status === "edited");
+                  if (nextIdx >= 0) setCurrentIndex(nextIdx);
+                }}
+                className="text-xs px-2 py-1 rounded bg-graphite-100 hover:bg-graphite-200 text-graphite-700"
+                title="Jump to next photo needing review"
+              >
+                Next pending
+              </button>
             </div>
 
             <div className="flex items-center gap-2">

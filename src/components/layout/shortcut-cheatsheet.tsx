@@ -120,8 +120,18 @@ export function ShortcutCheatsheet() {
             </div>
           ))}
         </div>
-        <div className="px-6 py-3 bg-graphite-50 dark:bg-graphite-800 text-[10px] text-graphite-500 dark:text-graphite-400">
-          Customize review gallery shortcuts in <a href="/settings/keyboard" className="text-cyan hover:underline">Settings → Keyboard</a>
+        <div className="px-6 py-3 bg-graphite-50 dark:bg-graphite-800 flex items-center justify-between gap-3">
+          <span className="text-[10px] text-graphite-500 dark:text-graphite-400">
+            Customize review gallery shortcuts in <a href="/settings/keyboard" className="text-cyan hover:underline">Settings → Keyboard</a>
+          </span>
+          <a
+            href="/api/shortcuts/pdf"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-cyan text-white rounded hover:bg-cyan/90 transition-colors"
+            download="ath-shortcuts.pdf"
+          >
+            <span>📄</span>
+            <span>Download PDF</span>
+          </a>
         </div>
       </div>
     </div>

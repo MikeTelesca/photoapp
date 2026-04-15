@@ -40,9 +40,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             digits: 6,
             period: 30,
           });
-          const delta = totp.validate({ token: code, window: 1 });
+          const delta = totp.validate({ token: code.trim(), window: 1 });
           if (delta === null) {
-            throw new Error("Invalid 2FA code");
+            // Try backup codes fallback
+            let backupMatchedIndex = -1;
+            let backupList: string[] = [];
+            if (user.twoFactorBackupCodes) {
+              try {
+                backupList = JSON.parse(user.twoFactorBackupCodes);
+              } catch {
+                backupList = [];
+              }
+              for (let i = 0; i < backupList.length; i++) {
+                // Compare user input to each stored bcrypt hash
+                // eslint-disable-next-line no-await-in-loop
+                const ok = await bcrypt.compare(code.trim(), backupList[i]);
+                if (ok) {
+                  backupMatchedIndex = i;
+                  break;
+                }
+              }
+            }
+            if (backupMatchedIndex === -1) {
+              throw new Error("Invalid 2FA code");
+            }
+            // Consume the used backup code
+            const remaining = backupList.filter((_, idx) => idx !== backupMatchedIndex);
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                twoFactorBackupCodes:
+                  remaining.length > 0 ? JSON.stringify(remaining) : null,
+              },
+            });
           }
         }
 

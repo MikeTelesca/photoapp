@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   await prisma.user.update({
     where: { id: auth.userId },
-    data: { twoFactorEnabled: false, twoFactorSecret: null },
+    data: { twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: null },
   });
 
   return NextResponse.json({ ok: true });

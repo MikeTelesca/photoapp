@@ -2,6 +2,18 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
 import { prisma } from "@/lib/db";
 import * as OTPAuth from "otpauth";
+import QRCode from "qrcode";
+import crypto from "crypto";
+
+function generateBackupCodes(count = 10): string[] {
+  const codes: string[] = [];
+  for (let i = 0; i < count; i++) {
+    // 10 hex chars, formatted as XXXXX-XXXXX for readability
+    const raw = crypto.randomBytes(5).toString("hex").toUpperCase();
+    codes.push(`${raw.slice(0, 5)}-${raw.slice(5, 10)}`);
+  }
+  return codes;
+}
 
 export async function POST() {
   const auth = await requireUser();
@@ -20,8 +32,18 @@ export async function POST() {
     secret,
   });
 
+  const otpauthUrl = totp.toString();
+  const qrDataUrl = await QRCode.toDataURL(otpauthUrl, {
+    errorCorrectionLevel: "M",
+    margin: 1,
+    width: 240,
+  });
+  const backupCodes = generateBackupCodes(10);
+
   return NextResponse.json({
     secret: secret.base32,
-    otpauthUrl: totp.toString(),
+    otpauthUrl,
+    qrDataUrl,
+    backupCodes,
   });
 }

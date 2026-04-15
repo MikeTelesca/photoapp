@@ -29,6 +29,7 @@ model User {
   slackWebhookUrl   String?
   twoFactorEnabled  Boolean  @default(false)
   twoFactorSecret   String?
+  twoFactorBackupCodes String? // JSON array of bcrypt-hashed backup codes; codes consumed on use
   watermarkLogoPath String?  // internal Dropbox path to logo PNG
   invoiceLogoPath   String?  // internal Dropbox path to invoice logo (PNG or JPEG)
   weeklyDigest      Boolean  @default(true)

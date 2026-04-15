@@ -37,7 +37,10 @@ model Job {
   twilightCount    Int      @default(0)
   cost             Float    @default(0)
   notes            String?
-  watermarkText    String?
+  watermarkText     String?
+  watermarkPosition String  @default("bottom-right")  // top-left, top-right, bottom-left, bottom-right, center
+  watermarkSize     Int     @default(32)              // font size in px
+  watermarkOpacity  Float   @default(0.7)
   tags             String   @default("")  // comma-separated tags
   clientName       String?
   shareToken       String?  @unique

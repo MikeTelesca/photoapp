@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { CommentForm } from "@/components/share/comment-form";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function SharePage({
       photos: {
         where: { status: "approved" },
         orderBy: { orderIndex: "asc" },
+        include: { comments: { orderBy: { createdAt: "asc" } } },
       },
     },
   });
@@ -28,7 +30,7 @@ export default async function SharePage({
     <div className="min-h-screen bg-graphite-50">
       {/* Header */}
       <header className="bg-white border-b border-graphite-200 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
             <div className="text-xs font-semibold tracking-widest text-cyan uppercase mb-1">
               ATH Media
@@ -40,39 +42,52 @@ export default async function SharePage({
             </div>
           </div>
           <div className="text-right hidden sm:block">
-            <div className="text-xs text-graphite-400">Read-only preview</div>
+            <div className="text-xs text-graphite-400">Leave a comment on any photo</div>
           </div>
         </div>
       </header>
 
       {/* Gallery */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8">
         {approvedPhotos.length === 0 ? (
           <div className="text-center py-24 text-graphite-400">
             <p className="text-lg font-medium">No approved photos yet</p>
             <p className="text-sm mt-2">Check back soon — the photographer is still working on your gallery.</p>
           </div>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {approvedPhotos.map((photo) => {
               const url = photo.editedUrl ?? photo.originalUrl;
               if (!url) return null;
               return (
-                <a
-                  key={photo.id}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block break-inside-avoid rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={url}
-                    alt={`Photo of ${job.address}`}
-                    className="w-full h-auto object-cover"
-                    loading="lazy"
-                  />
-                </a>
+                <div key={photo.id} className="bg-white rounded-lg overflow-hidden shadow-sm">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block hover:opacity-95 transition-opacity"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={url}
+                      alt={`Photo of ${job.address}`}
+                      className="w-full h-auto object-cover"
+                      loading="lazy"
+                    />
+                  </a>
+                  <div className="px-3 pb-3">
+                    <CommentForm
+                      token={token}
+                      photoId={photo.id}
+                      initialComments={photo.comments.map(c => ({
+                        id: c.id,
+                        authorName: c.authorName,
+                        message: c.message,
+                        createdAt: c.createdAt.toISOString(),
+                      }))}
+                    />
+                  </div>
+                </div>
               );
             })}
           </div>

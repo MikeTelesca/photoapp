@@ -15,6 +15,7 @@ import {
   UserIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
+import { TemplatePicker } from "@/components/jobs/template-picker";
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -183,12 +184,32 @@ export default function NewJobPage() {
     }
   }
 
+  function applyTemplate(t: {
+    preset: string;
+    tvStyle: string | null;
+    skyStyle: string | null;
+    watermarkText: string | null;
+    clientName: string | null;
+    tags: string | null;
+    notes: string | null;
+  }) {
+    if (t.preset) setPreset(t.preset);
+    if (t.tvStyle) setTvStyle(t.tvStyle);
+    if (t.skyStyle) setSkyStyle(t.skyStyle);
+    if (t.watermarkText) setWatermarkText(t.watermarkText);
+    if (t.clientName) setClientName(t.clientName);
+    if (t.tags) setTags(t.tags);
+  }
+
   return (
     <>
       <Topbar title="New Job" subtitle="Create a new photo editing job" />
       <div className="p-6 max-w-2xl">
         <Card>
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            {/* Template picker */}
+            <TemplatePicker onApply={applyTemplate} />
+
             {/* Address */}
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-2">

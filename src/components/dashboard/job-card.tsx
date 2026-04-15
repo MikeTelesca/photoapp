@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DownloadButton } from "@/components/dashboard/download-button";
 import { DeleteJobButton } from "@/components/dashboard/delete-job-button";
 import { DuplicateJobButton } from "@/components/dashboard/duplicate-job-button";
+import { SaveTemplateButton } from "@/components/dashboard/save-template-button";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -101,6 +102,7 @@ function JobCardInternal({ job }: JobCardProps) {
         {job.status === "review" && (
           <>
             <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
             <span className="text-graphite-300 text-base">›</span>
@@ -116,6 +118,7 @@ function JobCardInternal({ job }: JobCardProps) {
             >
               {isStarting ? "Starting..." : "Start Processing"}
             </Button>
+            <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
           </>
@@ -124,6 +127,7 @@ function JobCardInternal({ job }: JobCardProps) {
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
             <DownloadButton jobId={job.id} />
+            <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
             <span className="text-graphite-300 text-base">›</span>

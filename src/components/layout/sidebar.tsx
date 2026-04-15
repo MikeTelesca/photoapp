@@ -20,6 +20,7 @@ import {
   MoonIcon,
   ComputerDesktopIcon,
   QuestionMarkCircleIcon,
+  BookmarkIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -30,6 +31,7 @@ const menuItems = [
   { label: "Needs Review", href: "/dashboard?filter=review", icon: EyeIcon },
   { label: "Processing", href: "/dashboard?filter=processing", icon: ArrowPathIcon },
   { label: "Completed", href: "/dashboard?filter=approved", icon: CheckCircleIcon },
+  { label: "Templates", href: "/templates", icon: BookmarkIcon },
 ];
 
 const settingsItems = [

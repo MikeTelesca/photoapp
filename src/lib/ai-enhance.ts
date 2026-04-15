@@ -153,39 +153,59 @@ export async function enhancePhoto(
       },
     };
 
+    // Try Nano Banana Pro (4K) first, fall back to Flash Image (2K) if overloaded
+    const models = [
+      { name: "gemini-3-pro-image-preview", config: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { imageSize: "4K" } } },
+      { name: "gemini-2.5-flash-image", config: { responseModalities: ["IMAGE", "TEXT"] } },
+    ];
+
     let responseData: any = null;
     let lastErr: any;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      try {
-        const apiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody),
-          }
-        );
 
-        if (!apiResponse.ok) {
-          const errText = await apiResponse.text();
-          const status = apiResponse.status;
-          const isRetryable = status === 503 || status === 429 || status >= 500;
-          if (!isRetryable || attempt === 3) {
-            throw new Error(`Gemini API ${status}: ${errText.substring(0, 300)}`);
+    outer:
+    for (const m of models) {
+      const body = {
+        contents: requestBody.contents,
+        generationConfig: m.config,
+      };
+
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const apiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${m.name}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            }
+          );
+
+          if (!apiResponse.ok) {
+            const errText = await apiResponse.text();
+            const status = apiResponse.status;
+            const isRetryable = status === 503 || status === 429 || status >= 500;
+            lastErr = new Error(`${m.name} ${status}: ${errText.substring(0, 200)}`);
+
+            if (status === 503 || status === 429) {
+              // Service unavailable — try fallback model
+              console.log(`[gemini] ${m.name} overloaded, trying next model`);
+              continue outer;
+            }
+            if (!isRetryable || attempt === 2) {
+              throw lastErr;
+            }
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
           }
-          const waitMs = 2000 * Math.pow(2, attempt);
-          console.log(`[gemini] ${status} retry ${attempt + 1}/4, waiting ${waitMs}ms`);
-          await new Promise(r => setTimeout(r, waitMs));
-          continue;
+
+          responseData = await apiResponse.json();
+          console.log(`[gemini] Success with ${m.name}`);
+          break outer;
+        } catch (err: any) {
+          lastErr = err;
+          if (attempt === 2) continue outer;
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
         }
-
-        responseData = await apiResponse.json();
-        break;
-      } catch (err: any) {
-        lastErr = err;
-        if (attempt === 3) throw err;
-        const waitMs = 2000 * Math.pow(2, attempt);
-        await new Promise(r => setTimeout(r, waitMs));
       }
     }
 

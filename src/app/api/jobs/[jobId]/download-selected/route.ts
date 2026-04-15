@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
-import { applyPattern } from "@/lib/filename-pattern";
+import { applyPattern, dedupeFilename } from "@/lib/filename-pattern";
 
 export const maxDuration = 300;
 
@@ -43,6 +43,7 @@ export async function POST(
   const pattern = user?.filenamePattern || "{address}-{seq}";
 
   const zip = new JSZip();
+  const usedFilenames = new Set<string>();
   let idx = 0;
   for (const photo of photos) {
     const url = photo.editedUrl || photo.originalUrl;
@@ -52,15 +53,18 @@ export async function POST(
       if (!res.ok) continue;
       const buf = Buffer.from(await res.arrayBuffer());
       idx++;
-      const filename = applyPattern({
-        pattern,
-        address: job.address,
-        client: job.clientName || "",
-        preset: job.preset || "",
-        photographer: user?.name || "",
-        index: idx,
-        total: photos.length,
-      });
+      const filename = dedupeFilename(
+        applyPattern({
+          pattern,
+          address: job.address,
+          client: job.clientName || "",
+          preset: job.preset || "",
+          photographer: user?.name || "",
+          index: idx,
+          total: photos.length,
+        }),
+        usedFilenames
+      );
       zip.file(filename, buf);
     } catch (err) {
       console.error("zip err:", err);

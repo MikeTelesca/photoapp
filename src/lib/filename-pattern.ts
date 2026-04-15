@@ -53,3 +53,54 @@ export function previewPattern(pattern: string): string {
     total: 50,
   });
 }
+
+/**
+ * Generate first / middle / last sample filenames for a sample 25-photo job
+ * so users can see how padding and {seq} expand across a real delivery.
+ */
+export function previewPatternSamples(pattern: string): {
+  first: string;
+  middle: string;
+  last: string;
+} {
+  const total = 25;
+  const mk = (index: number) =>
+    applyPattern({
+      pattern,
+      address: "123 Main St",
+      client: "Keller Williams",
+      preset: "luxury",
+      photographer: "Mike",
+      index,
+      total,
+    });
+  return {
+    first: mk(1),
+    middle: mk(Math.ceil(total / 2)),
+    last: mk(total),
+  };
+}
+
+/**
+ * Ensure a filename is unique within the given set by appending -1, -2, ...
+ * before the extension on collision. Mutates `used` by adding the returned name.
+ */
+export function dedupeFilename(filename: string, used: Set<string>): string {
+  if (!used.has(filename)) {
+    used.add(filename);
+    return filename;
+  }
+  const dot = filename.lastIndexOf(".");
+  const base = dot === -1 ? filename : filename.slice(0, dot);
+  const ext = dot === -1 ? "" : filename.slice(dot);
+  let n = 1;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const candidate = `${base}-${n}${ext}`;
+    if (!used.has(candidate)) {
+      used.add(candidate);
+      return candidate;
+    }
+    n++;
+  }
+}

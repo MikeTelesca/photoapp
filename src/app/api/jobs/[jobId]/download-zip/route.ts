@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
-import { applyPattern } from "@/lib/filename-pattern";
+import { applyPattern, dedupeFilename } from "@/lib/filename-pattern";
 import { logDownload } from "@/lib/download-log";
 import sharp from "sharp";
 
@@ -56,6 +56,7 @@ export async function GET(
   let idx = 0;
   const retouchLines: string[] = [];
   const retouchedPhotoIdsIncluded = new Set<string>();
+  const usedFilenames = new Set<string>();
   for (const photo of photos) {
     const url = photo.editedUrl || photo.originalUrl;
     if (!url) continue;
@@ -103,6 +104,9 @@ export async function GET(
       }
       // Replace extension in case pattern includes one
       filename = filename.replace(/\.[^/.]+$/, "") + `.${extension}`;
+
+      // Dedupe in case two photos resolve to the same filename
+      filename = dedupeFilename(filename, usedFilenames);
 
       zip.file(filename, buf);
 

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
 import sharp from "sharp";
-import { applyPattern } from "@/lib/filename-pattern";
+import { applyPattern, dedupeFilename } from "@/lib/filename-pattern";
 import { logDownload } from "@/lib/download-log";
 
 export const maxDuration = 300;
@@ -54,6 +54,7 @@ export async function GET(
   const zip = new JSZip();
   const user = job.photographer;
   const pattern = user?.filenamePattern || "{address}-{seq}";
+  const usedFilenames = new Set<string>();
   let idx = 0;
 
   for (const photo of photos) {
@@ -71,15 +72,18 @@ export async function GET(
         .toBuffer();
 
       idx++;
-      const filename = applyPattern({
-        pattern,
-        address: job.address,
-        client: job.clientName || "",
-        preset: job.preset || "",
-        photographer: user?.name || "",
-        index: idx,
-        total: photos.length,
-      });
+      const filename = dedupeFilename(
+        applyPattern({
+          pattern,
+          address: job.address,
+          client: job.clientName || "",
+          preset: job.preset || "",
+          photographer: user?.name || "",
+          index: idx,
+          total: photos.length,
+        }),
+        usedFilenames
+      );
       zip.file(filename, resized);
     } catch (err) {
       console.error("mls export err:", err);

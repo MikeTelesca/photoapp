@@ -55,7 +55,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [enhanceProgress, setEnhanceProgress] = useState(0);
 
   // Preset switcher
-  const [presets, setPresets] = useState<Array<{ slug: string; name: string; promptModifiers: string }>>([]);
+  const [presets, setPresets] = useState<Array<{ id: string; slug: string; name: string; promptModifiers: string }>>([]);
   const [currentPreset, setCurrentPreset] = useState<string>((initialJob as any).preset || "standard");
   const [editedPrompt, setEditedPrompt] = useState<string>("");
   const [showPromptEditor, setShowPromptEditor] = useState(false);

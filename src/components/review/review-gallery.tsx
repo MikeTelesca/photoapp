@@ -30,6 +30,7 @@ import { ExifPanel } from "./exif-panel";
 import { useSwipe } from "@/hooks/use-swipe";
 import { getActionForKey } from "@/lib/keyboard-shortcuts";
 import { LazyThumb } from "./lazy-thumb";
+import { Slideshow } from "./slideshow";
 
 interface Photo {
   id: string;
@@ -207,6 +208,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [viewMode, setViewMode] = useState<"single" | "grid">("single");
   const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
 
+  // Slideshow state
+  const [slideshowOpen, setSlideshowOpen] = useState(false);
+
   // Load view mode from localStorage on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -249,6 +253,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     // "order" — keep original orderIndex order
     return arr;
   }, [job.photos, sortBy]);
+
+  // Filter to approved photos for slideshow
+  const slideshowPhotos = useMemo(
+    () => sortedPhotos.filter(p => p.status === "approved" && (p.editedUrl || p.originalUrl)),
+    [sortedPhotos]
+  );
 
   // Collect unique auto-tags across all photos for the filter dropdown
   const allTags = useMemo(() => {
@@ -1169,6 +1179,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             initialToken={job.shareToken ?? null}
             initialEnabled={job.shareEnabled ?? false}
           />
+          {slideshowPhotos.length > 0 && (
+            <button
+              onClick={() => setSlideshowOpen(true)}
+              className="text-xs px-3 py-1.5 rounded bg-purple-500 text-white font-semibold hover:bg-purple-600"
+              title="Fullscreen slideshow of approved photos"
+            >
+              ▶ Present ({slideshowPhotos.length})
+            </button>
+          )}
           <Button variant="approve" onClick={handleApproveAll} disabled={isUpdating}>
             <CheckCircleIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Approve All</span>
@@ -2199,6 +2218,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {slideshowOpen && (
+        <Slideshow
+          photos={slideshowPhotos}
+          initialIndex={0}
+          onClose={() => setSlideshowOpen(false)}
+        />
       )}
     </div>
   );

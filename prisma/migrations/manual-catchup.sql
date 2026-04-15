@@ -382,3 +382,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS "Job_invoiceNumber_key" ON "Job"("invoiceNumbe
 -- First-run onboarding product tour: tracks when user completed/skipped tour
 -- ---------------------------------------------------------------------------
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMP(3);
+
+-- Wave 109: 2FA backup codes
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "twoFactorBackupCodes" TEXT;

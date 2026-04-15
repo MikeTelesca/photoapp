@@ -32,6 +32,8 @@ const SECTIONS: Section[] = [
       { keys: ["T"], action: "Flag photo for review" },
       { keys: ["S"], action: "Toggle slider view" },
       { keys: ["Z"], action: "Toggle zoom" },
+      { keys: ["1"], action: "Zoom to fit" },
+      { keys: ["2", "3", "4"], action: "Zoom 2x / 3x / 4x" },
       { keys: ["←", "→"], action: "Navigate photos" },
       { keys: ["PgUp", "PgDn"], action: "Jump 10 photos at a time" },
       { keys: ["Home"], action: "Jump to first photo" },

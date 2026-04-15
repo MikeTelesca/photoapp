@@ -1341,6 +1341,29 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           break;
       }
 
+      // Handle zoom level shortcuts (1, 2, 3, 4)
+      if (e.key === "1") {
+        e.preventDefault();
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+        return;
+      }
+      if (e.key === "2") {
+        e.preventDefault();
+        setZoom(2);
+        return;
+      }
+      if (e.key === "3") {
+        e.preventDefault();
+        setZoom(3);
+        return;
+      }
+      if (e.key === "4") {
+        e.preventDefault();
+        setZoom(4);
+        return;
+      }
+
       // Handle Page Up / Page Down / Home / End (not customizable)
       if (e.key === "PageDown") {
         e.preventDefault();

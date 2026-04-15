@@ -77,6 +77,7 @@ model Job {
   client           Client?  @relation(fields: [clientId], references: [id])
   shareToken          String?  @unique
   shareEnabled        Boolean  @default(false)
+  sharePassword       String?  // bcrypt hash when set
   listingDescription  String?
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt

@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
+import crypto from "crypto";
 import { CommentForm } from "@/components/share/comment-form";
+import { PasswordGate } from "@/components/share/password-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +26,20 @@ export default async function SharePage({
   });
 
   if (!job) notFound();
+
+  // If password required, check unlock cookie
+  if (job.sharePassword) {
+    const cookieStore = await cookies();
+    const cookie = cookieStore.get(`share-unlock-${token}`);
+    const expected = crypto
+      .createHmac("sha256", process.env.NEXTAUTH_SECRET || "secret")
+      .update(`${token}:${job.sharePassword}`)
+      .digest("hex");
+    if (!cookie || cookie.value !== expected) {
+      // Show password gate
+      return <PasswordGate token={token} />;
+    }
+  }
 
   const approvedPhotos = job.photos;
 

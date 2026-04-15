@@ -1475,6 +1475,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               📄 PDF Gallery
             </a>
           )}
+          <a href={`/api/jobs/${job.id}/contact-sheet`} download
+            className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300">
+            📋 Contact sheet
+          </a>
           {job.status === "approved" && (
             <div className="flex items-center gap-1">
               <button

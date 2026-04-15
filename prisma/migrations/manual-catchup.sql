@@ -328,3 +328,9 @@ CREATE INDEX IF NOT EXISTS "Job_deletedAt_idx" ON "Job"("deletedAt");
 -- Per-photo color label (Lightroom-style color flags)
 -- ---------------------------------------------------------------------------
 ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "colorLabel" TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Share-link password protection (dedicated hash + salt columns)
+-- ---------------------------------------------------------------------------
+ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "sharePasswordHash" TEXT;
+ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "sharePasswordSalt" TEXT;

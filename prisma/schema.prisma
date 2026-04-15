@@ -122,7 +122,9 @@ model Job {
   sequenceNumber   Int?     // auto-incrementing per user
   shareToken          String?  @unique
   shareEnabled        Boolean  @default(false)
-  sharePassword       String?  // bcrypt hash when set
+  sharePassword       String?  // legacy bcrypt hash when set (kept for backward-compat)
+  sharePasswordHash   String?  // bcrypt hash of share password (preferred)
+  sharePasswordSalt   String?  // optional explicit salt (bcrypt embeds its own; reserved for future algos)
   shareExpiresAt      DateTime?
   shareViewCount      Int      @default(0)
   shareFirstViewedAt  DateTime?

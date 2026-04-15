@@ -57,14 +57,23 @@ export default async function SharePage({
   }
 
   // If password required, check unlock cookie (bypass for owner in preview mode)
-  if (job.sharePassword && !(isPreview && isOwner)) {
+  const storedHash = job.sharePasswordHash || job.sharePassword;
+  if (storedHash && !(isPreview && isOwner)) {
     const cookieStore = await cookies();
-    const cookie = cookieStore.get(`share-unlock-${token}`);
+
+    // New per-job cookie (set by /api/share/[token]/verify on success).
+    const authCookie = cookieStore.get(`share-auth-${job.id}`);
+    const authUnlocked = authCookie?.value === "1";
+
+    // Legacy HMAC cookie (kept for in-flight sessions).
+    const legacyCookie = cookieStore.get(`share-unlock-${token}`);
     const expected = crypto
       .createHmac("sha256", process.env.NEXTAUTH_SECRET || "secret")
-      .update(`${token}:${job.sharePassword}`)
+      .update(`${token}:${storedHash}`)
       .digest("hex");
-    if (!cookie || cookie.value !== expected) {
+    const legacyUnlocked = legacyCookie?.value === expected;
+
+    if (!authUnlocked && !legacyUnlocked) {
       // Show password gate
       return <PasswordGate token={token} />;
     }
@@ -106,7 +115,7 @@ export default async function SharePage({
       {/* Preview banner */}
       {isPreview && isOwner && (
         <div className="bg-amber-100 dark:bg-amber-900/30 border-b border-amber-300 dark:border-amber-700 px-4 py-2 text-xs text-amber-900 dark:text-amber-100 text-center">
-          👁 Preview mode — you're viewing as your client. {job.sharePassword ? "Password gate bypassed." : ""}
+          👁 Preview mode — you're viewing as your client. {(job.sharePasswordHash || job.sharePassword) ? "Password gate bypassed." : ""}
         </div>
       )}
       {/* Header */}

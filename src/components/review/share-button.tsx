@@ -18,15 +18,18 @@ export function ShareButton({
   initialEnabled,
   shareViewCount,
   shareLastViewedAt,
+  initialPasswordSet,
 }: {
   jobId: string;
   initialToken: string | null;
   initialEnabled: boolean;
   shareViewCount?: number;
   shareLastViewedAt?: string | null;
+  initialPasswordSet?: boolean;
 }) {
   const [token, setToken] = useState(initialToken);
   const [enabled, setEnabled] = useState(initialEnabled);
+  const [passwordSet, setPasswordSet] = useState(!!initialPasswordSet);
   const [copied, setCopied] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
@@ -61,14 +64,24 @@ export function ShareButton({
   }
 
   async function setPassword() {
-    const password = window.prompt("New password (blank to remove):");
+    const password = window.prompt(
+      passwordSet
+        ? "Change password (leave blank to remove):"
+        : "New password (blank to remove):"
+    );
     if (password === null) return;
-    await fetch(`/api/jobs/${jobId}/share`, {
+    const res = await fetch(`/api/jobs/${jobId}/share/password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password: password || null }),
     });
-    alert(password ? "Password set" : "Password removed");
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setPasswordSet(!!data.passwordSet);
+      alert(data.passwordSet ? "Password set" : "Password removed");
+    } else {
+      alert("Failed to update password");
+    }
   }
 
   async function setExpiry() {
@@ -178,9 +191,14 @@ export function ShareButton({
         </button>
         <button
           onClick={setPassword}
-          className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+          title={passwordSet ? "Password is set — click to change or remove" : "No password set — click to add one"}
+          className={`text-xs px-3 py-1.5 rounded border ${
+            passwordSet
+              ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+              : "border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+          }`}
         >
-          🔒 Set password
+          🔒 Password{passwordSet ? " (set)" : ""}
         </button>
         <button
           onClick={setExpiry}

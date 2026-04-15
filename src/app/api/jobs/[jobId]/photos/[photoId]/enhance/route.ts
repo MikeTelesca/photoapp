@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+
+// Allow up to 5 minutes for AI processing
+export const maxDuration = 300;
+export const dynamic = "force-dynamic";
+
 import { prisma } from "@/lib/db";
 import { enhancePhoto, convertToTwilight, analyzePhoto } from "@/lib/ai-enhance";
 import { uploadToDropbox } from "@/lib/dropbox";

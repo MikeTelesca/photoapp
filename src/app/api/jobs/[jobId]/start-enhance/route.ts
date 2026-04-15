@@ -4,6 +4,10 @@ import { enhancePhoto, analyzePhoto } from "@/lib/ai-enhance";
 import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
 
+// Allow up to 5 minutes for AI processing (model cascade + retries)
+export const maxDuration = 300;
+export const dynamic = "force-dynamic";
+
 // Download a file from Dropbox shared link using raw API
 async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
   const token = process.env.DROPBOX_ACCESS_TOKEN;

@@ -164,50 +164,45 @@ export async function enhancePhoto(
     let responseData: any = null;
     let lastErr: any;
 
-    outer:
+    // Fail-fast cascade: try each model once, immediately fall through on any failure
     for (const m of models) {
       const body = {
         contents: requestBody.contents,
         generationConfig: m.config,
       };
 
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          const apiResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${m.name}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(body),
-            }
-          );
-
-          if (!apiResponse.ok) {
-            const errText = await apiResponse.text();
-            const status = apiResponse.status;
-            const isRetryable = status === 503 || status === 429 || status >= 500;
-            lastErr = new Error(`${m.name} ${status}: ${errText.substring(0, 200)}`);
-
-            if (status === 503 || status === 429) {
-              // Service unavailable — try fallback model
-              console.log(`[gemini] ${m.name} overloaded, trying next model`);
-              continue outer;
-            }
-            if (!isRetryable || attempt === 2) {
-              throw lastErr;
-            }
-            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-            continue;
+      try {
+        const apiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${m.name}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
           }
+        );
 
-          responseData = await apiResponse.json();
-          console.log(`[gemini] Success with ${m.name}`);
-          break outer;
-        } catch (err: any) {
-          lastErr = err;
-          if (attempt === 2) continue outer;
-          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        if (!apiResponse.ok) {
+          const errText = await apiResponse.text();
+          lastErr = new Error(`${m.name} ${apiResponse.status}: ${errText.substring(0, 200)}`);
+          console.log(`[gemini] ${m.name} ${apiResponse.status}, trying next model`);
+          continue;
         }
+
+        responseData = await apiResponse.json();
+        // Verify response has an image (sometimes 200 but no image)
+        const hasImage = responseData?.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
+        if (!hasImage) {
+          lastErr = new Error(`${m.name} returned no image`);
+          console.log(`[gemini] ${m.name} returned no image, trying next`);
+          responseData = null;
+          continue;
+        }
+
+        console.log(`[gemini] Success with ${m.name}`);
+        break;
+      } catch (err: any) {
+        lastErr = err;
+        console.log(`[gemini] ${m.name} threw error, trying next: ${err?.message?.substring(0, 100)}`);
       }
     }
 

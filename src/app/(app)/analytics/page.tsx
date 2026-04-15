@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DailyChart } from "@/components/analytics/daily-chart";
 import { PhotographerCostChart } from "@/components/analytics/photographer-cost-chart";
+import { forecastCost } from "@/lib/forecast";
+import { ForecastChart } from "@/components/analytics/forecast-chart";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +91,31 @@ export default async function AnalyticsPage() {
     jobs: p._count,
   }));
 
+  // Build history with actual costs per day
+  const historyMap = new Map<string, number>();
+  for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    historyMap.set(d.toISOString().slice(0, 10), 0);
+  }
+  for (const j of jobs30d) {
+    const key = j.createdAt.toISOString().slice(0, 10);
+    historyMap.set(key, (historyMap.get(key) || 0) + j.cost);
+  }
+  const history = Array.from(historyMap.entries()).map(([date, cost]) => ({
+    date,
+    cost,
+  }));
+  const forecast = forecastCost(history, 30);
+
+  // Merge history + forecast for chart
+  const chartData = [
+    ...history.map((h) => ({ date: h.date, cost: h.cost })),
+    ...forecast.map((f) => ({ date: f.date, projected: f.cost })),
+  ];
+
+  const projectedTotal = forecast.reduce((s, f) => s + f.cost, 0);
+
   return (
     <>
       <Topbar title="Analytics" subtitle="Usage and performance metrics" />
@@ -151,6 +178,23 @@ export default async function AnalyticsPage() {
           </CardHeader>
           <div className="p-5">
             <DailyChart data={dailyData} />
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <h2 className="text-sm font-semibold dark:text-white">
+                  30-day spend forecast
+                </h2>
+                <div className="text-xs text-graphite-500 dark:text-graphite-400">
+                  Linear projection from last 30 days · Projected next 30 days: $
+                  {projectedTotal.toFixed(2)}
+                </div>
+              </div>
+            </div>
+            <ForecastChart data={chartData} />
           </div>
         </Card>
 

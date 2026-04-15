@@ -2,17 +2,28 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-interface Match { id: string; address: string; status: string; createdAt: string; totalPhotos: number; }
+interface Match { id: string; address: string; dropboxUrl?: string; status: string; createdAt: string; totalPhotos: number; }
 
-export function DuplicateWarning({ address }: { address: string }) {
+interface Props {
+  address: string;
+  dropboxUrl?: string;
+}
+
+export function DuplicateWarning({ address, dropboxUrl }: Props) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (!address || address.length < 5) { setMatches([]); return; }
+    const hasAddress = address && address.length >= 5;
+    const hasUrl = dropboxUrl && dropboxUrl.length > 10;
+    if (!hasAddress && !hasUrl) { setMatches([]); return; }
+
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/jobs/check-duplicate?address=${encodeURIComponent(address)}`);
+        const params = new URLSearchParams();
+        if (hasAddress) params.set("address", address);
+        if (hasUrl) params.set("dropboxUrl", dropboxUrl);
+        const res = await fetch(`/api/jobs/check-duplicate?${params}`);
         const data = await res.json();
         setMatches(data.matches || []);
       } catch {
@@ -20,7 +31,7 @@ export function DuplicateWarning({ address }: { address: string }) {
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [address]);
+  }, [address, dropboxUrl]);
 
   if (dismissed || matches.length === 0) return null;
 
@@ -36,7 +47,10 @@ export function DuplicateWarning({ address }: { address: string }) {
       <ul className="space-y-1">
         {matches.map(m => (
           <li key={m.id} className="flex justify-between items-center gap-2">
-            <Link href={`/review/${m.id}`} className="text-cyan hover:underline truncate">{m.address}</Link>
+            <div className="flex items-center gap-1 flex-1 min-w-0">
+              <Link href={`/review/${m.id}`} className="text-cyan hover:underline truncate">{m.address}</Link>
+              {m.dropboxUrl === dropboxUrl && m.dropboxUrl && <span className="ml-1 text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap">same Dropbox URL</span>}
+            </div>
             <span className="text-amber-600 dark:text-amber-400 flex-shrink-0 text-[11px]">{m.status} · {m.totalPhotos} photos · {new Date(m.createdAt).toLocaleDateString()}</span>
           </li>
         ))}

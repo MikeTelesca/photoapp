@@ -7,12 +7,12 @@ export async function GET(request: NextRequest) {
   if ("error" in auth) return auth.error;
 
   const address = request.nextUrl.searchParams.get("address") || "";
-  if (!address || address.length < 5) {
+  const dropboxUrl = request.nextUrl.searchParams.get("dropboxUrl") || "";
+
+  // At least one must be provided
+  if ((!address || address.length < 5) && !dropboxUrl) {
     return NextResponse.json({ matches: [] });
   }
-
-  // Normalize for loose matching (strip punctuation, lowercase)
-  const normalized = address.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
   const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 
@@ -22,15 +22,28 @@ export async function GET(request: NextRequest) {
       photographerId: auth.userId,
       createdAt: { gte: fourteenDaysAgo },
     },
-    select: { id: true, address: true, status: true, createdAt: true, totalPhotos: true },
+    select: { id: true, address: true, dropboxUrl: true, status: true, createdAt: true, totalPhotos: true },
     orderBy: { createdAt: "desc" },
     take: 100,
   }).catch(() => []);
 
-  // Match by normalized substring overlap
+  // Normalize address for loose matching (strip punctuation, lowercase)
+  const normalized = address.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+  // Match by normalized address or exact Dropbox URL
   const matches = recent.filter(j => {
-    const n = j.address.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-    return n === normalized || n.includes(normalized) || normalized.includes(n);
+    // Exact Dropbox URL match
+    if (dropboxUrl && j.dropboxUrl && j.dropboxUrl.trim() === dropboxUrl.trim()) {
+      return true;
+    }
+    // Normalized address match (only if address provided)
+    if (address && j.address) {
+      const n = j.address.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      if (n === normalized || n.includes(normalized) || normalized.includes(n)) {
+        return true;
+      }
+    }
+    return false;
   });
 
   return NextResponse.json({ matches });

@@ -234,7 +234,7 @@ export default function NewJobPage() {
                 className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
               />
               <div className="mt-2">
-                <DuplicateWarning address={address} />
+                <DuplicateWarning address={address} dropboxUrl={dropboxUrl} />
               </div>
             </div>
 

@@ -2931,6 +2931,24 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           >
             Regroup by EXIF
           </button>
+          <button
+            onClick={async () => {
+              if (!confirm("Re-detect twilight photos for this job? This re-runs twilight analysis on all photos using EXIF timestamps.")) return;
+              addToast("info", "Re-detecting twilight photos…");
+              const res = await fetch(`/api/jobs/${job.id}/redetect-twilight`, { method: "POST" });
+              const data = await res.json();
+              if (res.ok) {
+                addToast("success", `Twilight re-detected: ${data.twilightCount}/${data.totalPhotos} photos (${data.changed} changed)`);
+                window.location.reload();
+              } else {
+                addToast("error", data.error || "Re-detect failed");
+              }
+            }}
+            className="text-xs px-2 py-1.5 rounded-md bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-200"
+            title="Re-run twilight detection on all photos in this job"
+          >
+            🌆 Re-detect twilight
+          </button>
           <div className="text-right mr-2 hidden sm:block">
             <div className="text-xs font-semibold text-graphite-700 dark:text-graphite-200">
               {approvedCount} / {photos.length} approved

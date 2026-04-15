@@ -758,10 +758,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           >
             Re-Enhance All
           </button>
-          <Button onClick={handleDownload}>
+          <a
+            href={`/api/jobs/${job.id}/download-zip`}
+            className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600"
+            onClick={(e) => e.stopPropagation()}
+            download
+          >
             <ArrowDownTrayIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Download</span>
-          </Button>
+            <span className="hidden sm:inline">Download ZIP</span>
+          </a>
           <Button variant="outline" onClick={handleDropboxFolder} title="Open Dropbox folder">
             <FolderOpenIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Dropbox</span>

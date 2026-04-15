@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/api-auth";
 
-// GET /api/users - list photographers
+// GET /api/users - list photographers (admin only)
 export async function GET() {
+  const authResult = await requireAdmin();
+  if ("error" in authResult) return authResult.error;
+
   try {
     const users = await prisma.user.findMany({
       select: { id: true, name: true, email: true, role: true, createdAt: true },
@@ -15,8 +19,11 @@ export async function GET() {
   }
 }
 
-// POST /api/users - create a new photographer
+// POST /api/users - create a new photographer (admin only)
 export async function POST(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if ("error" in authResult) return authResult.error;
+
   try {
     const body = await request.json();
     const { name, email, password, role } = body;

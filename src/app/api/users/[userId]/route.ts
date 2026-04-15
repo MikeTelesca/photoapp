@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/api-auth";
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  const authResult = await requireAdmin();
+  if ("error" in authResult) return authResult.error;
+
   const { userId } = await params;
   try {
     // Don't allow deleting the last admin

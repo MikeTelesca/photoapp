@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/api-auth";
 
 // Supported formats (JPEG/PNG can be sent to AI directly)
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
@@ -6,6 +7,9 @@ const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
 const RAW_EXTENSIONS = [".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf", ".tif", ".tiff"];
 
 export async function POST(request: NextRequest) {
+  const authResult = await requireUser();
+  if ("error" in authResult) return authResult.error;
+
   try {
     const { url } = await request.json();
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ingestFromDropbox } from "@/lib/ingest";
+import { requireJobAccess } from "@/lib/api-auth";
 
 // POST /api/jobs/:jobId/ingest - start ingesting photos from Dropbox
 export async function POST(
@@ -7,6 +8,8 @@ export async function POST(
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   const { jobId } = await params;
+  const access = await requireJobAccess(jobId);
+  if ("error" in access) return access.error;
 
   try {
     const result = await ingestFromDropbox(jobId);

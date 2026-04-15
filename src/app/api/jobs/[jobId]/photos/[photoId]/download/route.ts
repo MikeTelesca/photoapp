@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireJobAccess } from "@/lib/api-auth";
 
 // GET /api/jobs/:jobId/photos/:photoId/download
 export async function GET(
@@ -7,6 +8,8 @@ export async function GET(
   { params }: { params: Promise<{ jobId: string; photoId: string }> }
 ) {
   const { jobId, photoId } = await params;
+  const access = await requireJobAccess(jobId);
+  if ("error" in access) return access.error;
 
   try {
     const photo = await prisma.photo.findUnique({

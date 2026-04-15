@@ -1,27 +1,41 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/api-auth";
 
 // GET /api/stats - dashboard stats
 export async function GET() {
   try {
+    const authResult = await requireUser();
+    if ("error" in authResult) return authResult.error;
+    const { userId, role } = authResult;
+
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    // Photographers see only their own stats
+    const scope = role === "admin" ? {} : { photographerId: userId };
+    const photoScope =
+      role === "admin" ? {} : { job: { photographerId: userId } };
+
     const [totalJobs, processingJobs, reviewJobs, approvedToday, monthlyCost, totalImages] =
       await Promise.all([
-        prisma.job.count(),
-        prisma.job.count({ where: { status: "processing" } }),
-        prisma.job.count({ where: { status: "review" } }),
+        prisma.job.count({ where: scope }),
+        prisma.job.count({ where: { ...scope, status: "processing" } }),
+        prisma.job.count({ where: { ...scope, status: "review" } }),
         prisma.job.count({
-          where: { status: "approved", updatedAt: { gte: startOfDay } },
+          where: { ...scope, status: "approved", updatedAt: { gte: startOfDay } },
         }),
         prisma.job.aggregate({
-          where: { createdAt: { gte: startOfMonth } },
+          where: { ...scope, createdAt: { gte: startOfMonth } },
           _sum: { cost: true },
         }),
         prisma.photo.count({
-          where: { status: { not: "pending" }, createdAt: { gte: startOfMonth } },
+          where: {
+            ...photoScope,
+            status: { not: "pending" },
+            createdAt: { gte: startOfMonth },
+          },
         }),
       ]);
 

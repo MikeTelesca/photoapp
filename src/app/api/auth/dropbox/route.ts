@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { requireAdmin } from "@/lib/api-auth";
 
-// GET /api/auth/dropbox - handle OAuth callback from Dropbox
+// GET /api/auth/dropbox - handle OAuth callback from Dropbox (admin only)
 export async function GET(request: NextRequest) {
+  const authResult = await requireAdmin();
+  if ("error" in authResult) return authResult.error;
+
   const code = request.nextUrl.searchParams.get("code");
 
   if (!code) {

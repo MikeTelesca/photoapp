@@ -96,6 +96,47 @@ function SortableThumb({ id, children }: { id: string; children: React.ReactNode
   );
 }
 
+function GridView({ photos, cols, onPhotoClick, jobId }: {
+  photos: Photo[];
+  cols: 2 | 3 | 4;
+  onPhotoClick: (id: string) => void;
+  jobId: string;
+}) {
+  const colClass = cols === 2 ? "grid-cols-2" : cols === 3 ? "grid-cols-3" : "grid-cols-4";
+  return (
+    <div className={`grid ${colClass} gap-2 p-4 overflow-y-auto bg-graphite-900 flex-1`}>
+      {photos.map(p => {
+        const src = p.editedUrl || p.originalUrl || `/api/jobs/${jobId}/photos/${p.id}/original`;
+        return (
+          <div
+            key={p.id}
+            onClick={() => onPhotoClick(p.id)}
+            className="relative cursor-pointer group rounded overflow-hidden bg-graphite-800 aspect-[3/2]"
+          >
+            {src && (
+              <img
+                src={src}
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                alt=""
+              />
+            )}
+            {p.status === "approved" && (
+              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold">✓</div>
+            )}
+            {p.status === "rejected" && (
+              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">✗</div>
+            )}
+            {p.isFavorite && (
+              <div className="absolute top-1 left-1 text-amber-400 text-sm drop-shadow">★</div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const { addToast } = useToast();
   const [job, setJob] = useState(initialJob);
@@ -155,6 +196,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [compareTarget, setCompareTarget] = useState("luxury");
   const [compareResult, setCompareResult] = useState<string | null>(null);
   const [comparing, setComparing] = useState(false);
+
+  // Gallery view mode state
+  const [viewMode, setViewMode] = useState<"single" | "grid">("single");
+  const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
+
+  // Load view mode from localStorage on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const m = localStorage.getItem("gallery-view-mode");
+    const c = localStorage.getItem("gallery-grid-cols");
+    if (m === "grid" || m === "single") setViewMode(m);
+    if (c) setGridCols(parseInt(c) as any);
+  }, []);
+
+  // Persist view mode to localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("gallery-view-mode", viewMode);
+    localStorage.setItem("gallery-grid-cols", String(gridCols));
+  }, [viewMode, gridCols]);
 
   // Compute sorted photos
   const sortedPhotos = useMemo(() => {
@@ -1518,8 +1579,23 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
         {/* Viewer */}
         <div className="flex-1 flex flex-col" {...swipe}>
-          {/* Before / After Compare */}
-          <div className="flex-1 bg-graphite-900 min-h-0 p-2 md:p-4">
+          {viewMode === "grid" ? (
+            <GridView
+              photos={sortedPhotos}
+              cols={gridCols}
+              jobId={job.id}
+              onPhotoClick={(id) => {
+                const idx = sortedPhotos.findIndex(p => p.id === id);
+                if (idx >= 0) {
+                  setCurrentIndex(idx);
+                  setViewMode("single");
+                }
+              }}
+            />
+          ) : (
+            <>
+              {/* Before / After Compare */}
+              <div className="flex-1 bg-graphite-900 min-h-0 p-2 md:p-4">
             {compareMode === "slider" && currentPhoto ? (
               <div className="w-full h-full rounded-lg overflow-hidden">
                 <BeforeAfterSlider
@@ -1644,7 +1720,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 </div>
               </div>
             )}
-          </div>
+              </div>
+            </>
+          )}
 
           {/* EXIF Info Panel */}
           {currentPhoto && (
@@ -1671,6 +1749,34 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 >
                   <ChevronRightIcon className="w-4 h-4 text-graphite-700 dark:text-graphite-200" />
                 </button>
+              </div>
+              {/* View Mode Toggle */}
+              <div className="flex gap-1 items-center">
+                <button
+                  onClick={() => setViewMode("single")}
+                  className={`text-xs px-2 py-1.5 rounded transition-colors ${viewMode === "single" ? "bg-cyan text-white" : "border border-graphite-200 dark:border-graphite-700 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-100 dark:hover:bg-graphite-800"}`}
+                  title="Single photo view"
+                >
+                  ▦
+                </button>
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`text-xs px-2 py-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-cyan text-white" : "border border-graphite-200 dark:border-graphite-700 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-100 dark:hover:bg-graphite-800"}`}
+                  title="Grid view"
+                >
+                  ⊞
+                </button>
+                {viewMode === "grid" && (
+                  <select
+                    value={gridCols}
+                    onChange={(e) => setGridCols(parseInt(e.target.value) as 2 | 3 | 4)}
+                    className="text-[10px] px-1.5 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white bg-white text-graphite-700 hover:border-graphite-300"
+                  >
+                    <option value={2}>2 cols</option>
+                    <option value={3}>3 cols</option>
+                    <option value={4}>4 cols</option>
+                  </select>
+                )}
               </div>
               <div>
                 <span className="text-sm font-semibold text-graphite-900 dark:text-white">

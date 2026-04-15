@@ -5,6 +5,7 @@ export interface DashboardWidget {
 }
 
 export const DASHBOARD_WIDGETS: DashboardWidget[] = [
+  { key: "onboarding", label: "Onboarding checklist", defaultVisible: true },
   { key: "inbox", label: "Inbox (review queue)", defaultVisible: true },
   { key: "quick-actions", label: "Quick actions", defaultVisible: true },
   { key: "cost-tracker", label: "This month cost", defaultVisible: true },

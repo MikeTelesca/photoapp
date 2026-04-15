@@ -12,6 +12,7 @@ import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { WidgetWrapper } from "@/components/dashboard/widget-wrapper";
 import { CustomizeButton } from "@/components/dashboard/customize-button";
 import { GreetingWidget } from "@/components/dashboard/greeting-widget";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import {
   FolderIcon,
   ArrowPathIcon,
@@ -167,6 +168,11 @@ export default async function DashboardPage({
       <div className="p-6">
         {/* Greeting Widget */}
         <GreetingWidget userId={userId || ""} userName={session?.user?.name || null} />
+
+        {/* Onboarding Checklist */}
+        <WidgetWrapper widgetKey="onboarding">
+          <OnboardingChecklist userId={userId || ""} />
+        </WidgetWrapper>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

@@ -14,6 +14,7 @@ import { ArchiveButton } from "@/components/dashboard/archive-button";
 import { EtaBadge } from "@/components/dashboard/eta-badge";
 import { PinButton } from "@/components/dashboard/pin-button";
 import { SnoozeButton } from "@/components/dashboard/snooze-button";
+import { CopyJobLinkButton } from "@/components/dashboard/copy-job-link-button";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { formatJobNumber } from "@/lib/job-number";
 import { tagColor } from "@/lib/tag-color";
@@ -177,6 +178,7 @@ function JobCardInternal({ job }: JobCardProps) {
         {job.status === "review" && (
           <>
             <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <CopyJobLinkButton jobId={job.id} />
             <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
             <SaveTemplateButton jobId={job.id} />
@@ -205,6 +207,7 @@ function JobCardInternal({ job }: JobCardProps) {
         {job.status === "approved" && (
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
+            <CopyJobLinkButton jobId={job.id} />
             <DownloadButton jobId={job.id} />
             <button
               onClick={(e) => {

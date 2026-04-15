@@ -68,6 +68,7 @@ export default async function SettingsPage() {
     businessAddress: "",
     invoiceRate: 50,
     invoicePrefix: "INV",
+    invoiceCounter: 1000,
   };
   if (userId) {
     const user = await prisma.user.findUnique({
@@ -87,6 +88,7 @@ export default async function SettingsPage() {
         businessAddress: true,
         invoiceRate: true,
         invoicePrefix: true,
+        invoiceCounter: true,
         watermarkLogoPath: true,
         invoiceLogoPath: true,
         timezone: true,
@@ -127,6 +129,7 @@ export default async function SettingsPage() {
         businessAddress: user.businessAddress ?? "",
         invoiceRate: user.invoiceRate ?? 50,
         invoicePrefix: user.invoicePrefix ?? "INV",
+        invoiceCounter: user.invoiceCounter ?? 1000,
       };
     }
   }
@@ -432,6 +435,7 @@ export default async function SettingsPage() {
               initialBusinessAddress={invoiceSettings.businessAddress}
               initialInvoiceRate={invoiceSettings.invoiceRate}
               initialInvoicePrefix={invoiceSettings.invoicePrefix}
+              initialInvoiceCounter={invoiceSettings.invoiceCounter}
             />
           </div>
         </Card>

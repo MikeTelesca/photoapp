@@ -25,6 +25,7 @@ export async function PATCH(request: NextRequest) {
     businessAddress,
     invoiceRate,
     invoicePrefix,
+    invoiceCounter,
     jobSequencePrefix,
     timezone,
     budgetPerJob,
@@ -84,7 +85,21 @@ export async function PATCH(request: NextRequest) {
   if (businessPhone !== undefined) updateData.businessPhone = businessPhone?.trim() || null;
   if (businessAddress !== undefined) updateData.businessAddress = businessAddress?.trim() || null;
   if (invoiceRate !== undefined) updateData.invoiceRate = parseFloat(invoiceRate) || 50;
-  if (invoicePrefix !== undefined) updateData.invoicePrefix = invoicePrefix?.trim() || "INV";
+  if (invoicePrefix !== undefined) {
+    const trimmed = (invoicePrefix ?? "").toString().trim();
+    const prefix = trimmed || "INV";
+    if (prefix.length < 1 || prefix.length > 6) {
+      return NextResponse.json({ error: "Invoice prefix must be 1-6 characters" }, { status: 400 });
+    }
+    updateData.invoicePrefix = prefix;
+  }
+  if (invoiceCounter !== undefined) {
+    const n = typeof invoiceCounter === "number" ? invoiceCounter : parseInt(invoiceCounter, 10);
+    if (!Number.isFinite(n) || n < 0 || n > 999999999) {
+      return NextResponse.json({ error: "Invoice counter must be a non-negative integer" }, { status: 400 });
+    }
+    updateData.invoiceCounter = Math.floor(n);
+  }
   if (jobSequencePrefix !== undefined) updateData.jobSequencePrefix = jobSequencePrefix?.trim().toUpperCase() || "JOB";
   if (timezone !== undefined) updateData.timezone = timezone?.trim() || null;
   if (budgetPerJob !== undefined) updateData.budgetPerJob = parseFloat(budgetPerJob) || 20;

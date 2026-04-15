@@ -29,7 +29,9 @@ export async function GET(
   const rate = (user as any).invoiceRate ?? 50;
   const photoCount = job.approvedPhotos || job.totalPhotos;
   const subtotal = photoCount * rate;
-  const invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String(((user as any).invoiceCounter || 1000)).padStart(4, "0")}`;
+  // If the job already has an invoice number, show it. Otherwise preview the next one.
+  const invoiceNum = (job as any).invoiceNumber
+    || `${(user as any).invoicePrefix || "INV"}-${String(((user as any).invoiceCounter || 1000)).padStart(4, "0")}`;
   const jobNum = job.sequenceNumber ? formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt, prefix: (user as any).jobSequencePrefix }) : null;
 
   return NextResponse.json({

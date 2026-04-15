@@ -32,7 +32,8 @@ export default async function PrintInvoicePage({
   const rate = (user as any).invoiceRate ?? 50;
   const photoCount = job.approvedPhotos || job.totalPhotos;
   const subtotal = photoCount * rate;
-  const invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String(((user as any).invoiceCounter || 1000)).padStart(4, "0")}`;
+  const invoiceNum = (job as any).invoiceNumber
+    || `${(user as any).invoicePrefix || "INV"}-${String(((user as any).invoiceCounter || 1000)).padStart(4, "0")}`;
   const jobNum = (job as any).sequenceNumber ? formatJobNumber({ sequence: (job as any).sequenceNumber, createdAt: job.createdAt, prefix: (user as any).jobSequencePrefix }) : null;
   const client = (job as any).client;
   const invoiceLogoPath = (user as any).invoiceLogoPath;

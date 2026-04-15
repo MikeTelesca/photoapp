@@ -22,7 +22,7 @@ model User {
   businessPhone     String?
   businessAddress   String?
   invoiceRate       Float?    @default(50)  // default $/photo for invoicing
-  invoicePrefix     String?   @default("INV")
+  invoicePrefix     String    @default("INV")
   invoiceCounter    Int       @default(1000)
   jobSequenceCounter Int       @default(0)   // auto-incrementing job sequence
   jobSequencePrefix  String    @default("JOB") // prefix for job numbers
@@ -137,6 +137,7 @@ model Job {
   dropboxSyncedAt     DateTime?
   invoicePaidAt       DateTime?
   invoiceSentAt       DateTime?
+  invoiceNumber       String?  @unique
   pinnedAt            DateTime?
   snoozedUntil        DateTime?
   reminderAt          DateTime?

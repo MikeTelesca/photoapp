@@ -363,3 +363,17 @@ ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "customFilename" TEXT;
 ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "clientApprovalStatus" TEXT;
 ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "clientApprovedAt" TIMESTAMP(3);
 ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "clientApprovalNote" TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Sequential invoice numbering: per-user prefix/counter, per-job number
+-- ---------------------------------------------------------------------------
+-- Ensure User.invoicePrefix / invoiceCounter have sane defaults and NOT NULL
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "invoicePrefix" TEXT DEFAULT 'INV';
+UPDATE "User" SET "invoicePrefix" = 'INV' WHERE "invoicePrefix" IS NULL;
+ALTER TABLE "User" ALTER COLUMN "invoicePrefix" SET DEFAULT 'INV';
+ALTER TABLE "User" ALTER COLUMN "invoicePrefix" SET NOT NULL;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "invoiceCounter" INTEGER NOT NULL DEFAULT 1000;
+
+-- Job.invoiceNumber: assigned on first finalize/download; unique (nullable)
+ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "invoiceNumber" TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS "Job_invoiceNumber_key" ON "Job"("invoiceNumber");

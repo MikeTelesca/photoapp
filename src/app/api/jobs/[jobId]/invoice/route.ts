@@ -48,7 +48,35 @@ export async function GET(
   const rate = (user as any).invoiceRate ?? 50;
   const photoCount = job.approvedPhotos || job.totalPhotos;
   const subtotal = photoCount * rate;
-  const invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String((user as any).invoiceCounter || 1000).padStart(4, "0")}`;
+
+  // Atomically assign a sequential invoice number if not already assigned.
+  // Uses a single transaction: increment the user's counter and stamp the job.
+  let invoiceNum: string = (job as any).invoiceNumber || "";
+  if (!invoiceNum) {
+    try {
+      const assigned = await prisma.$transaction(async (tx) => {
+        const updatedUser = await tx.user.update({
+          where: { id: user.id },
+          data: { invoiceCounter: { increment: 1 } },
+          select: { invoicePrefix: true, invoiceCounter: true },
+        });
+        const prefix = updatedUser.invoicePrefix || "INV";
+        // After increment, the "current" counter value to use is (new - 1)
+        const nextNumber = (updatedUser.invoiceCounter || 1001) - 1;
+        const num = `${prefix}-${String(nextNumber).padStart(4, "0")}`;
+        await tx.job.update({
+          where: { id: jobId },
+          data: { invoiceNumber: num } as any,
+        });
+        return num;
+      });
+      invoiceNum = assigned;
+    } catch (err) {
+      // Fallback (shouldn't normally happen): compute without persisting
+      console.error("invoice assignment failed:", err);
+      invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String((user as any).invoiceCounter || 1000).padStart(4, "0")}`;
+    }
+  }
   const jobNum = job.sequenceNumber ? formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt, prefix: (user as any).jobSequencePrefix }) : null;
 
   // Fetch logo if exists
@@ -172,14 +200,6 @@ export async function GET(
 
   doc.end();
   const pdfBuffer = await pdfPromise;
-
-  // Increment invoice counter
-  await prisma.user
-    .update({
-      where: { id: user.id },
-      data: { invoiceCounter: { increment: 1 } },
-    })
-    .catch(() => {});
 
   // Mark invoice as sent
   await prisma.job

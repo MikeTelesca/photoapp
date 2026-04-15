@@ -11,6 +11,7 @@ interface Props {
   initialBusinessAddress: string;
   initialInvoiceRate: number;
   initialInvoicePrefix: string;
+  initialInvoiceCounter?: number;
 }
 
 export function InvoiceSettingsForm({
@@ -20,6 +21,7 @@ export function InvoiceSettingsForm({
   initialBusinessAddress,
   initialInvoiceRate,
   initialInvoicePrefix,
+  initialInvoiceCounter = 1000,
 }: Props) {
   const [businessName, setBusinessName] = useState(initialBusinessName);
   const [businessEmail, setBusinessEmail] = useState(initialBusinessEmail);
@@ -27,11 +29,22 @@ export function InvoiceSettingsForm({
   const [businessAddress, setBusinessAddress] = useState(initialBusinessAddress);
   const [invoiceRate, setInvoiceRate] = useState(String(initialInvoiceRate));
   const [invoicePrefix, setInvoicePrefix] = useState(initialInvoicePrefix);
+  const [invoiceCounter, setInvoiceCounter] = useState(String(initialInvoiceCounter));
   const [saving, setSaving] = useState(false);
   const { addToast } = useToast();
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    const trimmedPrefix = invoicePrefix.trim();
+    if (trimmedPrefix.length < 1 || trimmedPrefix.length > 6) {
+      addToast("error", "Invoice prefix must be 1-6 characters");
+      return;
+    }
+    const counterNum = parseInt(invoiceCounter, 10);
+    if (!Number.isFinite(counterNum) || counterNum < 0) {
+      addToast("error", "Invoice counter must be a non-negative number");
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/user/profile", {
@@ -43,7 +56,8 @@ export function InvoiceSettingsForm({
           businessPhone,
           businessAddress,
           invoiceRate: parseFloat(invoiceRate) || 50,
-          invoicePrefix,
+          invoicePrefix: trimmedPrefix,
+          invoiceCounter: counterNum,
         }),
       });
       if (res.ok) {
@@ -124,9 +138,33 @@ export function InvoiceSettingsForm({
             onChange={(e) => setInvoicePrefix(e.target.value)}
             className={inputCls}
             placeholder="INV"
-            maxLength={10}
+            minLength={1}
+            maxLength={6}
+            required
           />
-          <p className="text-[11px] text-graphite-400 mt-1">e.g. INV-1000, ATH-1001</p>
+          <p className="text-[11px] text-graphite-400 mt-1">1-6 chars, e.g. INV-1000, ATH-1001</p>
+        </div>
+        <div>
+          <label className={labelCls}>Next Invoice Number</label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={invoiceCounter}
+              onChange={(e) => setInvoiceCounter(e.target.value)}
+              className={inputCls}
+              placeholder="1000"
+            />
+            <button
+              type="button"
+              onClick={() => setInvoiceCounter("1000")}
+              className="px-3 py-2 text-xs rounded-lg border border-graphite-200 dark:border-graphite-700 text-graphite-600 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 whitespace-nowrap"
+            >
+              Reset
+            </button>
+          </div>
+          <p className="text-[11px] text-graphite-400 mt-1">Next invoice will use this number, then auto-increment.</p>
         </div>
       </div>
       <Button type="submit" disabled={saving}>

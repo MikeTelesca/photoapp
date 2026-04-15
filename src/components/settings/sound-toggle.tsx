@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export function SoundToggle() {
   const [enabled, setEnabled] = useState(false);
@@ -22,7 +23,10 @@ export function SoundToggle() {
   return (
     <div className="flex items-center justify-between py-3">
       <div>
-        <div className="text-sm font-medium dark:text-white">Sound effects</div>
+        <div className="flex items-center gap-1">
+          <div className="text-sm font-medium dark:text-white">Sound effects</div>
+          <InfoTooltip text="Plays a brief audio confirmation when you approve, reject, or favorite a photo." position="bottom" />
+        </div>
         <div className="text-xs text-graphite-500 dark:text-graphite-400">
           Subtle audio feedback on approve, reject, and favorite
         </div>

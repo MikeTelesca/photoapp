@@ -5,6 +5,7 @@ import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ZoomableImage } from "./zoomable-image";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import Link from "next/link";
 import {
   ChevronLeftIcon,
@@ -1184,14 +1185,17 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <option key={p.slug} value={p.slug}>{p.name}</option>
               ))}
             </select>
-            <button
-              onClick={suggestPreset}
-              disabled={suggesting}
-              className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50"
-              title="AI analyzes sample photos and suggests the best preset"
-            >
-              {suggesting ? "Analyzing..." : "✨ Suggest preset"}
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={suggestPreset}
+                disabled={suggesting}
+                className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50"
+                title="AI analyzes sample photos and suggests the best preset"
+              >
+                {suggesting ? "Analyzing..." : "✨ Suggest preset"}
+              </button>
+              <InfoTooltip text="AI analyzes 3 sample photos and recommends the best preset for this property." position="bottom" />
+            </div>
             <button
               onClick={suggestCrop}
               disabled={cropping || !currentPhoto}
@@ -1347,13 +1351,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </a>
           )}
           {job.status === "approved" && (
-            <button
-              onClick={syncToDropbox}
-              disabled={syncing}
-              className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-60"
-            >
-              {syncing ? "Syncing..." : "📦 Sync to Dropbox"}
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={syncToDropbox}
+                disabled={syncing}
+                className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-60"
+              >
+                {syncing ? "Syncing..." : "📦 Sync to Dropbox"}
+              </button>
+              <InfoTooltip text="Uploads approved photos to a shared Dropbox folder so your client can access them directly." position="bottom" />
+            </div>
           )}
           {syncResult?.shareLink && (
             <a

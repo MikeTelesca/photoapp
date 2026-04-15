@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export function BudgetInput({ initial }: { initial: number }) {
   const [value, setValue] = useState(initial);
@@ -26,6 +27,7 @@ export function BudgetInput({ initial }: { initial: number }) {
 
   return (
     <div className="flex gap-2 items-center">
+      <InfoTooltip text="If a job's estimated cost exceeds this, you'll see a confirmation prompt before processing starts." position="bottom" />
       <span className="text-xs">$</span>
       <input
         type="number"

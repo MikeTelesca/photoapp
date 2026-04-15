@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Props {
   initial: number | null;
@@ -29,6 +30,7 @@ export function AutoArchiveSelect({ initial }: Props) {
 
   return (
     <div className="flex gap-2 items-center">
+      <InfoTooltip text="Approved jobs older than this are automatically hidden from the dashboard but stay searchable." position="bottom" />
       <select
         value={value ?? ""}
         onChange={(e) => save(e.target.value === "" ? null : parseInt(e.target.value))}

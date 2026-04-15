@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { PromptLinter } from "@/components/presets/prompt-linter";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Props {
   initial: string | null;
@@ -31,9 +32,12 @@ export function PromptPrefixForm({ initial }: Props) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-graphite-500 dark:text-graphite-400">
-        These instructions are prepended to every enhance prompt. Use to enforce your personal style across all jobs.
-      </p>
+      <div className="flex items-center gap-1">
+        <p className="text-xs text-graphite-500 dark:text-graphite-400">
+          These instructions are prepended to every enhance prompt. Use to enforce your personal style across all jobs.
+        </p>
+        <InfoTooltip text="These instructions are prepended to every AI enhance prompt. Useful for enforcing your personal style consistently." />
+      </div>
       <textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}

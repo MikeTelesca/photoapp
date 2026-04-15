@@ -474,6 +474,35 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [photos, job.id]);
 
+  async function runBatchEnhance() {
+    const rejectedCount = photos.filter(p => p.status === "rejected").length;
+    const targetCount = batchFilter === "rejected" ? rejectedCount : photos.length;
+    if (targetCount === 0) {
+      addToast("error", `No ${batchFilter === "rejected" ? "rejected" : ""} photos to re-enhance.`);
+      return;
+    }
+    if (!confirm(`Re-enhance ${targetCount} ${batchFilter === "rejected" ? "rejected" : ""} photos with "${batchPreset}" preset?`)) return;
+    setBatching(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/batch-enhance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filter: batchFilter, preset: batchPreset }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Batch enhance failed");
+        return;
+      }
+      addToast("info", `Re-enhancing ${data.reset} photos with "${batchPreset}" preset. Processing will begin shortly.`);
+      window.location.reload();
+    } catch (err: any) {
+      addToast("error", err.message || "Batch enhance failed");
+    } finally {
+      setBatching(false);
+    }
+  }
+
   const handleDownload = useCallback(async () => {
     const approvedPhotos = photos.filter(
       (p) => p.status === "approved" && p.editedUrl
@@ -825,6 +854,45 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           >
             Re-Enhance All
           </button>
+          {/* Batch re-enhance with preset switching */}
+          <div className="flex items-center gap-1.5 border border-amber-200 rounded-md px-2 py-1 bg-amber-50">
+            <select
+              value={batchFilter}
+              onChange={(e) => setBatchFilter(e.target.value as "rejected" | "all")}
+              className="text-xs px-1.5 py-1 rounded border border-graphite-200 bg-white"
+              disabled={batching}
+            >
+              <option value="rejected">Rejected only</option>
+              <option value="all">All photos</option>
+            </select>
+            <select
+              value={batchPreset}
+              onChange={(e) => setBatchPreset(e.target.value)}
+              className="text-xs px-1.5 py-1 rounded border border-graphite-200 bg-white"
+              disabled={batching}
+            >
+              {presets.length > 0
+                ? presets.map((p) => (
+                    <option key={p.slug} value={p.slug}>{p.name}</option>
+                  ))
+                : (
+                  <>
+                    <option value="standard">Standard</option>
+                    <option value="bright-airy">Bright &amp; Airy</option>
+                    <option value="luxury">Luxury</option>
+                    <option value="flambient">Flambient</option>
+                  </>
+                )}
+            </select>
+            <button
+              onClick={runBatchEnhance}
+              disabled={batching}
+              className="text-xs px-2.5 py-1 rounded bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-60 whitespace-nowrap"
+              title="Re-enhance rejected (or all) photos with the selected preset"
+            >
+              {batching ? "Running..." : "Re-enhance batch"}
+            </button>
+          </div>
           <a
             href={`/api/jobs/${job.id}/download-zip`}
             className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-emerald-500 text-white font-semibold hover:bg-emerald-600"

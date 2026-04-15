@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -198,6 +199,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
 
+  // Deep-link state
+  const searchParams = useSearchParams();
+  const [linkCopied, setLinkCopied] = useState(false);
+
   // Watermark settings state
   const [showWatermarkPanel, setShowWatermarkPanel] = useState(false);
   const [wmText, setWmText] = useState(initialJob.watermarkText ?? "");
@@ -311,6 +316,43 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       if (newIdx >= 0) setCurrentIndex(newIdx);
     }
   }, [sortBy]);
+
+  // Read photo from URL query param on mount
+  useEffect(() => {
+    const photoIdFromUrl = searchParams.get("photo");
+    if (photoIdFromUrl) {
+      const idx = sortedPhotos.findIndex(p => p.id === photoIdFromUrl);
+      if (idx >= 0) {
+        setCurrentIndex(idx);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Update URL when current photo changes (debounced)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const currentPhoto = sortedPhotos[currentIndex];
+    if (!currentPhoto) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("photo", currentPhoto.id);
+    window.history.replaceState({}, "", url.toString());
+  }, [currentIndex, sortedPhotos]);
+
+  // Copy photo link to clipboard
+  async function copyPhotoLink() {
+    const currentPhoto = sortedPhotos[currentIndex];
+    if (!currentPhoto) return;
+    const url = `${window.location.origin}/review/${job.id}?photo=${currentPhoto.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+      addToast("error", "Failed to copy link");
+    }
+  }
 
   useEffect(() => {
     fetch("/api/presets")
@@ -2423,6 +2465,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   <span className="hidden sm:inline">Save</span>
                 </a>
               )}
+              <button
+                onClick={copyPhotoLink}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-graphite-100 text-graphite-700 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-200 dark:hover:bg-graphite-700 transition-colors"
+                title="Copy shareable link to this photo"
+              >
+                <span>{linkCopied ? "✓" : "🔗"}</span>
+                <span className="hidden sm:inline">{linkCopied ? "Copied" : "Copy link"}</span>
+              </button>
               <div className="relative" ref={twilightMenuRef}>
                 {currentPhoto?.isTwilight ? (
                   <button

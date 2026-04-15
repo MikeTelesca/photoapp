@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { ReviewGallery } from "@/components/review/review-gallery";
@@ -45,5 +46,9 @@ export default async function ReviewPage({
     })),
   };
 
-  return <ReviewGallery job={serializedJob} />;
+  return (
+    <Suspense fallback={<div className="w-full h-screen flex items-center justify-center">Loading gallery...</div>}>
+      <ReviewGallery job={serializedJob} />
+    </Suspense>
+  );
 }

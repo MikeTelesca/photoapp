@@ -7,12 +7,16 @@ import sharp from "sharp";
 export const maxDuration = 300;
 
 // Common MLS presets (max width x height, most MLS accept JPEG)
-const PRESETS: Record<string, { width: number; height: number; quality: number }> = {
-  "mls-standard": { width: 1024, height: 768, quality: 85 },
-  "mls-hi": { width: 1920, height: 1440, quality: 88 },
-  "mls-4k": { width: 3840, height: 2160, quality: 90 },
-  "web": { width: 1600, height: 1200, quality: 82 },
-  "social": { width: 1080, height: 1080, quality: 85 }, // 1:1 square for Insta
+const PRESETS: Record<string, { width: number; height: number; quality: number; fit?: "cover" | "inside" }> = {
+  "mls-standard": { width: 1024, height: 768, quality: 85, fit: "inside" },
+  "mls-hi": { width: 1920, height: 1440, quality: 88, fit: "inside" },
+  "mls-4k": { width: 3840, height: 2160, quality: 90, fit: "inside" },
+  "web": { width: 1600, height: 1200, quality: 82, fit: "inside" },
+  "social": { width: 1080, height: 1080, quality: 85, fit: "cover" }, // 1:1 square for Insta
+  "social-portrait": { width: 1080, height: 1350, quality: 85, fit: "cover" }, // Instagram portrait 4:5
+  "story": { width: 1080, height: 1920, quality: 85, fit: "cover" }, // Instagram story / TikTok 9:16
+  "video-16x9": { width: 1920, height: 1080, quality: 88, fit: "cover" }, // YouTube thumbnail / video
+  "realtor-ca": { width: 1024, height: 683, quality: 85, fit: "inside" }, // Realtor.ca standard 3:2
 };
 
 export async function GET(
@@ -50,7 +54,7 @@ export async function GET(
       if (!res.ok) continue;
       const src = Buffer.from(await res.arrayBuffer());
 
-      const fit = preset === "social" ? "cover" : "inside";
+      const fit = cfg.fit || "inside";
       const resized = await sharp(src)
         .resize(cfg.width, cfg.height, { fit, withoutEnlargement: true })
         .jpeg({ quality: cfg.quality, mozjpeg: true })

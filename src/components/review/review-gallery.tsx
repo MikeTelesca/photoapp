@@ -1159,6 +1159,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <option value="mls-4k">MLS 4K (3840)</option>
               <option value="web">Web (1600)</option>
               <option value="social">Social Square (1080)</option>
+              <option value="social-portrait">Instagram Portrait (1080×1350)</option>
+              <option value="story">Story / Reel (1080×1920)</option>
+              <option value="video-16x9">Video 16:9 (1920×1080)</option>
+              <option value="realtor-ca">Realtor.ca (1024×683)</option>
             </select>
             <a
               href={`/api/jobs/${job.id}/download-mls?preset=${mlsPreset}`}

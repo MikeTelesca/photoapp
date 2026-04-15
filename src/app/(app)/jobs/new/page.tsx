@@ -29,6 +29,26 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
+const DRAFT_KEY = "new-job-draft";
+const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+interface Draft {
+  address?: string;
+  dropboxUrl?: string;
+  clientName?: string;
+  clientId?: string | null;
+  preset?: string;
+  tvStyle?: string;
+  skyStyle?: string;
+  watermarkText?: string;
+  watermarkPosition?: string;
+  watermarkSize?: number;
+  watermarkOpacity?: number;
+  tags?: string;
+  seasonalStyle?: string;
+  savedAt?: number;
+}
+
 function NewJobPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,6 +66,7 @@ function NewJobPageInner() {
   const [clientName, setClientName] = useState("");
   const [clientId, setClientId] = useState<string | null>(null);
   const [tags, setTags] = useState("");
+  const [draftSaved, setDraftSaved] = useState(false);
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);
@@ -65,6 +86,64 @@ function NewJobPageInner() {
       .catch(console.error)
       .finally(() => setPresetsLoading(false));
   }, []);
+
+  // Load draft on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft: Draft = JSON.parse(raw);
+      if (!draft.savedAt || Date.now() - draft.savedAt > DRAFT_TTL_MS) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
+      // Only offer restore if draft has at least an address or dropboxUrl
+      if (!draft.address && !draft.dropboxUrl) return;
+
+      const restore = window.confirm(
+        `You have an unsaved draft from ${new Date(draft.savedAt).toLocaleString()}.\n\nRestore it?`
+      );
+      if (restore) {
+        if (draft.address) setAddress(draft.address);
+        if (draft.dropboxUrl) setDropboxUrl(draft.dropboxUrl);
+        if (draft.clientName) setClientName(draft.clientName);
+        if (draft.clientId !== undefined) setClientId(draft.clientId);
+        if (draft.preset) setPreset(draft.preset);
+        if (draft.tvStyle) setTvStyle(draft.tvStyle);
+        if (draft.skyStyle) setSkyStyle(draft.skyStyle);
+        if (draft.watermarkText) setWatermarkText(draft.watermarkText);
+        if (draft.watermarkPosition) setWatermarkPosition(draft.watermarkPosition);
+        if (draft.watermarkSize !== undefined) setWatermarkSize(draft.watermarkSize);
+        if (draft.watermarkOpacity !== undefined) setWatermarkOpacity(draft.watermarkOpacity);
+        if (draft.tags) setTags(draft.tags);
+        if (draft.seasonalStyle !== undefined) setSeasonalStyle(draft.seasonalStyle);
+      } else {
+        localStorage.removeItem(DRAFT_KEY);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-save draft on every change (debounced)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const draft: Draft = {
+      address, dropboxUrl, clientName, clientId, preset, tvStyle, skyStyle,
+      watermarkText, watermarkPosition, watermarkSize, watermarkOpacity,
+      tags, seasonalStyle,
+      savedAt: Date.now(),
+    };
+    const hasContent = draft.address || draft.dropboxUrl;
+    if (!hasContent) return;
+
+    const timer = setTimeout(() => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2000);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [address, dropboxUrl, clientName, clientId, preset, tvStyle, skyStyle, watermarkText, watermarkPosition, watermarkSize, watermarkOpacity, tags, seasonalStyle]);
   const tvOptions = [
     { value: "netflix", label: "Netflix Home Screen", desc: "Netflix UI with movie thumbnails" },
     { value: "black", label: "Black Screen (Off)", desc: "TV appears turned off" },
@@ -191,6 +270,8 @@ function NewJobPageInner() {
         fetch(`/api/jobs/${jobData.id}/ingest`, { method: "POST" }).catch(console.error);
       }
 
+      // Clear draft on successful submit
+      localStorage.removeItem(DRAFT_KEY);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -696,6 +777,9 @@ function NewJobPageInner() {
               >
                 Cancel
               </Button>
+              {draftSaved && (
+                <span className="text-[10px] text-graphite-400">Draft saved ✓</span>
+              )}
             </div>
           </form>
         </Card>

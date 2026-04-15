@@ -112,6 +112,41 @@ export function weeklyDigestTemplate(data: WeeklyDigestData) {
   `;
 }
 
+export function shareLinkTemplate(opts: {
+  photographerName: string;
+  address: string;
+  photoCount: number;
+  shareUrl: string;
+  password?: string;
+  personalMessage?: string;
+}) {
+  return `
+    <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+      <h1 style="color: #111; font-size: 24px;">Photos are ready: ${escapeHtml(opts.address)}</h1>
+      <p style="color: #555; font-size: 15px; line-height: 1.5;">
+        ${escapeHtml(opts.photographerName)} has shared a private gallery of ${opts.photoCount} photos with you.
+      </p>
+      ${opts.personalMessage ? `
+        <div style="background: #f0fdfa; border-left: 4px solid #06b6d4; padding: 12px 16px; margin: 20px 0;">
+          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Message from ${escapeHtml(opts.photographerName)}:</div>
+          <div style="color: #333; font-size: 14px; font-style: italic;">${escapeHtml(opts.personalMessage)}</div>
+        </div>
+      ` : ""}
+      <a href="${opts.shareUrl}" style="display: inline-block; margin-top: 16px; padding: 14px 28px; background: #06b6d4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">
+        View gallery →
+      </a>
+      ${opts.password ? `
+        <p style="margin-top: 20px; font-size: 13px; color: #666;">
+          <strong>Password:</strong> <span style="font-family: monospace; background: #f5f5f5; padding: 2px 8px; border-radius: 4px;">${escapeHtml(opts.password)}</span>
+        </p>
+      ` : ""}
+      <p style="color: #999; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+        This link gives view-only access to the photos. If you have questions, reply to this email to contact ${escapeHtml(opts.photographerName)} directly.
+      </p>
+    </div>
+  `;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }

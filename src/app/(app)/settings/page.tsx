@@ -19,6 +19,7 @@ import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload
 import { AccentPicker } from "@/components/settings/accent-picker";
 import { NotificationPrefs } from "@/components/settings/notification-prefs";
 import { TimezonePicker } from "@/components/settings/timezone-picker";
+import { SoundToggle } from "@/components/settings/sound-toggle";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -269,6 +270,8 @@ export default async function SettingsPage() {
               </div>
               <WeeklyDigestToggle initial={weeklyDigestEnabled} />
             </div>
+            <hr className="border-graphite-200" />
+            <SoundToggle />
           </div>
         </Card>
 

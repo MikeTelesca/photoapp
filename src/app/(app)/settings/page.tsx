@@ -8,12 +8,24 @@ import {
 import { MaintenanceActions } from "@/components/settings/maintenance-actions";
 import { AccountForm } from "@/components/settings/account-form";
 import { NotificationToggle } from "@/components/settings/notification-toggle";
+import { EmailNotificationToggle } from "@/components/settings/email-notification-toggle";
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const session = await auth();
   const userRole = session?.user?.role;
+  const userId = session?.user?.id;
+
+  let emailNotificationsEnabled = true;
+  if (userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { emailNotifications: true },
+    });
+    emailNotificationsEnabled = user?.emailNotifications ?? true;
+  }
 
   const dropboxRefreshToken = !!process.env.DROPBOX_REFRESH_TOKEN;
   const dropboxConnected = dropboxRefreshToken || !!process.env.DROPBOX_ACCESS_TOKEN;

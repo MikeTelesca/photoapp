@@ -8,6 +8,7 @@ import { logActivity } from "@/lib/activity";
 import { log } from "@/lib/logger";
 import { readExif } from "@/lib/exif";
 import { analyzeImage } from "@/lib/image-quality";
+import { sendEmail, jobCompleteTemplate } from "@/lib/email";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -103,10 +104,30 @@ export async function POST(
         const totalEdited = await prisma.photo.count({
           where: { jobId, status: { in: ["edited", "approved"] } },
         });
-        await prisma.job.update({
+        const updatedJob = await prisma.job.update({
           where: { id: jobId },
           data: { status: "review", processedPhotos: totalEdited },
         });
+
+        // Send email notification if enabled
+        try {
+          const user = await prisma.user.findUnique({ where: { id: updatedJob.photographerId } });
+          if (user?.email) {
+            const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
+            await sendEmail({
+              to: user.email,
+              subject: `Ready for review: ${updatedJob.address}`,
+              html: jobCompleteTemplate({
+                address: updatedJob.address,
+                photoCount: updatedJob.totalPhotos,
+                jobUrl: `${baseUrl}/review/${updatedJob.id}`,
+              }),
+            });
+          }
+        } catch (emailErr) {
+          console.error("[start-enhance] email notification failed (non-fatal):", emailErr);
+        }
+
         return NextResponse.json({ done: true, processed: totalEdited });
       }
       // Race lost, tell client to retry

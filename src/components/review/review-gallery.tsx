@@ -1343,6 +1343,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         case "reject":
           handleReject();
           break;
+        case "approveAndNext":
+          handleApprove();
+          goNext();
+          break;
+        case "rejectAndNext":
+          handleReject();
+          goNext();
+          break;
         case "reenhance":
           handleRegenerate();
           break;

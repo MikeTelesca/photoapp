@@ -7,6 +7,8 @@ export interface Shortcut {
 export const SHORTCUTS: Shortcut[] = [
   { id: "approve", label: "Approve photo", defaultKey: "a" },
   { id: "reject", label: "Reject photo", defaultKey: "r" },
+  { id: "approveAndNext", label: "Approve & advance to next", defaultKey: "y" },
+  { id: "rejectAndNext", label: "Reject & advance to next", defaultKey: "n" },
   { id: "next", label: "Next photo", defaultKey: "ArrowRight" },
   { id: "prev", label: "Previous photo", defaultKey: "ArrowLeft" },
   { id: "favorite", label: "Toggle favorite", defaultKey: "f" },

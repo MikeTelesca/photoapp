@@ -31,6 +31,7 @@ interface Photo {
   editedUrl: string | null;
   isExterior: boolean;
   isTwilight: boolean;
+  isFavorite?: boolean;
   twilightInstructions: string | null;
   twilightStyle?: string | null;
   customInstructions: string | null;
@@ -90,7 +91,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [showZoomHint, setShowZoomHint] = useState(true);
   const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
   const twilightMenuRef = useRef<HTMLDivElement>(null);
-  const [thumbFilter, setThumbFilter] = useState<"all" | "pending" | "edited" | "approved" | "rejected">("all");
+  const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
 
   useEffect(() => {
@@ -223,6 +224,25 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     updatePhoto(currentPhoto.id, { status: "rejected" });
     setTimeout(() => goNext(), 300);
   }, [currentPhoto, updatePhoto, goNext]);
+
+  const handleFavorite = useCallback(async () => {
+    if (!currentPhoto) return;
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/favorite`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setJob((prev) => ({
+          ...prev,
+          photos: prev.photos.map((p) =>
+            p.id === currentPhoto.id ? { ...p, isFavorite: data.isFavorite } : p
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+    }
+  }, [currentPhoto, job.id]);
+
 
   const [enhanceErrors, setEnhanceErrors] = useState<Record<string, string>>({});
   const [enhancingIds, setEnhancingIds] = useState<Set<string>>(new Set());
@@ -528,6 +548,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             setTwilightMenuOpen(false);
             setShowHelpOverlay(false);
           }
+          break;
+        case "f":
+        case "F":
+          handleFavorite();
           break;
         case "?":
           e.preventDefault();
@@ -850,6 +874,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           <div className="flex gap-0.5 p-1 border-b border-graphite-200 flex-shrink-0">
             {[
               { v: "all" as const, l: "All" },
+              { v: "favorites" as const, l: "★" },
               { v: "edited" as const, l: "New" },
               { v: "approved" as const, l: "✓" },
               { v: "rejected" as const, l: "✗" },
@@ -866,7 +891,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {/* Scrollable thumbnail list */}
           <div className="overflow-y-auto flex-1 p-2 flex flex-col gap-1">
             {photos.map((photo, idx) => {
-              if (thumbFilter !== "all" && photo.status !== thumbFilter) return null;
+              if (thumbFilter === "favorites" && !photo.isFavorite) return null;
+              if (thumbFilter !== "all" && thumbFilter !== "favorites" && photo.status !== thumbFilter) return null;
               return (
                 <button
                   key={photo.id}
@@ -925,6 +951,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   </div>
                   {photo.isTwilight && (
                     <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
+                  )}
+                  {photo.isFavorite && (
+                    <div className="absolute top-1 right-1 text-amber-400 text-sm drop-shadow">★</div>
                   )}
                   {photo.qualityFlags && (() => {
                     try {
@@ -1147,6 +1176,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               >
                 <ArrowPathIcon className="w-4 h-4" />
                 <span className="hidden sm:inline">Regenerate</span>
+              </button>
+              <button
+                onClick={handleFavorite}
+                disabled={isUpdating || enhanceLoading}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
+                  currentPhoto?.isFavorite
+                    ? "bg-amber-100 text-amber-600 hover:bg-amber-200"
+                    : "bg-graphite-100 text-graphite-400 hover:bg-amber-100 hover:text-amber-600"
+                }`}
+                title="Favorite (press F)"
+              >
+                <span>★</span>
+                <span className="hidden sm:inline">Favorite</span>
               </button>
               <div className="relative" ref={twilightMenuRef}>
                 {currentPhoto?.isTwilight ? (

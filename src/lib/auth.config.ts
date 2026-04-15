@@ -46,7 +46,9 @@ export const authConfig = {
       // NextAuth's own endpoints handle their own auth flow
       const isNextAuthRoute = nextUrl.pathname.startsWith("/api/auth/") &&
         !nextUrl.pathname.startsWith("/api/auth/dropbox") &&
-        nextUrl.pathname !== "/api/auth/signup";
+        nextUrl.pathname !== "/api/auth/signup" &&
+        nextUrl.pathname !== "/api/auth/forgot" &&
+        nextUrl.pathname !== "/api/auth/reset";
 
       if (isNextAuthRoute) return true;
 
@@ -60,6 +62,12 @@ export const authConfig = {
       if (nextUrl.pathname.startsWith("/signup/")) return true;
       if (nextUrl.pathname === "/api/auth/signup") return true;
       if (nextUrl.pathname.match(/^\/api\/invites\/[^/]+$/) && request.method === "GET") return true;
+
+      // Public password reset routes
+      if (nextUrl.pathname === "/api/auth/forgot") return true;
+      if (nextUrl.pathname === "/api/auth/reset") return true;
+      if (nextUrl.pathname === "/forgot") return true;
+      if (nextUrl.pathname === "/reset") return true;
 
       if (isAuthPage) {
         if (isLoggedIn) {

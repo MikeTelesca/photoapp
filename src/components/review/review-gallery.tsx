@@ -2599,14 +2599,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   );
 
   return (
-    <div className={`flex flex-col h-screen ${focusMode ? "ath-focus-root" : ""}`}>
-      <PhotoMinimap
-        photos={sortedPhotos}
-        activeIndex={currentIndex}
-        jumpTo={jumpToPhoto}
-      />
+    <div className={`flex flex-col min-h-[calc(100vh-3.5rem)] ${focusMode ? "ath-focus-root" : ""}`}>
+      {showMoreActions && (
+        <PhotoMinimap
+          photos={sortedPhotos}
+          activeIndex={currentIndex}
+          jumpTo={jumpToPhoto}
+        />
+      )}
       {/* Top Bar */}
-      <div className="app-header review-toolbar-extras sticky top-0 z-20 bg-white/92 dark:bg-graphite-900/92 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-700 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
+      <div className="app-header review-toolbar-extras bg-white/92 dark:bg-graphite-900/92 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-800 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3.5">
           <Link
             href="/dashboard"

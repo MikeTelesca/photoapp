@@ -481,6 +481,30 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     return localStorage.getItem("ath-focus-mode-default") === "true";
   });
 
+  // Undo/Redo stacks for photo-level actions (client-side, in-memory)
+  type UndoEntryType = "status" | "favorited" | "flagged" | "colorLabel" | "retouchRequest";
+  type UndoEntry = {
+    type: UndoEntryType;
+    photoId: string;
+    prevValue: unknown;
+    newValue: unknown;
+    at: number;
+  };
+  const UNDO_LIMIT = 20;
+  const [undoStack, setUndoStack] = useState<UndoEntry[]>([]);
+  const [redoStack, setRedoStack] = useState<UndoEntry[]>([]);
+  const isUndoRedoRef = useRef(false);
+
+  const pushUndo = useCallback((entry: Omit<UndoEntry, "at">) => {
+    if (isUndoRedoRef.current) return;
+    setUndoStack(s => {
+      const next = [...s, { ...entry, at: Date.now() }];
+      if (next.length > UNDO_LIMIT) next.shift();
+      return next;
+    });
+    setRedoStack([]);
+  }, []);
+
   // Apply/remove the global focus-mode class on body when toggled
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -963,23 +987,36 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   const handleApprove = useCallback(() => {
     if (!currentPhoto) return;
+    pushUndo({
+      type: "status",
+      photoId: currentPhoto.id,
+      prevValue: currentPhoto.status,
+      newValue: "approved",
+    });
     updatePhoto(currentPhoto.id, { status: "approved" });
     playApproveSound();
     setTimeout(() => goNext(), 300);
-  }, [currentPhoto, updatePhoto, goNext]);
+  }, [currentPhoto, updatePhoto, goNext, pushUndo]);
 
   const handleReject = useCallback(() => {
     if (!currentPhoto) return;
+    pushUndo({
+      type: "status",
+      photoId: currentPhoto.id,
+      prevValue: currentPhoto.status,
+      newValue: "rejected",
+    });
     updatePhoto(currentPhoto.id, {
       status: "rejected",
       ...(rejectionReasonDefault && { rejectionReason: rejectionReasonDefault })
     });
     playRejectSound();
     setTimeout(() => goNext(), 300);
-  }, [currentPhoto, updatePhoto, goNext, rejectionReasonDefault]);
+  }, [currentPhoto, updatePhoto, goNext, rejectionReasonDefault, pushUndo]);
 
   const handleFavorite = useCallback(async () => {
     if (!currentPhoto) return;
+    const prevFavorited = !!currentPhoto.favorited;
     try {
       const res = await fetch(`/api/photos/${currentPhoto.id}/favorite`, { method: "POST" });
       if (res.ok) {
@@ -990,16 +1027,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             p.id === currentPhoto.id ? { ...p, favorited: data.favorited } : p
           ),
         }));
+        pushUndo({
+          type: "favorited",
+          photoId: currentPhoto.id,
+          prevValue: prevFavorited,
+          newValue: data.favorited,
+        });
         playFavoriteSound();
       }
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
     }
-  }, [currentPhoto]);
+  }, [currentPhoto, pushUndo]);
 
   const handleColorLabel = useCallback(async (color: string | null) => {
     if (!currentPhoto) return;
     const prevColor = currentPhoto.colorLabel ?? null;
+    pushUndo({
+      type: "colorLabel",
+      photoId: currentPhoto.id,
+      prevValue: prevColor,
+      newValue: color,
+    });
     // Optimistic update
     setJob((prev) => ({
       ...prev,
@@ -1031,11 +1080,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         ),
       }));
     }
-  }, [currentPhoto]);
+  }, [currentPhoto, pushUndo]);
 
   const handleToggleFlag = useCallback(async () => {
     if (!currentPhoto) return;
-    const newFlag = !currentPhoto.flagged;
+    const prevFlag = !!currentPhoto.flagged;
+    const newFlag = !prevFlag;
     try {
       const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}`, {
         method: "PATCH",
@@ -1049,11 +1099,135 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             p.id === currentPhoto.id ? { ...p, flagged: newFlag } : p
           ),
         }));
+        pushUndo({
+          type: "flagged",
+          photoId: currentPhoto.id,
+          prevValue: prevFlag,
+          newValue: newFlag,
+        });
       }
     } catch (error) {
       console.error("Failed to toggle flag:", error);
     }
-  }, [currentPhoto, job.id]);
+  }, [currentPhoto, job.id, pushUndo]);
+
+  // Apply a value for a given undo entry type (used by undo/redo).
+  const applyUndoValue = useCallback(async (entry: UndoEntry, value: unknown) => {
+    const { type, photoId } = entry;
+    isUndoRedoRef.current = true;
+    try {
+      if (type === "status") {
+        const res = await fetch(`/api/jobs/${job.id}/photos/${photoId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: value }),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setJob((prev) => ({
+            ...prev,
+            photos: prev.photos.map((p) => (p.id === photoId ? { ...p, ...updated } : p)),
+          }));
+        }
+      } else if (type === "favorited") {
+        const current = job.photos.find((p) => p.id === photoId)?.favorited ?? false;
+        if (!!current !== !!value) {
+          const res = await fetch(`/api/photos/${photoId}/favorite`, { method: "POST" });
+          if (res.ok) {
+            const data = await res.json();
+            setJob((prev) => ({
+              ...prev,
+              photos: prev.photos.map((p) =>
+                p.id === photoId ? { ...p, favorited: data.favorited } : p
+              ),
+            }));
+          }
+        }
+      } else if (type === "flagged") {
+        const res = await fetch(`/api/jobs/${job.id}/photos/${photoId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flagged: !!value }),
+        });
+        if (res.ok) {
+          setJob((prev) => ({
+            ...prev,
+            photos: prev.photos.map((p) =>
+              p.id === photoId ? { ...p, flagged: !!value } : p
+            ),
+          }));
+        }
+      } else if (type === "colorLabel") {
+        setJob((prev) => ({
+          ...prev,
+          photos: prev.photos.map((p) =>
+            p.id === photoId ? { ...p, colorLabel: (value as string | null) } : p
+          ),
+        }));
+        await fetch(`/api/photos/${photoId}/color-label`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ color: value }),
+        });
+      } else if (type === "retouchRequest") {
+        const res = await fetch(`/api/photos/${photoId}/retouch-request`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ request: value }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setJob((prev) => ({
+            ...prev,
+            photos: prev.photos.map((p) =>
+              p.id === photoId ? { ...p, retouchRequest: data.retouchRequest ?? null } : p
+            ),
+          }));
+        }
+      }
+    } finally {
+      isUndoRedoRef.current = false;
+    }
+  }, [job.id, job.photos]);
+
+  const describeEntry = useCallback((entry: UndoEntry): string => {
+    switch (entry.type) {
+      case "status":
+        return entry.newValue === "approved" ? "Approve" : entry.newValue === "rejected" ? "Reject" : "Status change";
+      case "favorited":
+        return entry.newValue ? "Favorite" : "Unfavorite";
+      case "flagged":
+        return entry.newValue ? "Flag" : "Unflag";
+      case "colorLabel":
+        return `Color label${entry.newValue ? ` (${entry.newValue})` : " cleared"}`;
+      case "retouchRequest":
+        return entry.newValue ? "Retouch request updated" : "Retouch request cleared";
+      default:
+        return "Action";
+    }
+  }, []);
+
+  const performUndo = useCallback(async () => {
+    const entry = undoStack[undoStack.length - 1];
+    if (!entry) return;
+    setUndoStack((s) => s.slice(0, -1));
+    setRedoStack((s) => [...s, entry]);
+    await applyUndoValue(entry, entry.prevValue);
+    addToast("info", `Undone: ${describeEntry(entry)}`);
+  }, [undoStack, applyUndoValue, addToast, describeEntry]);
+
+  const performRedo = useCallback(async () => {
+    const entry = redoStack[redoStack.length - 1];
+    if (!entry) return;
+    setRedoStack((s) => s.slice(0, -1));
+    setUndoStack((s) => {
+      const next = [...s, entry];
+      if (next.length > UNDO_LIMIT) next.shift();
+      return next;
+    });
+    await applyUndoValue(entry, entry.newValue);
+    addToast("info", `Redone: ${describeEntry(entry)}`);
+  }, [redoStack, applyUndoValue, addToast, describeEntry]);
 
   const handleSetAsCover = useCallback(async () => {
     if (!currentPhoto) return;
@@ -1586,20 +1760,64 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   async function bulkRotate(degrees: number) {
     if (selectedPhotoIds.size === 0) return;
-    if (!confirm(`Rotate ${selectedPhotoIds.size} selected photos by ${degrees}°? This may take a minute.`)) return;
+    const total = selectedPhotoIds.size;
+    if (!confirm(`Rotate ${total} selected photos by ${degrees}°? This may take a minute.`)) return;
     setBulkRotating(true);
+    addToast("info", `Rotating 0/${total}...`);
     try {
-      const res = await fetch(`/api/jobs/${job.id}/photos/bulk-rotate`, {
+      const res = await fetch(`/api/jobs/${job.id}/photos/batch-rotate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [...selectedPhotoIds], degrees }),
+        body: JSON.stringify({ photoIds: [...selectedPhotoIds], degrees }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        addToast("error", data.error || "Rotate failed");
+      if (!res.ok || !res.body) {
+        let errMsg = "Rotate failed";
+        try {
+          const data = await res.json();
+          errMsg = data.error || errMsg;
+        } catch {}
+        addToast("error", errMsg);
         return;
       }
-      addToast("success", `Rotated ${data.rotated} photos${data.failed > 0 ? ` (${data.failed} failed)` : ""}`);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let rotated = 0;
+      let failed = 0;
+      let lastToastAt = 0;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const evt = JSON.parse(trimmed);
+            if (evt.type === "progress") {
+              if (evt.ok) rotated++;
+              else failed++;
+              const now = Date.now();
+              // Throttle progress toasts so we don't spam the UI
+              if (now - lastToastAt > 800 || evt.done === evt.total) {
+                lastToastAt = now;
+                addToast("info", `Rotating ${evt.done}/${evt.total}...`);
+              }
+            } else if (evt.type === "done") {
+              rotated = evt.rotated ?? rotated;
+              failed = evt.failed ?? failed;
+            }
+          } catch {
+            // Ignore malformed line
+          }
+        }
+      }
+      addToast(
+        "success",
+        `Rotated ${rotated} photos${failed > 0 ? ` (${failed} failed)` : ""}`
+      );
       setSelectedPhotoIds(new Set());
       setSelectMode(false);
       window.location.reload();
@@ -1859,6 +2077,18 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       if (shortcutsDisabled()) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
+      // Undo / Redo (Cmd+Z / Ctrl+Z, Shift for redo)
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && (e.key === "z" || e.key === "Z")) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          performRedo();
+        } else {
+          performUndo();
+        }
+        return;
+      }
+
       // Shift+F toggles fullscreen focus mode
       if (e.shiftKey && (e.key === "F" || e.key === "f") && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
@@ -2006,7 +2236,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleApprove, handleReject, handleRegenerate, handleToggleFlag, handleColorLabel, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay, focusMode]);
+  }, [handleApprove, handleReject, handleRegenerate, handleToggleFlag, handleColorLabel, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay, focusMode, performUndo, performRedo]);
 
   // Close twilight menu when clicking outside
   useEffect(() => {
@@ -2589,6 +2819,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             initialPasswordSet={job.sharePasswordSet ?? false}
           />
           <JobTimeline jobId={job.id} />
+          <button
+            type="button"
+            onClick={performUndo}
+            disabled={undoStack.length === 0}
+            title={
+              undoStack.length === 0
+                ? "Nothing to undo"
+                : `Undo ${describeEntry(undoStack[undoStack.length - 1])} (Cmd/Ctrl+Z)`
+            }
+            className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-40"
+          >
+            ⟲ Undo ({undoStack.length})
+          </button>
           {slideshowPhotos.length > 0 && (
             <button
               onClick={() => setSlideshowOpen(true)}
@@ -2722,20 +2965,20 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
               <div className="flex gap-0.5">
                 <button
-                  onClick={() => bulkRotate(-90)}
-                  disabled={bulkRotating || batching}
-                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
-                  title="Rotate selected 90° counter-clockwise"
-                >
-                  ↺
-                </button>
-                <button
                   onClick={() => bulkRotate(90)}
                   disabled={bulkRotating || batching}
                   className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
                   title="Rotate selected 90° clockwise"
                 >
-                  ↻
+                  🔄 Rotate 90°
+                </button>
+                <button
+                  onClick={() => bulkRotate(-90)}
+                  disabled={bulkRotating || batching}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
+                  title="Rotate selected 90° counter-clockwise"
+                >
+                  🔄 Rotate -90°
                 </button>
                 <button
                   onClick={() => bulkRotate(180)}
@@ -2743,7 +2986,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700 disabled:opacity-60"
                   title="Flip selected photos 180°"
                 >
-                  ↻↻
+                  🔄 Rotate 180°
                 </button>
               </div>
 
@@ -3913,6 +4156,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   initialValue={currentPhoto.retouchRequest}
                   disabled={isUpdating || enhanceLoading}
                   onSaved={(value) => {
+                    const prevValue = currentPhoto.retouchRequest ?? null;
+                    if (prevValue !== value) {
+                      pushUndo({
+                        type: "retouchRequest",
+                        photoId: currentPhoto.id,
+                        prevValue,
+                        newValue: value,
+                      });
+                    }
                     setJob((prev) => ({
                       ...prev,
                       photos: prev.photos.map((p) =>

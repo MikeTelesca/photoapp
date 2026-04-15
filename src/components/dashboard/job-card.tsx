@@ -25,6 +25,7 @@ import type { Job } from "@/lib/types";
 
 interface JobCardProps {
   job: Job;
+  density?: "compact" | "normal" | "comfortable";
 }
 
 const dotColors: Record<string, string> = {
@@ -35,10 +36,11 @@ const dotColors: Record<string, string> = {
   rejected: "bg-red-500",
 };
 
-function JobCardInternal({ job }: JobCardProps) {
+function JobCardInternal({ job, density = "normal" }: JobCardProps) {
   const [isStarting, setIsStarting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const progress = job.totalPhotos > 0 ? Math.round((job.processedPhotos / job.totalPhotos) * 100) : 0;
+  const padding = density === "compact" ? "px-5 py-2" : density === "comfortable" ? "px-5 py-5" : "px-5 py-3.5";
 
   async function handleStartProcessing(e: React.MouseEvent) {
     e.preventDefault();
@@ -99,7 +101,7 @@ function JobCardInternal({ job }: JobCardProps) {
 
   return (
     <>
-      <Wrapper className={`flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0 ${borderColor}`}>
+      <Wrapper className={`flex items-center justify-between ${padding} cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0 ${borderColor}`}>
         <div className="flex items-center gap-3">
         {job.coverPhotoUrl ? (
           <img src={job.coverPhotoUrl} alt=""

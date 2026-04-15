@@ -27,6 +27,8 @@ function getDateBucket(date: Date | string): string {
 
 const BUCKET_ORDER = ["Pinned", "Today", "Yesterday", "This week", "This month", "Older"];
 
+type Density = "compact" | "normal" | "comfortable";
+
 export function JobFilterBar({ jobs }: Props) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
@@ -40,12 +42,22 @@ export function JobFilterBar({ jobs }: Props) {
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [filterName, setFilterName] = useState("");
+  const [density, setDensity] = useState<Density>("normal");
 
   // Load groupByDate preference from localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
     const saved = localStorage.getItem("dashboard-group-by-date");
     if (saved === "false") setGroupByDate(false);
+  }, []);
+
+  // Load density preference from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("dashboard-density");
+    if (saved === "compact" || saved === "normal" || saved === "comfortable") {
+      setDensity(saved);
+    }
   }, []);
 
   // Load saved filters from localStorage
@@ -57,6 +69,11 @@ export function JobFilterBar({ jobs }: Props) {
   useEffect(() => {
     localStorage.setItem("dashboard-group-by-date", String(groupByDate));
   }, [groupByDate]);
+
+  // Save density preference to localStorage
+  useEffect(() => {
+    localStorage.setItem("dashboard-density", density);
+  }, [density]);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -348,7 +365,7 @@ export function JobFilterBar({ jobs }: Props) {
           </button>
         </div>
       )}
-      <div className="flex gap-2 px-5 py-3 border-b border-graphite-50 dark:border-graphite-800 bg-graphite-50/30 dark:bg-graphite-900/30">
+      <div className="flex gap-2 px-5 py-3 border-b border-graphite-50 dark:border-graphite-800 bg-graphite-50/30 dark:bg-graphite-900/30 items-center">
         <input
           type="text"
           value={search}
@@ -368,6 +385,15 @@ export function JobFilterBar({ jobs }: Props) {
           className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700">
           {groupByDate ? "📅 Grouped" : "📋 Flat"}
         </button>
+        <div className="flex gap-0.5 ml-auto">
+          {(["compact", "normal", "comfortable"] as Density[]).map(d => (
+            <button key={d} onClick={() => setDensity(d)}
+              className={`text-[10px] px-2 py-1 rounded ${density === d ? "bg-cyan text-white" : "border border-graphite-200 dark:border-graphite-700 text-graphite-500 dark:text-graphite-400"}`}
+              title={`${d} layout`}>
+              {d === "compact" ? "≡" : d === "normal" ? "☰" : "▤"}
+            </button>
+          ))}
+        </div>
       </div>
       {allTags.length > 0 && (
         <div className="flex gap-1 flex-wrap px-5 py-2 border-b border-graphite-50 dark:border-graphite-800">
@@ -450,7 +476,7 @@ export function JobFilterBar({ jobs }: Props) {
                     className="ml-3 mr-2 cursor-pointer"
                   />
                   <div className="flex-1">
-                    <JobCard job={job} />
+                    <JobCard job={job} density={density} />
                   </div>
                 </div>
               ))}
@@ -470,7 +496,7 @@ export function JobFilterBar({ jobs }: Props) {
               className="ml-3 mr-2 cursor-pointer"
             />
             <div className="flex-1">
-              <JobCard job={job} />
+              <JobCard job={job} density={density} />
             </div>
           </div>
         ))

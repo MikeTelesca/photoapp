@@ -137,6 +137,9 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
       updatedAt: j.updatedAt,
       coverPhotoId: j.coverPhotoId,
       coverPhotoUrl: j.coverPhotoId ? coverMap.get(j.coverPhotoId) : null,
+      clientApprovalStatus: j.clientApprovalStatus ?? null,
+      clientApprovedAt: j.clientApprovedAt,
+      clientApprovalNote: j.clientApprovalNote ?? null,
     }));
 
     // Sort by pinned status, then by priority, then by creation date

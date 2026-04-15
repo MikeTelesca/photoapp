@@ -45,6 +45,9 @@ export interface Job {
   coverPhotoUrl?: string | null;
   colorLabel?: string | null;
   lockedAt?: Date | string | null;
+  clientApprovalStatus?: string | null;
+  clientApprovedAt?: Date | string | null;
+  clientApprovalNote?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

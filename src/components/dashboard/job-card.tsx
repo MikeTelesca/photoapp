@@ -186,6 +186,36 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
           {job.clientName && (
             <div className="text-[11px] text-graphite-500 dark:text-graphite-400 mt-0.5">{job.clientName}</div>
           )}
+          {job.clientApprovalStatus === "approved" && (
+            <div className="mt-1">
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold uppercase tracking-wide"
+                title={job.clientApprovalNote || undefined}
+              >
+                Client Approved ✅
+              </span>
+              {job.clientApprovalNote && (
+                <div className="mt-1 text-[10px] text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 border-l-2 border-emerald-400 px-2 py-1 rounded max-w-md whitespace-pre-wrap">
+                  “{job.clientApprovalNote}”
+                </div>
+              )}
+            </div>
+          )}
+          {job.clientApprovalStatus === "changes_requested" && (
+            <div className="mt-1">
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wide"
+                title={job.clientApprovalNote || undefined}
+              >
+                Changes Requested 📝
+              </span>
+              {job.clientApprovalNote && (
+                <div className="mt-1 text-[10px] text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 border-l-2 border-amber-400 px-2 py-1 rounded max-w-md whitespace-pre-wrap">
+                  “{job.clientApprovalNote}”
+                </div>
+              )}
+            </div>
+          )}
           {job.tags && (
             <div className="flex gap-1 mt-1 items-center">
               {job.tags.split(",").map((t: string) => t.trim()).filter(Boolean).map((tag: string) => {

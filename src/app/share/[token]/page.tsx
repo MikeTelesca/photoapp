@@ -7,6 +7,7 @@ import { CommentForm } from "@/components/share/comment-form";
 import { StarRating } from "@/components/share/star-rating";
 import { PasswordGate } from "@/components/share/password-gate";
 import { ShareContactForm } from "@/components/share/contact-form";
+import { ApprovalForm } from "@/components/share/approval-form";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +202,11 @@ export default async function SharePage({
           </div>
         )}
       </main>
+
+      {/* Client approval section */}
+      {photosWithReactions.length > 0 && (
+        <ApprovalForm token={token} initialStatus={job.clientApprovalStatus} />
+      )}
 
       {/* Footer */}
       <footer className="text-center py-8 text-xs text-graphite-400">

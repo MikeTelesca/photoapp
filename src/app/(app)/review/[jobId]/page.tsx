@@ -36,6 +36,9 @@ export default async function ReviewPage({
     shareViewCount: job.shareViewCount,
     shareLastViewedAt: job.shareLastViewedAt?.toISOString() ?? null,
     sharePasswordSet: !!(job.sharePasswordHash || job.sharePassword),
+    clientApprovalStatus: job.clientApprovalStatus ?? null,
+    clientApprovedAt: job.clientApprovedAt?.toISOString() ?? null,
+    clientApprovalNote: job.clientApprovalNote ?? null,
     photos: job.photos.map((p) => ({
       ...p,
       createdAt: p.createdAt.toISOString(),

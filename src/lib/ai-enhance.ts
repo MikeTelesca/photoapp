@@ -119,24 +119,13 @@ export async function enhancePhoto(
   customInstructions?: string | null
 ): Promise<EnhanceResult> {
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-pro-image-preview",
-      generationConfig: {
-        responseModalities: ["image", "text"],
-        imageConfig: {
-          imageSize: "4K",
-        },
-      } as Record<string, unknown>,
-    });
-
     // Use preset prompt, or fall back to standard
     let basePrompt = presetPrompts[preset] || presetPrompts.standard;
     let extraInstructions = customInstructions;
 
-    // If it's a custom preset not in our hardcoded list, use the custom instructions as the base
     if (!presetPrompts[preset] && customInstructions) {
       basePrompt = customInstructions;
-      extraInstructions = null; // Don't append it twice
+      extraInstructions = null;
     }
 
     const prompt = extraInstructions
@@ -145,58 +134,85 @@ export async function enhancePhoto(
 
     const imageBase64 = imageBuffer.toString("base64");
 
-    // Retry on 503/overload errors with exponential backoff
-    let result;
+    // Direct API call to ensure imageConfig.imageSize is sent (SDK strips it)
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
+    if (!apiKey) throw new Error("GOOGLE_AI_API_KEY not set");
+
+    const requestBody = {
+      contents: [{
+        parts: [
+          { inlineData: { mimeType, data: imageBase64 } },
+          { text: prompt },
+        ],
+      }],
+      generationConfig: {
+        responseModalities: ["IMAGE", "TEXT"],
+        imageConfig: {
+          imageSize: "4K",
+        },
+      },
+    };
+
+    let responseData: any = null;
     let lastErr: any;
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
-        result = await model.generateContent([
-          { inlineData: { mimeType, data: imageBase64 } },
-          prompt,
-        ]);
+        const apiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+          }
+        );
+
+        if (!apiResponse.ok) {
+          const errText = await apiResponse.text();
+          const status = apiResponse.status;
+          const isRetryable = status === 503 || status === 429 || status >= 500;
+          if (!isRetryable || attempt === 3) {
+            throw new Error(`Gemini API ${status}: ${errText.substring(0, 300)}`);
+          }
+          const waitMs = 2000 * Math.pow(2, attempt);
+          console.log(`[gemini] ${status} retry ${attempt + 1}/4, waiting ${waitMs}ms`);
+          await new Promise(r => setTimeout(r, waitMs));
+          continue;
+        }
+
+        responseData = await apiResponse.json();
         break;
       } catch (err: any) {
         lastErr = err;
-        const msg = err?.message || "";
-        const isRetryable = msg.includes("503") || msg.includes("overload") || msg.includes("UNAVAILABLE") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("429");
-        if (!isRetryable || attempt === 3) throw err;
+        if (attempt === 3) throw err;
         const waitMs = 2000 * Math.pow(2, attempt);
-        console.log(`[gemini] Retryable error (attempt ${attempt + 1}/4), waiting ${waitMs}ms: ${msg.substring(0, 100)}`);
         await new Promise(r => setTimeout(r, waitMs));
       }
     }
-    if (!result) throw lastErr;
 
-    const response = result.response;
-    const candidates = response.candidates;
+    if (!responseData) throw lastErr || new Error("No response");
 
+    const candidates = responseData.candidates;
     if (!candidates || candidates.length === 0) {
       return { success: false, imageBase64: null, mimeType: "", error: "No response from Gemini" };
     }
 
-    // Look for image parts in the response
     for (const part of candidates[0].content.parts) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const partAny = part as any;
-      if (partAny.inlineData) {
+      if (part.inlineData) {
         return {
           success: true,
-          imageBase64: partAny.inlineData.data as string,
-          mimeType: (partAny.inlineData.mimeType as string) || "image/png",
+          imageBase64: part.inlineData.data,
+          mimeType: part.inlineData.mimeType || "image/png",
           error: null,
         };
       }
     }
 
-    // No image in response — might have returned text only
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const textPart = candidates[0].content.parts.find((p: any) => p.text);
     return {
       success: false,
       imageBase64: null,
       mimeType: "",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      error: `Gemini returned text instead of image: ${(textPart as any)?.text?.substring(0, 200) || "unknown"}`,
+      error: `Gemini returned text instead of image: ${textPart?.text?.substring(0, 200) || "unknown"}`,
     };
   } catch (error: unknown) {
     const err = error as Error;
@@ -223,7 +239,7 @@ export async function convertToTwilight(
     const model = genAI.getGenerativeModel({
       model: "gemini-3-pro-image-preview",
       generationConfig: {
-        responseModalities: ["image", "text"],
+        responseModalities: ["IMAGE", "TEXT"],
         imageConfig: {
           imageSize: "4K",
         },

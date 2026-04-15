@@ -15,6 +15,7 @@ import { sendEmail, jobCompleteTemplate } from "@/lib/email";
 import { sendWebhook } from "@/lib/webhook";
 import { notify, shouldNotify } from "@/lib/notify";
 import { sendPushNotification } from "@/lib/push";
+import { applySubject } from "@/lib/email-subject";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -130,13 +131,19 @@ export async function POST(
         try {
           const emailUser = await prisma.user.findUnique({
             where: { id: updatedJob.photographerId },
-            select: { email: true, emailNotifications: true, emailSignature: true },
+            select: { email: true, emailNotifications: true, emailSignature: true, jobReadyEmailSubject: true },
           });
           if (emailUser?.email && emailUser?.emailNotifications) {
             const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
+            const subjectTemplate = emailUser.jobReadyEmailSubject || "Ready for review: {address}";
+            const subject = applySubject(subjectTemplate, {
+              address: updatedJob.address,
+              client: updatedJob.clientName || undefined,
+              count: updatedJob.totalPhotos,
+            });
             await sendEmail({
               to: emailUser.email,
-              subject: `Ready for review: ${updatedJob.address}`,
+              subject,
               html: jobCompleteTemplate({
                 address: updatedJob.address,
                 photoCount: updatedJob.totalPhotos,

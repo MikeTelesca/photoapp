@@ -30,6 +30,7 @@ import { BackupRestore } from "@/components/settings/backup-restore";
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { FilenamePatternForm } from "@/components/settings/filename-pattern-form";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
+import { EmailSubjectForm } from "@/components/settings/email-subject-form";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,8 @@ export default async function SettingsPage() {
   let emailSignature: string | null = null;
   let autoArchiveDays: number | null = null;
   let filenamePattern: string | null = null;
+  let shareEmailSubject: string | null = null;
+  let jobReadyEmailSubject: string | null = null;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -87,6 +90,8 @@ export default async function SettingsPage() {
         emailSignature: true,
         autoArchiveDays: true,
         filenamePattern: true,
+        shareEmailSubject: true,
+        jobReadyEmailSubject: true,
       },
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
@@ -104,6 +109,8 @@ export default async function SettingsPage() {
     emailSignature = user?.emailSignature ?? null;
     autoArchiveDays = user?.autoArchiveDays ?? null;
     filenamePattern = user?.filenamePattern ?? null;
+    shareEmailSubject = user?.shareEmailSubject ?? null;
+    jobReadyEmailSubject = user?.jobReadyEmailSubject ?? null;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -422,6 +429,19 @@ export default async function SettingsPage() {
           </CardHeader>
           <div className="p-4">
             <EmailSignatureForm initial={emailSignature} />
+          </div>
+        </Card>
+
+        {/* Email Subject Lines */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Email subjects</CardTitle>
+          </CardHeader>
+          <div className="p-4">
+            <EmailSubjectForm
+              initialShareSubject={shareEmailSubject}
+              initialJobReadySubject={jobReadyEmailSubject}
+            />
           </div>
         </Card>
 

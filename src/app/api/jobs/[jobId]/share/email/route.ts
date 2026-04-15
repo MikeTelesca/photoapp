@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import { sendEmail, shareLinkTemplate } from "@/lib/email";
+import { applySubject } from "@/lib/email-subject";
 
 export async function POST(
   request: NextRequest,
@@ -35,7 +36,7 @@ export async function POST(
 
   const user = await prisma.user.findUnique({
     where: { id: (job as any).photographerId },
-    select: { name: true, email: true, emailSignature: true },
+    select: { name: true, email: true, emailSignature: true, shareEmailSubject: true },
   });
   const photographerName = user?.name || user?.email || "ATH Media";
 
@@ -44,6 +45,15 @@ export async function POST(
 
   const approvedCount = await prisma.photo.count({
     where: { jobId, status: "approved" },
+  });
+
+  // Apply customizable subject template
+  const subjectTemplate = user?.shareEmailSubject || "Photos ready: {address}";
+  const subject = applySubject(subjectTemplate, {
+    address: job.address,
+    client: (job as any).clientName || undefined,
+    photographer: photographerName,
+    count: approvedCount,
   });
 
   // Send to each recipient and track successes
@@ -63,7 +73,7 @@ export async function POST(
 
     const ok = await sendEmail({
       to: recipient,
-      subject: `Photos ready: ${job.address}`,
+      subject,
       html: shareLinkTemplate({
         photographerName,
         address: job.address,

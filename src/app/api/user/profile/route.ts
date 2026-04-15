@@ -32,6 +32,8 @@ export async function PATCH(request: NextRequest) {
     autoArchiveDays,
     promptPrefix,
     filenamePattern,
+    shareEmailSubject,
+    jobReadyEmailSubject,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -94,6 +96,14 @@ export async function PATCH(request: NextRequest) {
 
   if (filenamePattern !== undefined) {
     updateData.filenamePattern = filenamePattern?.trim() || "{address}-{seq}";
+  }
+
+  if (shareEmailSubject !== undefined) {
+    updateData.shareEmailSubject = shareEmailSubject?.trim() || null;
+  }
+
+  if (jobReadyEmailSubject !== undefined) {
+    updateData.jobReadyEmailSubject = jobReadyEmailSubject?.trim() || null;
   }
 
   if (Object.keys(updateData).length === 0) {

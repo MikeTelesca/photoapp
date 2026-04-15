@@ -41,6 +41,8 @@ model User {
   autoArchiveDays   Int?      // null = disabled; otherwise days
   promptPrefix      String?   // Custom prompt prefix prepended to all enhance prompts
   filenamePattern   String   @default("{address}-{seq}") // Download filename pattern
+  shareEmailSubject String?   // override for share link emails
+  jobReadyEmailSubject String? // override for job-complete emails
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]

@@ -247,6 +247,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [savingOverride, setSavingOverride] = useState(false);
   const [overrideSaved, setOverrideSaved] = useState(false);
 
+  // Per-photo custom prompt override state
+  const [photoOverride, setPhotoOverride] = useState("");
+  const [savingPhotoOverride, setSavingPhotoOverride] = useState(false);
+
   // Swipe hint state
   const [showSwipeHint, setShowSwipeHint] = useState(false);
 
@@ -526,6 +530,22 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function savePhotoOverride() {
+    if (!currentPhoto) return;
+    setSavingPhotoOverride(true);
+    try {
+      await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customPromptOverride: photoOverride.trim() || null }),
+      });
+    } catch (e: any) {
+      addToast("error", e.message || "Failed to save per-photo instructions");
+    } finally {
+      setSavingPhotoOverride(false);
+    }
+  }
+
   async function runCompare() {
     if (!currentPhoto) return;
     setComparing(true);
@@ -549,14 +569,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const photos = job.photos;
   const currentPhoto = photos[currentIndex];
 
-  // Pre-populate custom instruction from saved photo value when navigating
+  // Pre-populate custom instruction and photo override from saved photo value when navigating
   useEffect(() => {
     if (currentPhoto?.customInstructions) {
       setCustomInstruction(currentPhoto.customInstructions);
     } else {
       setCustomInstruction("");
     }
-  }, [currentPhoto?.id, currentPhoto?.customInstructions]);
+    if (currentPhoto?.customPromptOverride) {
+      setPhotoOverride(currentPhoto.customPromptOverride);
+    } else {
+      setPhotoOverride("");
+    }
+  }, [currentPhoto?.id, currentPhoto?.customInstructions, currentPhoto?.customPromptOverride]);
 
   // Persist zoom level to sessionStorage; reset pan when zoom returns to 1
   useEffect(() => {
@@ -2082,6 +2107,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 {savingOverride ? "Saving..." : "Save"}
               </button>
             </div>
+          </div>
+        </div>
+      </details>
+
+      {/* Per-photo custom prompt override */}
+      <details className="text-sm bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-700 px-7 py-3">
+        <summary className="cursor-pointer text-xs text-graphite-500 dark:text-graphite-400 hover:text-cyan font-semibold">
+          🎯 Per-photo instructions {photoOverride ? "(set)" : ""}
+        </summary>
+        <div className="mt-2 space-y-2">
+          <textarea
+            value={photoOverride}
+            onChange={(e) => setPhotoOverride(e.target.value)}
+            onBlur={savePhotoOverride}
+            rows={2}
+            placeholder="Special instructions for THIS photo only"
+            className="w-full text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
+          />
+          <div className="text-[10px] text-graphite-400">
+            Auto-saves on blur. Applied during re-enhance (overrides job-level).
           </div>
         </div>
       </details>

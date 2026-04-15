@@ -92,9 +92,12 @@ export async function POST(
       }, { status: 402 });
     }
 
+    // Per-photo preset override takes precedence over job.preset
+    const effectivePreset = photo.presetOverride || job.preset;
+
     // Always check database for preset prompt - this lets users edit prompts in the UI
     let customPresetPrompt: string | null = null;
-    const dbPreset = await prisma.preset.findFirst({ where: { slug: job.preset } });
+    const dbPreset = await prisma.preset.findFirst({ where: { slug: effectivePreset } });
     if (dbPreset?.promptModifiers && dbPreset.promptModifiers.trim().length > 0) {
       customPresetPrompt = dbPreset.promptModifiers;
     }
@@ -198,7 +201,7 @@ export async function POST(
       if (customInstructions) additionalInstructions.push(customInstructions);
       const combinedInstructions = additionalInstructions.join("\n");
 
-      result = await enhancePhoto(bracketBuffers, mimeType, job.preset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions, job.seasonalStyle, user?.promptPrefix);
+      result = await enhancePhoto(bracketBuffers, mimeType, effectivePreset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions, job.seasonalStyle, user?.promptPrefix);
     }
 
     if (!result.success) {
@@ -289,7 +292,7 @@ export async function POST(
         data: {
           photoId: photo.id,
           url: photo.editedUrl,
-          preset: job.preset,
+          preset: effectivePreset,
         },
       }).catch(err => console.error("version save err:", err));
     }

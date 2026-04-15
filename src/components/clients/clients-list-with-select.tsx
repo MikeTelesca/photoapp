@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Sparkline } from "@/components/clients/sparkline";
 
 interface Client {
   id: string;
@@ -10,6 +11,7 @@ interface Client {
   phone?: string | null;
   company?: string | null;
   _count?: { jobs: number };
+  sparkline?: number[];
 }
 
 export function ClientsListWithSelect({ clients }: { clients: Client[] }) {
@@ -76,8 +78,16 @@ export function ClientsListWithSelect({ clients }: { clients: Client[] }) {
                   {[c.company, c.email, c.phone].filter(Boolean).join(" · ")}
                 </div>
               </div>
-              <div className="text-xs text-graphite-400">
-                {c._count?.jobs || 0} {c._count?.jobs === 1 ? "job" : "jobs"}
+              <div className="flex items-center gap-3">
+                {c.sparkline && (
+                  <Sparkline
+                    values={c.sparkline}
+                    className="text-cyan shrink-0"
+                  />
+                )}
+                <div className="text-xs text-graphite-400">
+                  {c._count?.jobs || 0} {c._count?.jobs === 1 ? "job" : "jobs"}
+                </div>
               </div>
             </Link>
           </li>

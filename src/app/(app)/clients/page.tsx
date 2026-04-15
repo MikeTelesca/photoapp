@@ -9,6 +9,12 @@ import { ClientsListWithSelect } from "@/components/clients/clients-list-with-se
 
 export const dynamic = "force-dynamic";
 
+const SPARK_DAYS = 30;
+
+function emptySeries() {
+  return Array<number>(SPARK_DAYS).fill(0);
+}
+
 export default async function ClientsPage() {
   const session = await auth();
   if (!session?.user?.id) return null;
@@ -20,6 +26,7 @@ export default async function ClientsPage() {
     phone: string | null;
     company: string | null;
     _count: { jobs: number };
+    sparkline?: number[];
   }> = [];
 
   try {
@@ -31,6 +38,54 @@ export default async function ClientsPage() {
     });
   } catch {
     // Table may not exist in prod yet — show empty state
+  }
+
+  // Build a 30-day photo sparkline per client via a single aggregate query.
+  if (clients.length > 0) {
+    const now = new Date();
+    // Zero out to midnight UTC for stable bucket boundaries.
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const since = new Date(today);
+    since.setUTCDate(since.getUTCDate() - (SPARK_DAYS - 1));
+
+    const clientIds = clients.map(c => c.id);
+
+    try {
+      // Group jobs by client + created-at day, summing totalPhotos.
+      // Using Prisma's groupBy on date requires truncation, so use $queryRaw.
+      const rows = await (prisma as any).$queryRaw<
+        Array<{ clientId: string; day: Date; photos: bigint | number }>
+      >`
+        SELECT "clientId",
+               date_trunc('day', "createdAt") AS day,
+               SUM("totalPhotos")::bigint AS photos
+        FROM "Job"
+        WHERE "clientId" = ANY(${clientIds}::text[])
+          AND "createdAt" >= ${since}
+        GROUP BY "clientId", date_trunc('day', "createdAt")
+      `;
+
+      const byClient = new Map<string, number[]>();
+      for (const c of clients) byClient.set(c.id, emptySeries());
+
+      for (const r of rows) {
+        if (!r.clientId) continue;
+        const series = byClient.get(r.clientId);
+        if (!series) continue;
+        const day = new Date(r.day);
+        const dayUtc = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate());
+        const sinceUtc = since.getTime();
+        const idx = Math.floor((dayUtc - sinceUtc) / (1000 * 60 * 60 * 24));
+        if (idx >= 0 && idx < SPARK_DAYS) {
+          series[idx] += Number(r.photos) || 0;
+        }
+      }
+
+      clients = clients.map(c => ({ ...c, sparkline: byClient.get(c.id) ?? emptySeries() }));
+    } catch {
+      // If the aggregate fails (e.g. missing table), fall back to empty sparklines.
+      clients = clients.map(c => ({ ...c, sparkline: emptySeries() }));
+    }
   }
 
   return (

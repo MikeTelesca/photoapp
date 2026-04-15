@@ -46,6 +46,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         }
 
+        // Record login attempt
+        try {
+          await prisma.loginRecord.create({
+            data: { userId: user.id },
+          });
+        } catch (err) {
+          console.error("[login-record] failed:", err);
+        }
+
         return {
           id: user.id,
           name: user.name,

@@ -116,6 +116,19 @@ export default async function SettingsPage() {
           </div>
         </Card>
 
+        {/* Sessions */}
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 dark:text-white">Sessions</h2>
+            <p className="text-xs text-graphite-500 dark:text-graphite-400 mb-2">
+              Review your recent sign-in activity.
+            </p>
+            <a href="/settings/sessions" className="text-xs text-cyan hover:underline">
+              View recent sign-ins →
+            </a>
+          </div>
+        </Card>
+
         {/* Connected Services */}
         <Card>
           <CardHeader>

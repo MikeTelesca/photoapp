@@ -34,6 +34,18 @@ model User {
   jobTemplates       JobTemplate[]
   clients            Client[]
   passwordResetTokens PasswordResetToken[]
+  loginRecords       LoginRecord[]
+}
+
+model LoginRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model Client {

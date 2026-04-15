@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 
 export default function HealthPage() {
   const [data, setData] = useState<any>(null);
+  const [storage, setStorage] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -26,6 +27,10 @@ export default function HealthPage() {
     load();
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/storage").then(r => r.json()).then(setStorage).catch(() => {});
   }, []);
 
   const checks = data?.checks || {};
@@ -99,6 +104,46 @@ export default function HealthPage() {
                 >
                   Run stuck recovery now
                 </button>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {storage && (
+          <Card>
+            <div className="p-4">
+              <h2 className="text-sm font-semibold mb-3 dark:text-white">Storage usage</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+                <Stat label="Total photos" value={storage.totals.photos} />
+                <Stat label="Active jobs" value={storage.totals.activeJobs} />
+                <Stat label="Archived jobs" value={storage.totals.archivedJobs} />
+                <Stat label="Deleted jobs" value={storage.totals.deletedJobs} />
+              </div>
+
+              {storage.topUsers && storage.topUsers.length > 0 && (
+                <>
+                  <h3 className="text-xs font-semibold mb-2 text-graphite-500 dark:text-graphite-400 uppercase tracking-wide">Top users by photo count</h3>
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-graphite-400 border-b border-graphite-100 dark:border-graphite-800">
+                      <tr>
+                        <th className="text-left py-2">User</th>
+                        <th className="text-right">Jobs</th>
+                        <th className="text-right">Photos</th>
+                        <th className="text-right">Spend</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {storage.topUsers.map((u: any) => (
+                        <tr key={u.id} className="border-b border-graphite-50 dark:border-graphite-800">
+                          <td className="py-2 dark:text-white">{u.name}</td>
+                          <td className="text-right">{u.jobCount}</td>
+                          <td className="text-right">{u.photoCount}</td>
+                          <td className="text-right">${u.totalCost.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
             </div>
           </Card>

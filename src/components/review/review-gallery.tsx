@@ -1583,6 +1583,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                         {photo.isFavorite && (
                           <div className="absolute top-1 right-1 text-amber-400 text-sm drop-shadow">★</div>
                         )}
+                        {photo.note && (
+                          <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-400 drop-shadow" title="Has note" />
+                        )}
                         {photo.qualityFlags && (() => {
                           try {
                             const f = JSON.parse(photo.qualityFlags);
@@ -1803,6 +1806,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {currentPhoto && (
             <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-3">
               <ExifPanel exifData={currentPhoto.exifData} />
+            </div>
+          )}
+
+          {/* Photo Note */}
+          {currentPhoto && (
+            <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
+              <PhotoNote jobId={job.id} photoId={currentPhoto.id} initialNote={currentPhoto.note} />
             </div>
           )}
 

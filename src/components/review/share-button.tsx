@@ -160,6 +160,14 @@ export function ShareButton({
         >
           {copied ? "Copied!" : "Copy link"}
         </button>
+        <a
+          href={`/share/${token}?preview=1`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+        >
+          👁 Preview as client
+        </a>
         <button
           onClick={() => setEmailOpen(true)}
           className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold hover:bg-cyan-600"

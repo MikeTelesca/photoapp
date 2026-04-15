@@ -116,6 +116,9 @@ export async function enhancePhoto(
       model: "gemini-3-pro-image-preview",
       generationConfig: {
         responseModalities: ["image", "text"],
+        imageConfig: {
+          imageSize: "4K",
+        },
       } as Record<string, unknown>,
     });
 
@@ -202,6 +205,9 @@ export async function convertToTwilight(
       model: "gemini-3-pro-image-preview",
       generationConfig: {
         responseModalities: ["image", "text"],
+        imageConfig: {
+          imageSize: "4K",
+        },
       } as Record<string, unknown>,
     });
 

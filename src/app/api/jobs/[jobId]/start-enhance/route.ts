@@ -160,7 +160,7 @@ export async function POST(
       return NextResponse.json({ error: result.error, photoId: photo.id });
     }
 
-    // Upload edited image to Dropbox
+    // Upload edited image to Dropbox - Nano Banana Pro returns 4K natively
     const outputBuffer = Buffer.from(result.imageBase64!, "base64");
     const sanitizedAddress = job.address.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 40);
     const editedFileName = `photo_${photo.orderIndex + 1}.jpg`;

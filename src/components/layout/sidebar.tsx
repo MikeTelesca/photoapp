@@ -53,6 +53,7 @@ const settingsItems = [
   { label: "Users", href: "/admin/users", icon: UsersIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
+  { label: "Feature Flags", href: "/admin/flags", icon: AdjustmentsHorizontalIcon },
   { label: "Announcements", href: "/admin/announcements", icon: MegaphoneIcon },
   { label: "Errors", href: "/admin/errors", icon: ExclamationTriangleIcon },
   { label: "Health", href: "/admin/health", icon: HeartIcon },

@@ -19,7 +19,7 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
   }
 }
 
-export function welcomeTemplate(opts: { name: string; loginUrl: string }) {
+export function welcomeTemplate(opts: { name: string; loginUrl: string; signature?: string }) {
   return `
     <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
       <h1 style="color: #111; font-size: 28px;">Welcome to ATH AI Editor, ${escapeHtml(opts.name)} 👋</h1>
@@ -41,15 +41,19 @@ export function welcomeTemplate(opts: { name: string; loginUrl: string }) {
         <li>Share a preview link with your realtor client — no login required for them</li>
         <li>Settings → Keyboard shortcuts to rebind for your workflow</li>
       </ul>
-      <p style="color: #999; font-size: 13px; margin-top: 40px;">
+      ${opts.signature ? `
+        <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; color: #555; font-size: 13px; white-space: pre-wrap;">
+          ${escapeHtml(opts.signature)}
+        </div>
+      ` : `<p style="color: #999; font-size: 13px; margin-top: 40px;">
         Questions? Reply to this email or visit the Help page. We read every message.<br>
         — ATH Media
-      </p>
+      </p>`}
     </div>
   `;
 }
 
-export function jobCompleteTemplate(opts: { address: string; photoCount: number; jobUrl: string }) {
+export function jobCompleteTemplate(opts: { address: string; photoCount: number; jobUrl: string; signature?: string }) {
   return `
     <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
       <h1 style="color: #111; font-size: 24px;">Your job is ready for review</h1>
@@ -57,7 +61,11 @@ export function jobCompleteTemplate(opts: { address: string; photoCount: number;
         We've finished enhancing <strong>${opts.photoCount}</strong> photos for <strong>${opts.address}</strong>.
       </p>
       <a href="${opts.jobUrl}" style="display: inline-block; margin-top: 24px; padding: 12px 24px; background: #06b6d4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Review photos</a>
-      <p style="color: #999; font-size: 13px; margin-top: 40px;">ATH Media · AI Photo Editor</p>
+      ${opts.signature ? `
+        <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; color: #555; font-size: 13px; white-space: pre-wrap;">
+          ${escapeHtml(opts.signature)}
+        </div>
+      ` : `<p style="color: #999; font-size: 13px; margin-top: 40px;">ATH Media · AI Photo Editor</p>`}
     </div>
   `;
 }
@@ -72,6 +80,7 @@ export interface WeeklyDigestData {
   totalCost: number;
   topAddress?: string;
   dashboardUrl: string;
+  signature?: string;
 }
 
 export function weeklyDigestTemplate(data: WeeklyDigestData) {
@@ -105,9 +114,13 @@ export function weeklyDigestTemplate(data: WeeklyDigestData) {
         <a href="${data.dashboardUrl}" style="display: inline-block; padding: 12px 24px; background: #06b6d4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Open dashboard</a>
       </p>
 
-      <p style="color: #999; font-size: 12px; margin-top: 40px;">
+      ${data.signature ? `
+        <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; color: #555; font-size: 13px; white-space: pre-wrap;">
+          ${escapeHtml(data.signature)}
+        </div>
+      ` : `<p style="color: #999; font-size: 12px; margin-top: 40px;">
         You can turn this digest off in Settings → Notifications.
-      </p>
+      </p>`}
     </div>
   `;
 }
@@ -119,6 +132,7 @@ export function shareLinkTemplate(opts: {
   shareUrl: string;
   password?: string;
   personalMessage?: string;
+  signature?: string;
 }) {
   return `
     <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
@@ -140,9 +154,13 @@ export function shareLinkTemplate(opts: {
           <strong>Password:</strong> <span style="font-family: monospace; background: #f5f5f5; padding: 2px 8px; border-radius: 4px;">${escapeHtml(opts.password)}</span>
         </p>
       ` : ""}
-      <p style="color: #999; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+      ${opts.signature ? `
+        <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; color: #555; font-size: 13px; white-space: pre-wrap;">
+          ${escapeHtml(opts.signature)}
+        </div>
+      ` : `<p style="color: #999; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
         This link gives view-only access to the photos. If you have questions, reply to this email to contact ${escapeHtml(opts.photographerName)} directly.
-      </p>
+      </p>`}
     </div>
   `;
 }

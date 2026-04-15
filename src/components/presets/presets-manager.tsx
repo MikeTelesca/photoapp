@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PaintBrushIcon, PlusIcon, TrashIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { ForkPresetButton } from "./fork-preset-button";
+import { PromptLinter } from "./prompt-linter";
 
 interface Preset {
   id: string;
@@ -18,6 +19,8 @@ interface Preset {
 export function PresetsManager({ initialPresets }: { initialPresets: Preset[] }) {
   const [presets, setPresets] = useState(initialPresets);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDesc, setEditingDesc] = useState("");
+  const [editingPrompt, setEditingPrompt] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -199,11 +202,9 @@ export function PresetsManager({ initialPresets }: { initialPresets: Preset[] })
                     variant="approve"
                     className="text-xs"
                     onClick={() => {
-                      const textarea = document.getElementById(`prompt-${preset.id}`) as HTMLTextAreaElement;
-                      const descInput = document.getElementById(`desc-${preset.id}`) as HTMLInputElement;
                       handleSave(preset.id, {
-                        promptModifiers: textarea?.value || preset.promptModifiers,
-                        description: descInput?.value || preset.description,
+                        promptModifiers: editingPrompt,
+                        description: editingDesc,
                       });
                     }}
                     disabled={saving}
@@ -211,7 +212,15 @@ export function PresetsManager({ initialPresets }: { initialPresets: Preset[] })
                     Save
                   </Button>
                 ) : (
-                  <Button variant="outline" className="text-xs" onClick={() => setEditingId(preset.id)}>
+                  <Button
+                    variant="outline"
+                    className="text-xs"
+                    onClick={() => {
+                      setEditingId(preset.id);
+                      setEditingDesc(preset.description);
+                      setEditingPrompt(preset.promptModifiers);
+                    }}
+                  >
                     Edit
                   </Button>
                 )}
@@ -243,18 +252,19 @@ export function PresetsManager({ initialPresets }: { initialPresets: Preset[] })
             {editingId === preset.id ? (
               <div className="space-y-3">
                 <input
-                  id={`desc-${preset.id}`}
-                  defaultValue={preset.description}
+                  value={editingDesc}
+                  onChange={(e) => setEditingDesc(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm text-graphite-900 focus:outline-none focus:border-cyan"
                   placeholder="Short description"
                 />
                 <textarea
-                  id={`prompt-${preset.id}`}
-                  defaultValue={preset.promptModifiers}
+                  value={editingPrompt}
+                  onChange={(e) => setEditingPrompt(e.target.value)}
                   rows={6}
                   className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm text-graphite-900 font-mono focus:outline-none focus:border-cyan"
                   placeholder="AI prompt modifiers..."
                 />
+                <PromptLinter text={editingPrompt} />
               </div>
             ) : (
               <div className="bg-graphite-50 rounded-lg p-3 mt-2">
@@ -299,6 +309,7 @@ export function PresetsManager({ initialPresets }: { initialPresets: Preset[] })
               className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm font-mono focus:outline-none focus:border-cyan"
               placeholder="AI prompt modifiers..."
             />
+            <PromptLinter text={newPrompt} />
             <div className="flex gap-2">
               <Button onClick={handleCreate} disabled={saving || !newName.trim()}>
                 {saving ? "Creating..." : "Create Preset"}

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
+import { PromptLinter } from "@/components/presets/prompt-linter";
 
 export default function PlaygroundPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -60,6 +61,7 @@ export default function PlaygroundPage() {
               <label className="block text-xs font-semibold mb-1 dark:text-white">2. Write your prompt</label>
               <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={6}
                 className="w-full text-sm p-3 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white font-mono" />
+              <PromptLinter text={prompt} />
             </div>
             <div className="flex gap-2 items-center">
               <button onClick={run} disabled={!file || !prompt || running}

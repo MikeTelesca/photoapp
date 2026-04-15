@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
 
   const users = await prisma.user.findMany({
     where: { weeklyDigest: true },
+    select: { id: true, name: true, email: true, emailSignature: true },
   });
 
   let sent = 0;
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
           totalCost,
           topAddress,
           dashboardUrl: `${baseUrl}/dashboard`,
+          signature: user.emailSignature || undefined,
         }),
       });
 

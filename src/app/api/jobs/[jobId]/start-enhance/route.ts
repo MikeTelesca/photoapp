@@ -123,7 +123,10 @@ export async function POST(
         if (allowed) {
           // Send email notification if enabled
         try {
-          const user = await prisma.user.findUnique({ where: { id: updatedJob.photographerId } });
+          const user = await prisma.user.findUnique({
+            where: { id: updatedJob.photographerId },
+            select: { email: true, emailNotifications: true, emailSignature: true },
+          });
           if (user?.email && user?.emailNotifications) {
             const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
             await sendEmail({
@@ -133,6 +136,7 @@ export async function POST(
                 address: updatedJob.address,
                 photoCount: updatedJob.totalPhotos,
                 jobUrl: `${baseUrl}/review/${updatedJob.id}`,
+                signature: user.emailSignature || undefined,
               }),
             });
           }

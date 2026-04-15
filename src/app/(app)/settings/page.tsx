@@ -21,6 +21,7 @@ import { NotificationPrefs } from "@/components/settings/notification-prefs";
 import { TimezonePicker } from "@/components/settings/timezone-picker";
 import { SoundToggle } from "@/components/settings/sound-toggle";
 import { BudgetInput } from "@/components/settings/budget-input";
+import { EmailSignatureForm } from "@/components/settings/email-signature-form";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,7 @@ export default async function SettingsPage() {
   let watermarkLogoPath: string | null = null;
   let userTimezone: string | null = null;
   let budgetPerJob = 20;
+  let emailSignature: string | null = null;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -68,6 +70,7 @@ export default async function SettingsPage() {
         watermarkLogoPath: true,
         timezone: true,
         budgetPerJob: true,
+        emailSignature: true,
       },
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
@@ -80,6 +83,7 @@ export default async function SettingsPage() {
     watermarkLogoPath = user?.watermarkLogoPath ?? null;
     userTimezone = user?.timezone ?? null;
     budgetPerJob = user?.budgetPerJob ?? 20;
+    emailSignature = user?.emailSignature ?? null;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -328,6 +332,16 @@ export default async function SettingsPage() {
               initialInvoiceRate={invoiceSettings.invoiceRate}
               initialInvoicePrefix={invoiceSettings.invoicePrefix}
             />
+          </div>
+        </Card>
+
+        {/* Email Signature */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Email signature</CardTitle>
+          </CardHeader>
+          <div className="p-4">
+            <EmailSignatureForm initial={emailSignature} />
           </div>
         </Card>
 

@@ -24,7 +24,10 @@ export async function POST(
     return NextResponse.json({ error: "Share link not enabled for this job" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: (job as any).photographerId } });
+  const user = await prisma.user.findUnique({
+    where: { id: (job as any).photographerId },
+    select: { name: true, email: true, emailSignature: true },
+  });
   const photographerName = user?.name || user?.email || "ATH Media";
 
   const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
@@ -44,6 +47,7 @@ export async function POST(
       shareUrl,
       password: password?.trim() || undefined,
       personalMessage: personalMessage?.trim() || undefined,
+      signature: user?.emailSignature || undefined,
     }),
   });
 

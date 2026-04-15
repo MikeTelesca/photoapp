@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
@@ -14,6 +14,24 @@ interface TopbarProps {
 export function Topbar({ title, subtitle }: TopbarProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [aiStatus, setAiStatus] = useState<{ processing: number; queue: number }>({ processing: 0, queue: 0 });
+
+  useEffect(() => {
+    function fetchStatus() {
+      fetch("/api/stats")
+        .then(r => r.json())
+        .then(data => {
+          setAiStatus({
+            processing: data.processingJobs || 0,
+            queue: data.reviewJobs || 0,
+          });
+        })
+        .catch(() => {});
+    }
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -32,6 +50,12 @@ export function Topbar({ title, subtitle }: TopbarProps) {
         {subtitle && <p className="text-[13px] text-graphite-400 mt-0.5">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-2.5">
+        {aiStatus.processing > 0 && (
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            {aiStatus.processing} processing
+          </div>
+        )}
         <form onSubmit={handleSearch}>
           <div className="flex items-center gap-2 bg-white dark:bg-graphite-900 border border-graphite-200 dark:border-graphite-700 rounded-[10px] px-3.5 py-2 w-[200px] text-[13px] hover:border-graphite-300 dark:hover:border-graphite-600 transition-colors focus-within:border-cyan focus-within:ring-1 focus-within:ring-cyan">
             <MagnifyingGlassIcon className="w-[15px] h-[15px] text-graphite-400 flex-shrink-0" />

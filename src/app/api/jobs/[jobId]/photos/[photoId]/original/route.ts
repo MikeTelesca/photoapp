@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import crypto from "crypto";
 
 // GET /api/jobs/:jobId/photos/:photoId/original - serve original photo from Dropbox
 export async function GET(
@@ -64,11 +65,21 @@ export async function GET(
       .jpeg({ quality: 85, mozjpeg: true })
       .toBuffer();
 
+    // Generate ETag from buffer content for conditional requests
+    const etag = `"${crypto.createHash("md5").update(resized).digest("hex")}"`;
+
+    // Return 304 if client already has this version
+    const ifNoneMatch = request.headers.get("if-none-match");
+    if (ifNoneMatch === etag) {
+      return new NextResponse(null, { status: 304 });
+    }
+
     return new NextResponse(new Uint8Array(resized), {
       headers: {
         "Content-Type": "image/jpeg",
         // Cache for 7 days - photos rarely change, browser will use cached version
         "Cache-Control": "public, max-age=604800, immutable",
+        "ETag": etag,
       },
     });
   } catch (error: any) {

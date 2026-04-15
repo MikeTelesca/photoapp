@@ -21,6 +21,8 @@ import {
   ComputerDesktopIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
+import { useSidebar } from "@/components/layout/sidebar-context";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
@@ -42,6 +44,7 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [needsReviewCount, setNeedsReviewCount] = useState<number | null>(null);
   const { theme, setTheme } = useTheme();
+  const { collapsed, toggle } = useSidebar();
 
   useEffect(() => {
     const fetchCount = () => {
@@ -57,11 +60,13 @@ export function Sidebar() {
 
   const sidebarContent = (
     <>
-      <div className="px-6 py-6 mb-2 flex items-center gap-2.5">
-        <div className="w-[34px] h-[34px] bg-gradient-to-br from-graphite-900 to-graphite-700 rounded-[10px] flex items-center justify-center shadow-md">
+      <div className={`py-6 mb-2 flex items-center gap-2.5 ${collapsed ? "px-3 justify-center" : "px-6"}`}>
+        <div className="w-[34px] h-[34px] flex-shrink-0 bg-gradient-to-br from-graphite-900 to-graphite-700 rounded-[10px] flex items-center justify-center shadow-md">
           <CameraIcon className="w-[18px] h-[18px] text-white" />
         </div>
-        <span className="text-[17px] font-bold text-graphite-900 dark:text-white tracking-tight">PhotoApp</span>
+        {!collapsed && (
+          <span className="text-[17px] font-bold text-graphite-900 dark:text-white tracking-tight">PhotoApp</span>
+        )}
         {/* Close button on mobile */}
         <button
           onClick={() => setIsOpen(false)}
@@ -70,10 +75,30 @@ export function Sidebar() {
         >
           <XMarkIcon className="w-5 h-5" />
         </button>
+        {/* Collapse toggle — desktop only */}
+        {!collapsed && (
+          <button
+            onClick={toggle}
+            aria-label="Collapse sidebar"
+            className="hidden md:flex ml-auto p-1 text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-300 transition-colors"
+          >
+            <ChevronLeftIcon className="w-4 h-4" />
+          </button>
+        )}
       </div>
+      {/* Expand button when collapsed — desktop only */}
+      {collapsed && (
+        <button
+          onClick={toggle}
+          aria-label="Expand sidebar"
+          className="hidden md:flex items-center justify-center w-full py-1.5 mb-2 text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-300 transition-colors"
+        >
+          <ChevronRightIcon className="w-4 h-4" />
+        </button>
+      )}
 
       <nav className="mb-7">
-        <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Menu</div>
+        {!collapsed && <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Menu</div>}
         {menuItems.map((item) => {
           const isActive = item.href === "/dashboard"
             ? pathname === "/dashboard"
@@ -83,18 +108,24 @@ export function Sidebar() {
               key={item.label}
               href={item.href}
               onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-2.5 px-6 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
+              title={collapsed ? item.label : undefined}
+              className={`flex items-center gap-2.5 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
+                collapsed ? "px-3 justify-center" : "px-6"
+              } ${
                 isActive
                   ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
                   : "text-graphite-500 dark:text-graphite-400 hover:bg-graphite-100 dark:hover:bg-graphite-800 hover:text-graphite-700 dark:hover:text-graphite-200"
               }`}
             >
               <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-              {item.label}
-              {item.label === "Needs Review" && needsReviewCount !== null && needsReviewCount > 0 && (
+              {!collapsed && item.label}
+              {!collapsed && item.label === "Needs Review" && needsReviewCount !== null && needsReviewCount > 0 && (
                 <span className="ml-auto bg-cyan text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                   {needsReviewCount}
                 </span>
+              )}
+              {collapsed && item.label === "Needs Review" && needsReviewCount !== null && needsReviewCount > 0 && (
+                <span className="absolute top-0 right-0 w-2 h-2 bg-cyan rounded-full" />
               )}
             </Link>
           );
@@ -103,7 +134,7 @@ export function Sidebar() {
 
       {session?.user?.role === "admin" && (
         <nav className="mb-7">
-          <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Settings</div>
+          {!collapsed && <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Settings</div>}
           {settingsItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -111,14 +142,17 @@ export function Sidebar() {
                 key={item.label}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-2.5 px-6 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center gap-2.5 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
+                  collapsed ? "px-3 justify-center" : "px-6"
+                } ${
                   isActive
                     ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
                     : "text-graphite-500 dark:text-graphite-400 hover:bg-graphite-100 dark:hover:bg-graphite-800 hover:text-graphite-700 dark:hover:text-graphite-200"
                 }`}
               >
                 <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-                {item.label}
+                {!collapsed && item.label}
               </Link>
             );
           })}
@@ -128,7 +162,7 @@ export function Sidebar() {
       <div className="flex-1" />
 
       {/* Theme toggle */}
-      <div className="px-3 mb-2 mx-3">
+      <div className={`mb-2 ${collapsed ? "px-1 mx-1" : "px-3 mx-3"}`}>
         <div className="flex items-center justify-center gap-1 bg-graphite-100 dark:bg-graphite-800 rounded-lg p-1">
           <button
             onClick={() => setTheme("light")}
@@ -169,27 +203,42 @@ export function Sidebar() {
         </div>
       </div>
 
-      <div className="px-6 py-4 border-t border-graphite-200 dark:border-graphite-800 flex items-center gap-2.5">
-        <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-cyan to-cyan-light flex items-center justify-center text-[13px] font-bold text-white">
+      <div className={`py-4 border-t border-graphite-200 dark:border-graphite-800 flex items-center gap-2.5 ${collapsed ? "px-3 justify-center flex-col" : "px-6"}`}>
+        <div className="w-[34px] h-[34px] flex-shrink-0 rounded-full bg-gradient-to-br from-cyan to-cyan-light flex items-center justify-center text-[13px] font-bold text-white" title={collapsed ? (session?.user?.name || "User") : undefined}>
           {session?.user?.name?.charAt(0) || "?"}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold text-graphite-900 dark:text-white truncate">
-            {session?.user?.name || "User"}
-          </div>
-          <div className="text-[11px] text-graphite-400 truncate">
-            {session?.user?.email || ""}
-          </div>
-        </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-300 transition-colors"
-          title="Sign out"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-          </svg>
-        </button>
+        {!collapsed && (
+          <>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-semibold text-graphite-900 dark:text-white truncate">
+                {session?.user?.name || "User"}
+              </div>
+              <div className="text-[11px] text-graphite-400 truncate">
+                {session?.user?.email || ""}
+              </div>
+            </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-300 transition-colors"
+              title="Sign out"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </button>
+          </>
+        )}
+        {collapsed && (
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-300 transition-colors"
+            title="Sign out"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+          </button>
+        )}
       </div>
     </>
   );
@@ -207,7 +256,7 @@ export function Sidebar() {
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:w-[230px] md:fixed md:top-0 md:left-0 md:bottom-0 bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-800 flex-col z-20">
+      <aside className={`hidden md:flex md:fixed md:top-0 md:left-0 md:bottom-0 bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-800 flex-col z-20 transition-all duration-300 ${collapsed ? "md:w-[60px]" : "md:w-[230px]"}`}>
         {sidebarContent}
       </aside>
 

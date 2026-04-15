@@ -146,6 +146,26 @@ export async function downloadFileFromSharedLink(
 }
 
 /**
+ * Upload a file to an internal Dropbox path (no shared link needed).
+ * Used for direct uploads from the app (not from external shared links).
+ */
+export async function uploadInternalFile(
+  buffer: Buffer,
+  path: string
+): Promise<{ path: string; size: number }> {
+  const dbx = getDbx();
+  const result = await dbx.filesUpload({
+    path,
+    contents: buffer,
+    mode: { ".tag": "overwrite" },
+  });
+  return {
+    path: (result.result as any).path_display || path,
+    size: (result.result as any).size || 0,
+  };
+}
+
+/**
  * Upload a file to Dropbox and return a shared link URL.
  */
 export async function uploadToDropbox(

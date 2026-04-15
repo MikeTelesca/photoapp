@@ -72,6 +72,11 @@ export default function NewJobPage() {
     { value: "as-is", label: "Keep Original Sky", desc: "Don't replace the sky" },
   ];
 
+  const [uploadMode, setUploadMode] = useState<"dropbox" | "upload">("dropbox");
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [isCheckingDropbox, setIsCheckingDropbox] = useState(false);
@@ -118,6 +123,11 @@ export default function NewJobPage() {
       return;
     }
 
+    if (uploadMode === "upload" && filesToUpload.length === 0) {
+      setError("Please select at least one photo to upload");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -126,7 +136,7 @@ export default function NewJobPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           address: address.trim(),
-          dropboxUrl: dropboxUrl.trim() || null,
+          dropboxUrl: uploadMode === "dropbox" ? (dropboxUrl.trim() || null) : null,
           preset,
           tvStyle,
           skyStyle,
@@ -141,10 +151,26 @@ export default function NewJobPage() {
         throw new Error(data.error || "Failed to create job");
       }
 
-      // After creating the job, trigger ingestion if Dropbox URL was provided
       const jobData = await res.json();
 
-      if (dropboxUrl.trim()) {
+      if (uploadMode === "upload" && filesToUpload.length > 0) {
+        // Upload files in chunks of 5 to avoid massive multipart requests
+        setUploading(true);
+        const chunkSize = 5;
+        let uploaded = 0;
+        for (let i = 0; i < filesToUpload.length; i += chunkSize) {
+          const chunk = filesToUpload.slice(i, i + chunkSize);
+          const fd = new FormData();
+          for (const f of chunk) fd.append("files", f);
+          await fetch(`/api/jobs/${jobData.id}/upload`, { method: "POST", body: fd });
+          uploaded += chunk.length;
+          setUploadProgress(Math.round((uploaded / filesToUpload.length) * 100));
+        }
+        setUploading(false);
+        // Trigger ingest from the uploaded files
+        await fetch(`/api/jobs/${jobData.id}/ingest-uploaded`, { method: "POST" });
+      } else if (uploadMode === "dropbox" && dropboxUrl.trim()) {
+        // After creating the job, trigger ingestion if Dropbox URL was provided
         fetch(`/api/jobs/${jobData.id}/ingest`, { method: "POST" }).catch(console.error);
       }
 
@@ -153,6 +179,7 @@ export default function NewJobPage() {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsSubmitting(false);
+      setUploading(false);
     }
   }
 
@@ -207,90 +234,170 @@ export default function NewJobPage() {
               />
             </div>
 
-            {/* Dropbox Link */}
+            {/* Photo Source — toggle between Dropbox link and direct upload */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-3">
                 <LinkIcon className="w-4 h-4 text-graphite-500" />
-                Dropbox Link
-                <span className="text-xs font-normal text-graphite-400">(optional)</span>
+                Photo Source
               </label>
-              <input
-                type="url"
-                value={dropboxUrl}
-                onChange={(e) => setDropboxUrl(e.target.value)}
-                onBlur={() => checkDropboxLink(dropboxUrl)}
-                placeholder="https://www.dropbox.com/sh/..."
-                className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
-              />
-              <p className="text-xs text-graphite-400 mt-1.5">
-                Paste the shared Dropbox folder link containing the bracketed photos. We&apos;ll pull them automatically.
-              </p>
 
-              {isCheckingDropbox && (
-                <div className="mt-3 flex items-center gap-2 text-sm text-cyan">
-                  <ArrowPathIcon className="w-4 h-4 animate-spin" />
-                  Checking Dropbox folder...
-                </div>
-              )}
+              {/* Mode toggle */}
+              <div className="flex gap-1 p-1 bg-graphite-100 rounded-lg w-fit mb-4">
+                <button
+                  type="button"
+                  onClick={() => setUploadMode("dropbox")}
+                  className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${uploadMode === "dropbox" ? "bg-white text-graphite-900 shadow-sm" : "text-graphite-500"}`}
+                >
+                  Dropbox Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMode("upload")}
+                  className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${uploadMode === "upload" ? "bg-white text-graphite-900 shadow-sm" : "text-graphite-500"}`}
+                >
+                  Upload Files
+                </button>
+              </div>
 
-              {dropboxError && (
-                <div className="mt-3 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                  {dropboxError}
-                </div>
-              )}
-
-              {dropboxFiles.length > 0 && !isCheckingDropbox && (
-                <div className="mt-3 bg-graphite-50 border border-graphite-200 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
-                      <span className="text-sm font-semibold text-graphite-900">
-                        {dropboxFiles.length} files found
-                      </span>
+              {uploadMode === "upload" ? (
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-2">
+                    Upload Photos
+                  </label>
+                  <label
+                    htmlFor="file-upload"
+                    className="block border-2 border-dashed border-graphite-300 rounded-xl p-8 text-center cursor-pointer hover:border-cyan hover:bg-cyan-50/30 transition-colors"
+                    onDragOver={(e) => { e.preventDefault(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const files = Array.from(e.dataTransfer.files).filter(f => /\.(jpe?g|png)$/i.test(f.name));
+                      setFilesToUpload(prev => [...prev, ...files]);
+                    }}
+                  >
+                    <input
+                      id="file-upload"
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/png"
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        setFilesToUpload(prev => [...prev, ...files]);
+                      }}
+                    />
+                    <div className="text-sm font-semibold text-graphite-700 mb-1">
+                      Drop photos here or click to browse
                     </div>
-                    <span className="text-xs text-graphite-400">
-                      {formatFileSize(dropboxFiles.reduce((sum, f) => sum + f.size, 0))}
-                    </span>
-                  </div>
+                    <div className="text-xs text-graphite-500">
+                      JPEG or PNG only &middot; {filesToUpload.length} file{filesToUpload.length === 1 ? "" : "s"} ready
+                    </div>
+                  </label>
+                  {filesToUpload.length > 0 && (
+                    <div className="mt-3 max-h-[120px] overflow-y-auto bg-graphite-50 rounded-lg p-2">
+                      {filesToUpload.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs py-0.5">
+                          <span className="truncate text-graphite-600">{f.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setFilesToUpload(prev => prev.filter((_, idx) => idx !== i))}
+                            className="text-red-500 hover:text-red-700 ml-2"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {uploading && (
+                    <div className="mt-3">
+                      <div className="h-1.5 bg-graphite-200 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-cyan transition-all" style={{ width: `${uploadProgress}%` }} />
+                      </div>
+                      <div className="text-xs text-graphite-500 mt-1">Uploading {uploadProgress}%...</div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <input
+                    type="url"
+                    value={dropboxUrl}
+                    onChange={(e) => setDropboxUrl(e.target.value)}
+                    onBlur={() => checkDropboxLink(dropboxUrl)}
+                    placeholder="https://www.dropbox.com/sh/..."
+                    className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
+                  />
+                  <p className="text-xs text-graphite-400 mt-1.5">
+                    Paste the shared Dropbox folder link containing the bracketed photos. We&apos;ll pull them automatically.
+                  </p>
 
-                  {rawFileCount > 0 && (
-                    <div className="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
-                      <strong>{rawFileCount} RAW files</strong> (DNG/CR2/ARW/NEF/TIFF) in this folder will be skipped. RAW formats aren&apos;t supported — only JPEGs will be processed. Please export as JPEG if you need those photos edited.
+                  {isCheckingDropbox && (
+                    <div className="mt-3 flex items-center gap-2 text-sm text-cyan">
+                      <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                      Checking Dropbox folder...
                     </div>
                   )}
 
-                  <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-                    <div className="bg-white rounded-lg p-2 border border-graphite-200">
-                      <div className="text-lg font-bold text-graphite-900">{dropboxFiles.length}</div>
-                      <div className="text-[10px] text-graphite-400 uppercase">Source Files</div>
+                  {dropboxError && (
+                    <div className="mt-3 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                      {dropboxError}
                     </div>
-                    <div className="bg-white rounded-lg p-2 border border-graphite-200">
-                      <div className="text-lg font-bold text-cyan">
-                        {dropboxFiles.length % 5 === 0 ? 5 : 3}
-                      </div>
-                      <div className="text-[10px] text-graphite-400 uppercase">Brackets</div>
-                    </div>
-                    <div className="bg-white rounded-lg p-2 border border-graphite-200">
-                      <div className="text-lg font-bold text-emerald-600">
-                        {Math.ceil(dropboxFiles.length / (dropboxFiles.length % 5 === 0 ? 5 : 3))}
-                      </div>
-                      <div className="text-[10px] text-graphite-400 uppercase">Final Photos</div>
-                    </div>
-                  </div>
+                  )}
 
-                  <div className="max-h-[120px] overflow-y-auto">
-                    {dropboxFiles.slice(0, 30).map((file, i) => (
-                      <div key={i} className="flex items-center justify-between py-1 text-xs">
-                        <span className="text-graphite-600 truncate mr-2">{file.name}</span>
-                        <span className="text-graphite-400 flex-shrink-0">{formatFileSize(file.size)}</span>
+                  {dropboxFiles.length > 0 && !isCheckingDropbox && (
+                    <div className="mt-3 bg-graphite-50 border border-graphite-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
+                          <span className="text-sm font-semibold text-graphite-900">
+                            {dropboxFiles.length} files found
+                          </span>
+                        </div>
+                        <span className="text-xs text-graphite-400">
+                          {formatFileSize(dropboxFiles.reduce((sum, f) => sum + f.size, 0))}
+                        </span>
                       </div>
-                    ))}
-                    {dropboxFiles.length > 30 && (
-                      <div className="text-xs text-graphite-400 mt-1">
-                        +{dropboxFiles.length - 30} more files...
+
+                      {rawFileCount > 0 && (
+                        <div className="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                          <strong>{rawFileCount} RAW files</strong> (DNG/CR2/ARW/NEF/TIFF) in this folder will be skipped. RAW formats aren&apos;t supported — only JPEGs will be processed. Please export as JPEG if you need those photos edited.
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+                        <div className="bg-white rounded-lg p-2 border border-graphite-200">
+                          <div className="text-lg font-bold text-graphite-900">{dropboxFiles.length}</div>
+                          <div className="text-[10px] text-graphite-400 uppercase">Source Files</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-2 border border-graphite-200">
+                          <div className="text-lg font-bold text-cyan">
+                            {dropboxFiles.length % 5 === 0 ? 5 : 3}
+                          </div>
+                          <div className="text-[10px] text-graphite-400 uppercase">Brackets</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-2 border border-graphite-200">
+                          <div className="text-lg font-bold text-emerald-600">
+                            {Math.ceil(dropboxFiles.length / (dropboxFiles.length % 5 === 0 ? 5 : 3))}
+                          </div>
+                          <div className="text-[10px] text-graphite-400 uppercase">Final Photos</div>
+                        </div>
                       </div>
-                    )}
-                  </div>
+
+                      <div className="max-h-[120px] overflow-y-auto">
+                        {dropboxFiles.slice(0, 30).map((file, i) => (
+                          <div key={i} className="flex items-center justify-between py-1 text-xs">
+                            <span className="text-graphite-600 truncate mr-2">{file.name}</span>
+                            <span className="text-graphite-400 flex-shrink-0">{formatFileSize(file.size)}</span>
+                          </div>
+                        ))}
+                        {dropboxFiles.length > 30 && (
+                          <div className="text-xs text-graphite-400 mt-1">
+                            +{dropboxFiles.length - 30} more files...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

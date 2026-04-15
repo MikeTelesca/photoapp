@@ -13,6 +13,7 @@ export interface Job {
   preset: PresetName;
   tvStyle?: TvStyle;
   skyStyle?: SkyStyle;
+  priority?: string;
   status: JobStatus;
   totalPhotos: number;
   processedPhotos: number;

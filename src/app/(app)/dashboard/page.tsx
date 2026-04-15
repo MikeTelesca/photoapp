@@ -92,12 +92,13 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
       take: 20,
     });
 
-    return dbJobs.map((j) => ({
+    const jobs = dbJobs.map((j) => ({
       id: j.id,
       address: j.address,
       photographerId: j.photographerId,
       photographerName: j.photographer.name,
       preset: j.preset as Job["preset"],
+      priority: j.priority,
       status: j.status as Job["status"],
       totalPhotos: j.totalPhotos,
       processedPhotos: j.processedPhotos,
@@ -111,6 +112,20 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
       createdAt: j.createdAt,
       updatedAt: j.updatedAt,
     }));
+
+    // Sort by pinned status, then by priority, then by creation date
+    jobs.sort((a, b) => {
+      const aPin = a.pinnedAt ? 1 : 0;
+      const bPin = b.pinnedAt ? 1 : 0;
+      if (aPin !== bPin) return bPin - aPin;
+      const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+      const ap = priorityOrder[a.priority || "medium"] ?? 1;
+      const bp = priorityOrder[b.priority || "medium"] ?? 1;
+      if (ap !== bp) return ap - bp;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return jobs;
   } catch (error) {
     console.error("Failed to fetch jobs:", error);
     return [];

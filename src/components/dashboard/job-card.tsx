@@ -84,9 +84,21 @@ function JobCardInternal({ job }: JobCardProps) {
         <div className="flex items-center gap-3">
         <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
         <div>
-          {job.pinnedAt && (
-            <div className="text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400 font-semibold mb-0.5">📌 Pinned</div>
-          )}
+          <div className="flex gap-1 items-center mb-0.5">
+            {job.pinnedAt && (
+              <span className="text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400 font-semibold">📌 Pinned</span>
+            )}
+            {job.priority === "high" && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-bold uppercase tracking-wide">
+                🔴 High
+              </span>
+            )}
+            {job.priority === "low" && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-graphite-100 dark:bg-graphite-800 text-graphite-500 dark:text-graphite-400 uppercase tracking-wide">
+                Low
+              </span>
+            )}
+          </div>
           <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{job.address}</div>
           <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">
             <span>{job.photographerName}</span>

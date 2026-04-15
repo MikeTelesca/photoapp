@@ -40,6 +40,7 @@ interface Draft {
   preset?: string;
   tvStyle?: string;
   skyStyle?: string;
+  priority?: string;
   watermarkText?: string;
   watermarkPosition?: string;
   watermarkSize?: number;
@@ -59,6 +60,7 @@ function NewJobPageInner() {
   const [tvStyle, setTvStyle] = useState("off");
   const [skyStyle, setSkyStyle] = useState("as-is");
   const [seasonalStyle, setSeasonalStyle] = useState<string>("");
+  const [priority, setPriority] = useState("medium");
   const [watermarkText, setWatermarkText] = useState("");
   const [watermarkPosition, setWatermarkPosition] = useState("bottom-right");
   const [watermarkSize, setWatermarkSize] = useState(32);
@@ -112,6 +114,7 @@ function NewJobPageInner() {
         if (draft.preset) setPreset(draft.preset);
         if (draft.tvStyle) setTvStyle(draft.tvStyle);
         if (draft.skyStyle) setSkyStyle(draft.skyStyle);
+        if (draft.priority) setPriority(draft.priority);
         if (draft.watermarkText) setWatermarkText(draft.watermarkText);
         if (draft.watermarkPosition) setWatermarkPosition(draft.watermarkPosition);
         if (draft.watermarkSize !== undefined) setWatermarkSize(draft.watermarkSize);
@@ -129,7 +132,7 @@ function NewJobPageInner() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const draft: Draft = {
-      address, dropboxUrl, clientName, clientId, preset, tvStyle, skyStyle,
+      address, dropboxUrl, clientName, clientId, preset, tvStyle, skyStyle, priority,
       watermarkText, watermarkPosition, watermarkSize, watermarkOpacity,
       tags, seasonalStyle,
       savedAt: Date.now(),
@@ -143,7 +146,7 @@ function NewJobPageInner() {
       setTimeout(() => setDraftSaved(false), 2000);
     }, 1000);
     return () => clearTimeout(timer);
-  }, [address, dropboxUrl, clientName, clientId, preset, tvStyle, skyStyle, watermarkText, watermarkPosition, watermarkSize, watermarkOpacity, tags, seasonalStyle]);
+  }, [address, dropboxUrl, clientName, clientId, preset, tvStyle, skyStyle, priority, watermarkText, watermarkPosition, watermarkSize, watermarkOpacity, tags, seasonalStyle]);
   const tvOptions = [
     { value: "netflix", label: "Netflix Home Screen", desc: "Netflix UI with movie thumbnails" },
     { value: "black", label: "Black Screen (Off)", desc: "TV appears turned off" },
@@ -232,6 +235,7 @@ function NewJobPageInner() {
           tvStyle,
           skyStyle,
           seasonalStyle,
+          priority,
           watermarkText: watermarkText.trim() || null,
           watermarkPosition,
           watermarkSize,
@@ -365,6 +369,27 @@ function NewJobPageInner() {
                 placeholder="e.g. luxury, condo, urgent"
                 className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
               />
+            </div>
+
+            {/* Priority */}
+            <div>
+              <label className="block text-xs font-semibold mb-1 dark:text-graphite-300">Priority</label>
+              <div className="flex gap-1">
+                {[
+                  { value: "high", label: "🔴 High", color: "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300" },
+                  { value: "medium", label: "🟡 Medium", color: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-300" },
+                  { value: "low", label: "🟢 Low", color: "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300" },
+                ].map(p => (
+                  <button key={p.value} type="button" onClick={() => setPriority(p.value)}
+                    className={`text-xs px-3 py-1.5 rounded border ${
+                      priority === p.value
+                        ? p.color + " font-semibold"
+                        : "border-graphite-200 dark:border-graphite-700 text-graphite-500 dark:text-graphite-400"
+                    }`}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Photo Source — toggle between Dropbox link and direct upload */}

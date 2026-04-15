@@ -20,6 +20,7 @@ import { AccentPicker } from "@/components/settings/accent-picker";
 import { NotificationPrefs } from "@/components/settings/notification-prefs";
 import { TimezonePicker } from "@/components/settings/timezone-picker";
 import { SoundToggle } from "@/components/settings/sound-toggle";
+import { BudgetInput } from "@/components/settings/budget-input";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,7 @@ export default async function SettingsPage() {
   let twoFactorEnabled = false;
   let watermarkLogoPath: string | null = null;
   let userTimezone: string | null = null;
+  let budgetPerJob = 20;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -65,6 +67,7 @@ export default async function SettingsPage() {
         invoicePrefix: true,
         watermarkLogoPath: true,
         timezone: true,
+        budgetPerJob: true,
       },
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
@@ -76,6 +79,7 @@ export default async function SettingsPage() {
     twoFactorEnabled = user?.twoFactorEnabled ?? false;
     watermarkLogoPath = user?.watermarkLogoPath ?? null;
     userTimezone = user?.timezone ?? null;
+    budgetPerJob = user?.budgetPerJob ?? 20;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -158,6 +162,17 @@ export default async function SettingsPage() {
           <div className="p-4">
             <h2 className="text-sm font-semibold mb-2 dark:text-white">Display timezone</h2>
             <TimezonePicker initial={userTimezone} />
+          </div>
+        </Card>
+
+        {/* Per-job Budget Warning */}
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-1 dark:text-white">Per-job budget warning</h2>
+            <p className="text-xs text-graphite-500 dark:text-graphite-400 mb-3">
+              Get a confirmation prompt before starting jobs that would cost more than this.
+            </p>
+            <BudgetInput initial={budgetPerJob} />
           </div>
         </Card>
         <Card>

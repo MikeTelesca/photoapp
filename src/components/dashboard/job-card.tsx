@@ -35,6 +35,23 @@ function JobCardInternal({ job }: JobCardProps) {
   async function handleStartProcessing(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+
+    // Fetch estimate first
+    try {
+      const estRes = await fetch(`/api/jobs/${job.id}/estimate`);
+      const est = await estRes.json();
+      if (est.overBudget) {
+        const confirmed = confirm(
+          `This job has ${est.photoCount} photos and will cost approximately $${est.estimatedCost.toFixed(2)}.\n\n` +
+          `That's above your per-job budget of $${est.budgetPerJob.toFixed(2)}.\n\n` +
+          `Continue with processing?`
+        );
+        if (!confirmed) return;
+      }
+    } catch (err) {
+      console.error("estimate err:", err);
+    }
+
     setIsStarting(true);
     try {
       const res = await fetch(`/api/jobs/${job.id}/ingest`, { method: "POST" });

@@ -24,6 +24,7 @@ export async function PATCH(request: NextRequest) {
     invoiceRate,
     invoicePrefix,
     timezone,
+    budgetPerJob,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -66,6 +67,7 @@ export async function PATCH(request: NextRequest) {
   if (invoiceRate !== undefined) updateData.invoiceRate = parseFloat(invoiceRate) || 50;
   if (invoicePrefix !== undefined) updateData.invoicePrefix = invoicePrefix?.trim() || "INV";
   if (timezone !== undefined) updateData.timezone = timezone?.trim() || null;
+  if (budgetPerJob !== undefined) updateData.budgetPerJob = parseFloat(budgetPerJob) || 20;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });

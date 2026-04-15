@@ -10,6 +10,7 @@ import { ShortcutCheatsheet } from "@/components/layout/shortcut-cheatsheet";
 import { LiveProgressIndicator } from "@/components/dashboard/live-progress-indicator";
 import { GlobalShortcuts } from "@/components/layout/global-shortcuts";
 import { QuickAddFab } from "@/components/layout/quick-add-fab";
+import { FeedbackWidget } from "@/components/feedback/feedback-widget";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -28,6 +29,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <LiveProgressIndicator />
       <GlobalShortcuts />
       <QuickAddFab />
+      <FeedbackWidget />
     </div>
   );
 }

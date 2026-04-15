@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import type { Job } from "@/lib/types";
+import { tagColor } from "@/lib/tag-color";
 import { JobCard } from "./job-card";
 
 interface Props {
@@ -246,17 +247,22 @@ export function JobFilterBar({ jobs }: Props) {
           >
             All
           </button>
-          {allTags.map(tag => (
-            <button
-              key={tag}
-              onClick={() => setActiveTag(tag === activeTag ? null : tag)}
-              className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-wide font-semibold ${
-                activeTag === tag ? "bg-cyan text-white" : "bg-cyan-50 text-cyan hover:bg-cyan-100"
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
+          {allTags.map(tag => {
+            const c = tagColor(tag);
+            return (
+              <button
+                key={tag}
+                onClick={() => setActiveTag(tag === activeTag ? null : tag)}
+                className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-wide font-semibold ${
+                  activeTag === tag
+                    ? "bg-cyan text-white"
+                    : `${c.bg} ${c.text} hover:opacity-80`
+                }`}
+              >
+                {tag}
+              </button>
+            );
+          })}
         </div>
       )}
       {filtered.length === 0 ? (

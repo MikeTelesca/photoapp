@@ -52,6 +52,7 @@ model User {
   noteTemplates      NoteTemplate[]
   jobComments        JobComment[] @relation("JobCommentAuthor")
   pushSubscriptions  PushSubscription[]
+  feedbackReports    FeedbackReport[]
 }
 
 model LoginRecord {
@@ -400,4 +401,17 @@ model DownloadLog {
 
   @@index([userId, createdAt])
   @@index([jobId, createdAt])
+}
+
+model FeedbackReport {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  category  String   // "bug" | "feature" | "question" | "other"
+  message   String
+  metadata  String?  // JSON: page url, user-agent
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([resolved, createdAt])
 }

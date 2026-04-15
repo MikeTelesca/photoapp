@@ -15,6 +15,7 @@ import { EtaBadge } from "@/components/dashboard/eta-badge";
 import { PinButton } from "@/components/dashboard/pin-button";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { formatJobNumber } from "@/lib/job-number";
+import { tagColor } from "@/lib/tag-color";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -128,11 +129,14 @@ function JobCardInternal({ job }: JobCardProps) {
           )}
           {job.tags && (
             <div className="flex gap-1 mt-1 items-center">
-              {job.tags.split(",").map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
-                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan font-semibold uppercase tracking-wide">
-                  {tag}
-                </span>
-              ))}
+              {job.tags.split(",").map((t: string) => t.trim()).filter(Boolean).map((tag: string) => {
+                const c = tagColor(tag);
+                return (
+                  <span key={tag} className={`text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide ${c.bg} ${c.text}`}>
+                    {tag}
+                  </span>
+                );
+              })}
               <EditTagsButton jobId={job.id} initial={job.tags || ""} />
             </div>
           )}

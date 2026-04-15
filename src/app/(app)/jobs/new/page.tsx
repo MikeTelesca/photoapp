@@ -69,6 +69,7 @@ function NewJobPageInner() {
   const [clientId, setClientId] = useState<string | null>(null);
   const [tags, setTags] = useState("");
   const [draftSaved, setDraftSaved] = useState(false);
+  const [urlPrefilled, setUrlPrefilled] = useState(false);
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);
@@ -125,6 +126,70 @@ function NewJobPageInner() {
         localStorage.removeItem(DRAFT_KEY);
       }
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load URL parameters on mount (after draft effect, so URL params win)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let any = false;
+
+    const a = searchParams?.get("address");
+    if (a) {
+      setAddress(a);
+      any = true;
+    }
+
+    const c = searchParams?.get("client");
+    if (c) {
+      setClientName(c);
+      any = true;
+    }
+
+    const p = searchParams?.get("preset");
+    if (p && ["mls-standard", "standard", "bright", "luxury", "flambient"].includes(p)) {
+      setPreset(p);
+      any = true;
+    }
+
+    const t = searchParams?.get("tags");
+    if (t) {
+      setTags(t);
+      any = true;
+    }
+
+    const url = searchParams?.get("dropboxUrl");
+    if (url) {
+      setDropboxUrl(url);
+      any = true;
+    }
+
+    const ss = searchParams?.get("skyStyle");
+    if (ss) {
+      setSkyStyle(ss);
+      any = true;
+    }
+
+    const ts = searchParams?.get("tvStyle");
+    if (ts) {
+      setTvStyle(ts);
+      any = true;
+    }
+
+    const sn = searchParams?.get("seasonalStyle");
+    if (sn) {
+      setSeasonalStyle(sn);
+      any = true;
+    }
+
+    const pr = searchParams?.get("priority");
+    if (pr && ["high", "medium", "low"].includes(pr)) {
+      setPriority(pr);
+      any = true;
+    }
+
+    if (any) setUrlPrefilled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -323,6 +388,13 @@ function NewJobPageInner() {
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Template picker */}
             <TemplatePicker onApply={applyTemplate} />
+
+            {/* URL prefilled banner */}
+            {urlPrefilled && (
+              <div className="text-xs text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded p-2">
+                🔗 Form pre-filled from URL parameters
+              </div>
+            )}
 
             {/* Address */}
             <div>

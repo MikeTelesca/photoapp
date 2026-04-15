@@ -145,6 +145,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [description, setDescription] = useState(initialJob.listingDescription || "");
   const [showDescModal, setShowDescModal] = useState(false);
 
+  // Preset A/B compare state
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareTarget, setCompareTarget] = useState("luxury");
+  const [compareResult, setCompareResult] = useState<string | null>(null);
+  const [comparing, setComparing] = useState(false);
+
   useEffect(() => {
     fetch("/api/presets")
       .then(r => r.json())
@@ -228,6 +234,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       }
     } finally {
       setSavingWatermark(false);
+    }
+  }
+
+  async function runCompare() {
+    if (!currentPhoto) return;
+    setComparing(true);
+    setCompareResult(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/compare`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preset: compareTarget }),
+      });
+      const data = await res.json();
+      if (res.ok) setCompareResult(data.dataUrl);
+      else addToast("error", data.error || "Compare failed");
+    } catch (e: any) {
+      addToast("error", e.message || "Compare failed");
+    } finally {
+      setComparing(false);
     }
   }
 
@@ -806,7 +832,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   return (
     <div className="flex flex-col h-screen">
       {/* Top Bar */}
-      <div className="sticky top-0 z-20 bg-white/92 backdrop-blur-xl border-b border-graphite-200 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
+      <div className="sticky top-0 z-20 bg-white/92 dark:bg-graphite-900/92 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-700 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3.5">
           <Link
             href="/dashboard"
@@ -816,7 +842,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
           <div>
-            <div className="text-sm md:text-base font-bold text-graphite-900">{job.address}</div>
+            <div className="text-sm md:text-base font-bold text-graphite-900 dark:text-white">{job.address}</div>
             <div className="text-xs text-graphite-400 flex gap-3">
               <span>{job.photographer.name}</span>
               <span>{photos.length} photos</span>
@@ -828,7 +854,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {/* Mobile nav button */}
           <button
             onClick={() => setShowMobileNav(true)}
-            className="md:hidden flex items-center gap-1 px-2 py-1 rounded text-xs bg-graphite-100"
+            className="md:hidden flex items-center gap-1 px-2 py-1 rounded text-xs bg-graphite-100 dark:bg-graphite-800"
           >
             <Bars3Icon className="w-4 h-4" />
             {currentIndex + 1} / {photos.length}
@@ -838,7 +864,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <select
               value={currentPreset}
               onChange={(e) => changePreset(e.target.value)}
-              className="text-xs border border-graphite-200 rounded-md px-2 py-1.5 bg-white text-graphite-900 focus:outline-none focus:border-cyan"
+              className="text-xs border border-graphite-200 dark:border-graphite-700 rounded-md px-2 py-1.5 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white focus:outline-none focus:border-cyan"
               title="Editing preset (changes apply to next regenerate)"
             >
               {presets.map(p => (
@@ -855,17 +881,24 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </button>
             <button
               onClick={() => setShowPromptEditor(!showPromptEditor)}
-              className="text-xs px-2 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 hover:bg-graphite-50"
+              className="text-xs px-2 py-1.5 rounded-md border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
               title="Edit prompt"
             >
               {showPromptEditor ? "Close" : "Edit Prompt"}
             </button>
             <button
               onClick={() => setCompareMode(m => m === "split" ? "slider" : "split")}
-              className="text-xs px-2 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 hover:bg-graphite-50"
+              className="text-xs px-2 py-1.5 rounded-md border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
               title="Toggle compare mode"
             >
               {compareMode === "split" ? "Slider View" : "Split View"}
+            </button>
+            <button
+              onClick={() => { setCompareResult(null); setCompareOpen(true); }}
+              className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 bg-white dark:bg-graphite-900 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+              title="Compare this photo rendered with a different preset"
+            >
+              Compare preset
             </button>
           </div>
           {suggestion && (
@@ -877,7 +910,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               >Apply</button>
               <button
                 onClick={() => setSuggestion(null)}
-                className="ml-1 text-graphite-400 hover:text-graphite-600"
+                className="ml-1 text-graphite-400 hover:text-graphite-600 dark:text-graphite-300"
               >Dismiss</button>
             </div>
           )}
@@ -902,13 +935,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 addToast("error", data.error || "Regroup failed");
               }
             }}
-            className="text-xs px-2 py-1.5 rounded-md bg-graphite-100 text-graphite-700 hover:bg-graphite-200"
+            className="text-xs px-2 py-1.5 rounded-md bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-200"
             title="Re-group photos using actual EXIF data (slow)"
           >
             Regroup by EXIF
           </button>
           <div className="text-right mr-2 hidden sm:block">
-            <div className="text-xs font-semibold text-graphite-700">
+            <div className="text-xs font-semibold text-graphite-700 dark:text-graphite-200">
               {approvedCount} / {photos.length} approved
             </div>
             <div className="w-[120px] h-1 bg-graphite-200 rounded-sm mt-1">
@@ -935,7 +968,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </span>
             )}
             {photos.filter(p => p.status === "pending").length > 0 && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-graphite-100 text-graphite-700">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-200">
                 ○ {photos.filter(p => p.status === "pending").length}
               </span>
             )}
@@ -1008,7 +1041,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <select
               value={batchFilter}
               onChange={(e) => setBatchFilter(e.target.value as "rejected" | "all")}
-              className="text-xs px-1.5 py-1 rounded border border-graphite-200 bg-white"
+              className="text-xs px-1.5 py-1 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900"
               disabled={batching}
             >
               <option value="rejected">Rejected only</option>
@@ -1017,7 +1050,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <select
               value={batchPreset}
               onChange={(e) => setBatchPreset(e.target.value)}
-              className="text-xs px-1.5 py-1 rounded border border-graphite-200 bg-white"
+              className="text-xs px-1.5 py-1 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900"
               disabled={batching}
             >
               {presets.length > 0
@@ -1055,7 +1088,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <select
               value={mlsPreset}
               onChange={(e) => setMlsPreset(e.target.value)}
-              className="text-xs px-2 py-1.5 rounded border border-graphite-200"
+              className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700"
             >
               <option value="mls-standard">MLS Standard (1024)</option>
               <option value="mls-hi">MLS Hi-Res (1920)</option>
@@ -1082,11 +1115,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {/* Mobile Nav Overlay */}
       {showMobileNav && (
         <div className="md:hidden fixed inset-0 z-50 bg-black/80" onClick={() => setShowMobileNav(false)}>
-          <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl max-h-[70vh] overflow-y-auto p-4" onClick={e => e.stopPropagation()}>
+          <div className="absolute inset-x-0 bottom-0 bg-white dark:bg-graphite-900 rounded-t-2xl max-h-[70vh] overflow-y-auto p-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-graphite-900">Photos ({photos.length})</span>
-              <button onClick={() => setShowMobileNav(false)} className="p-1 rounded-lg hover:bg-graphite-100">
-                <XMarkIcon className="w-5 h-5 text-graphite-600" />
+              <span className="text-sm font-semibold text-graphite-900 dark:text-white">Photos ({photos.length})</span>
+              <button onClick={() => setShowMobileNav(false)} className="p-1 rounded-lg hover:bg-graphite-100 dark:bg-graphite-800">
+                <XMarkIcon className="w-5 h-5 text-graphite-600 dark:text-graphite-300" />
               </button>
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -1101,7 +1134,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   {(photo.editedUrl || photo.originalUrl) ? (
                     <img src={photo.editedUrl || photo.originalUrl || `/api/jobs/${job.id}/photos/${photo.id}/original`} className="w-full h-full object-cover" loading="lazy" alt={`Photo ${idx + 1}`} />
                   ) : (
-                    <span className="text-[11px] text-graphite-500">{idx + 1}</span>
+                    <span className="text-[11px] text-graphite-500 dark:text-graphite-400">{idx + 1}</span>
                   )}
                 </button>
               ))}
@@ -1123,7 +1156,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             value={editedPrompt}
             onChange={(e) => setEditedPrompt(e.target.value)}
             rows={6}
-            className="w-full px-3 py-2 rounded-lg border border-amber-300 text-xs font-mono bg-white text-graphite-900 focus:outline-none focus:border-amber-500"
+            className="w-full px-3 py-2 rounded-lg border border-amber-300 text-xs font-mono bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white focus:outline-none focus:border-amber-500"
             placeholder="AI prompt instructions..."
           />
           <div className="flex gap-2 mt-2">
@@ -1139,7 +1172,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 const preset = presets.find(p => p.slug === currentPreset);
                 if (preset) setEditedPrompt(preset.promptModifiers || "");
               }}
-              className="px-3 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 text-xs hover:bg-graphite-50"
+              className="px-3 py-1.5 rounded-md border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 text-xs hover:bg-graphite-50 dark:hover:bg-graphite-800"
             >
               Reset
             </button>
@@ -1149,31 +1182,31 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
       {/* Watermark Settings Panel */}
       {showWatermarkPanel && (
-        <div className="bg-graphite-50 border-b border-graphite-200 px-7 py-4">
+        <div className="bg-graphite-50 dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-700 px-7 py-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-graphite-800">Watermark Settings</span>
-            <span className="text-[11px] text-graphite-500">Applied when downloading ZIP</span>
+            <span className="text-[11px] text-graphite-500 dark:text-graphite-400">Applied when downloading ZIP</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               {/* Text */}
               <div className="flex items-center gap-3">
-                <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Text</label>
+                <label className="text-xs font-semibold text-graphite-700 dark:text-graphite-200 w-20 flex-shrink-0">Text</label>
                 <input
                   type="text"
                   value={wmText}
                   onChange={(e) => setWmText(e.target.value)}
                   placeholder="e.g. © 2026 Your Photography Co."
-                  className="flex-1 px-3 py-1.5 rounded-lg border border-graphite-200 text-xs text-graphite-900 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
+                  className="flex-1 px-3 py-1.5 rounded-lg border border-graphite-200 dark:border-graphite-700 text-xs text-graphite-900 dark:text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
                 />
               </div>
               {/* Position */}
               <div className="flex items-center gap-3">
-                <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Position</label>
+                <label className="text-xs font-semibold text-graphite-700 dark:text-graphite-200 w-20 flex-shrink-0">Position</label>
                 <select
                   value={wmPosition}
                   onChange={(e) => setWmPosition(e.target.value)}
-                  className="flex-1 px-3 py-1.5 rounded-lg border border-graphite-200 text-xs text-graphite-900 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
+                  className="flex-1 px-3 py-1.5 rounded-lg border border-graphite-200 dark:border-graphite-700 text-xs text-graphite-900 dark:text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
                 >
                   <option value="top-left">Top Left</option>
                   <option value="top-right">Top Right</option>
@@ -1184,7 +1217,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </div>
               {/* Size */}
               <div className="flex items-center gap-3">
-                <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Size</label>
+                <label className="text-xs font-semibold text-graphite-700 dark:text-graphite-200 w-20 flex-shrink-0">Size</label>
                 <input
                   type="range"
                   min={10}
@@ -1193,11 +1226,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   onChange={(e) => setWmSize(Number(e.target.value))}
                   className="flex-1 accent-cyan"
                 />
-                <span className="text-xs text-graphite-500 w-10 text-right">{wmSize}px</span>
+                <span className="text-xs text-graphite-500 dark:text-graphite-400 w-10 text-right">{wmSize}px</span>
               </div>
               {/* Opacity */}
               <div className="flex items-center gap-3">
-                <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Opacity</label>
+                <label className="text-xs font-semibold text-graphite-700 dark:text-graphite-200 w-20 flex-shrink-0">Opacity</label>
                 <input
                   type="range"
                   min={0}
@@ -1206,15 +1239,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   onChange={(e) => setWmOpacity(Number(e.target.value) / 100)}
                   className="flex-1 accent-cyan"
                 />
-                <span className="text-xs text-graphite-500 w-10 text-right">{Math.round(wmOpacity * 100)}%</span>
+                <span className="text-xs text-graphite-500 dark:text-graphite-400 w-10 text-right">{Math.round(wmOpacity * 100)}%</span>
               </div>
             </div>
             {/* Live preview */}
             <div className="flex flex-col gap-2">
-              <span className="text-xs text-graphite-500">Preview</span>
+              <span className="text-xs text-graphite-500 dark:text-graphite-400">Preview</span>
               <div className="relative w-full h-28 bg-graphite-300 rounded-lg overflow-hidden flex-shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-br from-graphite-400 to-graphite-500 flex items-center justify-center">
-                  <span className="text-graphite-600 text-xs">Sample photo</span>
+                  <span className="text-graphite-600 dark:text-graphite-300 text-xs">Sample photo</span>
                 </div>
                 {wmText.trim() && (
                   <span
@@ -1246,7 +1279,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </button>
             <button
               onClick={() => setShowWatermarkPanel(false)}
-              className="px-3 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 text-xs hover:bg-graphite-50"
+              className="px-3 py-1.5 rounded-md border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 text-xs hover:bg-graphite-50 dark:hover:bg-graphite-800"
             >
               Cancel
             </button>
@@ -1257,9 +1290,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Thumbnail Strip - hidden on mobile */}
-        <div className="hidden md:flex w-[100px] bg-white border-r border-graphite-200 flex-col flex-shrink-0">
+        <div className="hidden md:flex w-[100px] bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-700 flex-col flex-shrink-0">
           {/* Filter pills */}
-          <div className="flex gap-0.5 p-1 border-b border-graphite-200 flex-shrink-0">
+          <div className="flex gap-0.5 p-1 border-b border-graphite-200 dark:border-graphite-700 flex-shrink-0">
             {[
               { v: "all" as const, l: "All" },
               { v: "favorites" as const, l: "★" },
@@ -1329,7 +1362,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                             <div className="absolute inset-0 ring-2 ring-red-500 rounded bg-red-500/30">
                               <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✗</div>
                               {photo.rejectionReason && (
-                                <div className="absolute bottom-1 left-1 right-1 text-[8px] text-red-600 bg-white/80 rounded px-1 py-0.5 truncate font-medium">
+                                <div className="absolute bottom-1 left-1 right-1 text-[8px] text-red-600 bg-white dark:bg-graphite-900/80 rounded px-1 py-0.5 truncate font-medium">
                                   {photo.rejectionReason}
                                 </div>
                               )}
@@ -1359,7 +1392,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                             ) : null;
                           } catch { return null; }
                         })()}
-                        <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500">
+                        <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500 dark:text-graphite-400">
                           {idx + 1}
                         </span>
                       </button>
@@ -1392,7 +1425,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                     <span>{Math.round(zoom * 100)}%</span>
                     <button
                       onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
-                      className="ml-1 px-1.5 py-0.5 rounded bg-white/20 hover:bg-white/30 text-[10px]"
+                      className="ml-1 px-1.5 py-0.5 rounded bg-white/20 hover:bg-white dark:bg-graphite-900/30 text-[10px]"
                     >Reset</button>
                   </div>
                 )}
@@ -1417,7 +1450,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       onPanChange={setPan}
                     />
                   ) : (
-                    <div className="flex items-center justify-center w-full h-full text-graphite-500 text-sm">Original HDR Merge</div>
+                    <div className="flex items-center justify-center w-full h-full text-graphite-500 dark:text-graphite-400 text-sm">Original HDR Merge</div>
                   )}
                 </div>
 
@@ -1439,12 +1472,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                     <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
                       <ArrowPathIcon className="w-8 h-8 text-cyan animate-spin" />
                       <div className="text-cyan text-sm font-medium">Enhancing Photo {currentIndex + 1} with AI...</div>
-                      <div className="text-graphite-500 text-xs">This may take 15-30 seconds</div>
+                      <div className="text-graphite-500 dark:text-graphite-400 text-xs">This may take 15-30 seconds</div>
                     </div>
                   ) : enhanceError ? (
                     <div className="flex flex-col items-center justify-center gap-2 w-full h-full max-w-sm text-center px-4">
                       <div className="text-red-400 text-sm font-medium">Enhancement failed</div>
-                      <div className="text-graphite-500 text-xs">{enhanceError}</div>
+                      <div className="text-graphite-500 dark:text-graphite-400 text-xs">{enhanceError}</div>
                       <button
                         onClick={handleRegenerate}
                         className="mt-2 px-4 py-1.5 rounded-lg bg-cyan/20 text-cyan text-xs font-semibold hover:bg-cyan/30 transition-colors"
@@ -1453,7 +1486,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center w-full h-full text-graphite-500 text-sm">
+                    <div className="flex items-center justify-center w-full h-full text-graphite-500 dark:text-graphite-400 text-sm">
                       {currentPhoto?.status === "regenerating"
                         ? "Regenerating..."
                         : "Click 'Enhance with AI' to edit this photo"}
@@ -1503,32 +1536,32 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
           {/* EXIF Info Panel */}
           {currentPhoto && (
-            <div className="bg-graphite-50 border-t border-graphite-200 px-3 md:px-6 py-3">
+            <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-3">
               <ExifPanel exifData={currentPhoto.exifData} />
             </div>
           )}
 
           {/* Action Bar */}
-          <div className="bg-white border-t border-graphite-200 px-3 md:px-6 py-3 flex items-center justify-between flex-wrap gap-2">
+          <div className="bg-white dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-3 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-4">
               <div className="flex gap-1">
                 <button
                   onClick={goPrev}
                   disabled={currentIndex === 0}
-                  className="w-8 h-8 rounded-lg bg-graphite-100 flex items-center justify-center hover:bg-graphite-200 transition-colors disabled:opacity-30"
+                  className="w-8 h-8 rounded-lg bg-graphite-100 dark:bg-graphite-800 flex items-center justify-center hover:bg-graphite-200 transition-colors disabled:opacity-30"
                 >
-                  <ChevronLeftIcon className="w-4 h-4 text-graphite-700" />
+                  <ChevronLeftIcon className="w-4 h-4 text-graphite-700 dark:text-graphite-200" />
                 </button>
                 <button
                   onClick={goNext}
                   disabled={currentIndex === photos.length - 1}
-                  className="w-8 h-8 rounded-lg bg-graphite-100 flex items-center justify-center hover:bg-graphite-200 transition-colors disabled:opacity-30"
+                  className="w-8 h-8 rounded-lg bg-graphite-100 dark:bg-graphite-800 flex items-center justify-center hover:bg-graphite-200 transition-colors disabled:opacity-30"
                 >
-                  <ChevronRightIcon className="w-4 h-4 text-graphite-700" />
+                  <ChevronRightIcon className="w-4 h-4 text-graphite-700 dark:text-graphite-200" />
                 </button>
               </div>
               <div>
-                <span className="text-sm font-semibold text-graphite-900">
+                <span className="text-sm font-semibold text-graphite-900 dark:text-white">
                   Photo {currentIndex + 1}
                 </span>
                 <span className="text-xs text-graphite-400 ml-1">
@@ -1540,7 +1573,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   const nextIdx = photos.findIndex((p, i) => i > currentIndex && p.status === "edited");
                   if (nextIdx >= 0) setCurrentIndex(nextIdx);
                 }}
-                className="text-xs px-2 py-1 rounded bg-graphite-100 hover:bg-graphite-200 text-graphite-700"
+                className="text-xs px-2 py-1 rounded bg-graphite-100 dark:bg-graphite-800 hover:bg-graphite-200 text-graphite-700 dark:text-graphite-200"
                 title="Jump to next photo needing review"
               >
                 Next pending
@@ -1571,7 +1604,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   value={rejectionReasonDefault}
                   onChange={(e) => setRejectionReasonDefault(e.target.value)}
                   disabled={isUpdating || enhanceLoading}
-                  className="text-xs px-2 py-2 rounded border border-graphite-200 bg-white text-graphite-900 hover:border-graphite-300 disabled:opacity-50"
+                  className="text-xs px-2 py-2 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white hover:border-graphite-300 disabled:opacity-50"
                 >
                   <option value="">No reason</option>
                   <option value="blurry">Blurry</option>
@@ -1635,7 +1668,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 )}
 
                 {twilightMenuOpen && !currentPhoto?.isTwilight && (
-                  <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-graphite-200 rounded-xl shadow-lg overflow-hidden z-30">
+                  <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-graphite-900 border border-graphite-200 dark:border-graphite-700 rounded-xl shadow-lg overflow-hidden z-30">
                     {[
                       { value: "warm-dusk", label: "Warm Dusk", desc: "Golden hour glow" },
                       { value: "blue-hour", label: "Blue Hour", desc: "Cobalt + warm" },
@@ -1652,9 +1685,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                           });
                           handleTwilight();
                         }}
-                        className="block w-full text-left px-3 py-2 hover:bg-graphite-50 border-b border-graphite-100 last:border-b-0"
+                        className="block w-full text-left px-3 py-2 hover:bg-graphite-50 dark:hover:bg-graphite-800 dark:bg-graphite-900 border-b border-graphite-100 dark:border-graphite-800 last:border-b-0"
                       >
-                        <div className="text-xs font-semibold text-graphite-900">{opt.label}</div>
+                        <div className="text-xs font-semibold text-graphite-900 dark:text-white">{opt.label}</div>
                         <div className="text-[10px] text-graphite-400">{opt.desc}</div>
                       </button>
                     ))}
@@ -1664,21 +1697,21 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </div>
 
             <div className="hidden md:flex gap-1.5 text-[10px] text-graphite-400">
-              <span className="px-2 py-1 bg-graphite-100 rounded">A = Approve</span>
-              <span className="px-2 py-1 bg-graphite-100 rounded">R = Reject</span>
-              <span className="px-2 py-1 bg-graphite-100 rounded">&larr; &rarr; Navigate</span>
+              <span className="px-2 py-1 bg-graphite-100 dark:bg-graphite-800 rounded">A = Approve</span>
+              <span className="px-2 py-1 bg-graphite-100 dark:bg-graphite-800 rounded">R = Reject</span>
+              <span className="px-2 py-1 bg-graphite-100 dark:bg-graphite-800 rounded">&larr; &rarr; Navigate</span>
             </div>
           </div>
 
           {/* Custom Instructions */}
-          <div className="bg-white border-t border-graphite-100 px-6 py-3 flex items-center gap-2.5">
+          <div className="bg-white dark:bg-graphite-900 border-t border-graphite-100 dark:border-graphite-800 px-6 py-3 flex items-center gap-2.5">
             <div className="flex gap-1.5 flex-wrap">
               {["Remove car", "Make brighter", "Fix sky", "Enhance grass", "Pot lights on", "Remove photographer", "TV: Netflix home screen", "TV: fireplace video", "TV: black screen off", "TV: beach scene"].map(
                 (tag) => (
                   <button
                     key={tag}
                     onClick={() => handleQuickTag(tag)}
-                    className="px-2.5 py-1 rounded-md bg-graphite-100 text-graphite-500 text-[11px] font-semibold border border-graphite-200 hover:bg-graphite-200 hover:text-graphite-700 transition-colors"
+                    className="px-2.5 py-1 rounded-md bg-graphite-100 dark:bg-graphite-800 text-graphite-500 dark:text-graphite-400 text-[11px] font-semibold border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-200 hover:text-graphite-700 dark:text-graphite-200 transition-colors"
                   >
                     {tag}
                   </button>
@@ -1695,7 +1728,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 }
               }}
               placeholder="Type custom instructions... e.g. 'remove the photographer from the mirror'"
-              className="flex-1 px-3.5 py-2.5 bg-graphite-100 border border-graphite-200 rounded-lg text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
+              className="flex-1 px-3.5 py-2.5 bg-graphite-100 dark:bg-graphite-800 border border-graphite-200 dark:border-graphite-700 rounded-lg text-sm text-graphite-900 dark:text-white placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
             />
             <Button
               onClick={handleRegenerate}
@@ -1715,47 +1748,47 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         />
       )}
       {showHelpOverlay && (
-        <div className="fixed top-4 right-4 z-50 bg-white rounded-lg shadow-lg border border-graphite-200 p-4 w-48">
+        <div className="fixed top-4 right-4 z-50 bg-white dark:bg-graphite-900 rounded-lg shadow-lg border border-graphite-200 dark:border-graphite-700 p-4 w-48">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-graphite-900">Keyboard Shortcuts</h3>
+            <h3 className="text-sm font-semibold text-graphite-900 dark:text-white">Keyboard Shortcuts</h3>
             <button
               onClick={() => setShowHelpOverlay(false)}
-              className="text-graphite-400 hover:text-graphite-600 text-lg"
+              className="text-graphite-400 hover:text-graphite-600 dark:text-graphite-300 text-lg"
             >
               ×
             </button>
           </div>
-          <div className="space-y-2 text-sm text-graphite-700">
+          <div className="space-y-2 text-sm text-graphite-700 dark:text-graphite-200">
             <div className="flex justify-between">
-              <span className="font-semibold text-graphite-900">A</span>
+              <span className="font-semibold text-graphite-900 dark:text-white">A</span>
               <span>Approve</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-graphite-900">R</span>
+              <span className="font-semibold text-graphite-900 dark:text-white">R</span>
               <span>Reject</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-graphite-900">E</span>
+              <span className="font-semibold text-graphite-900 dark:text-white">E</span>
               <span>Re-enhance</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-graphite-900">S</span>
+              <span className="font-semibold text-graphite-900 dark:text-white">S</span>
               <span>Toggle slider</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-graphite-900">Z</span>
+              <span className="font-semibold text-graphite-900 dark:text-white">Z</span>
               <span>Toggle zoom</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-graphite-900">← →</span>
+              <span className="font-semibold text-graphite-900 dark:text-white">← →</span>
               <span>Navigate</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-graphite-900">?</span>
+              <span className="font-semibold text-graphite-900 dark:text-white">?</span>
               <span>Toggle help</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-graphite-900">Esc</span>
+              <span className="font-semibold text-graphite-900 dark:text-white">Esc</span>
               <span>Close overlay</span>
             </div>
           </div>
@@ -1773,13 +1806,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {/* MLS Listing Description Modal */}
       {showDescModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDescModal(false)}>
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-graphite-900 rounded-lg p-6 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-2">MLS Listing Description</h2>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={14}
-              className="w-full p-3 text-sm border border-graphite-200 rounded"
+              className="w-full p-3 text-sm border border-graphite-200 dark:border-graphite-700 rounded"
             />
             <div className="flex gap-2 mt-3 justify-end">
               <button

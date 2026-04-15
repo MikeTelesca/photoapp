@@ -38,7 +38,7 @@ export function ShareButton({
     return (
       <button
         onClick={enable}
-        className="text-xs px-3 py-1.5 rounded border border-graphite-200 hover:bg-graphite-50"
+        className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
       >
         Share with client
       </button>
@@ -55,7 +55,7 @@ export function ShareButton({
       </button>
       <button
         onClick={disable}
-        className="text-xs px-3 py-1.5 rounded border border-graphite-200"
+        className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
       >
         Disable
       </button>

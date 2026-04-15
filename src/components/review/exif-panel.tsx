@@ -32,20 +32,20 @@ export function ExifPanel({ exifData }: Props) {
   if (visible.length === 0) return null;
 
   return (
-    <div className="border border-graphite-100 rounded">
+    <div className="border border-graphite-100 dark:border-graphite-800 rounded">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full text-left px-3 py-2 text-xs font-semibold text-graphite-600 flex justify-between items-center hover:bg-graphite-50"
+        className="w-full text-left px-3 py-2 text-xs font-semibold text-graphite-600 dark:text-graphite-300 flex justify-between items-center bg-graphite-50 dark:bg-graphite-900 hover:bg-graphite-100 dark:hover:bg-graphite-800"
       >
         Photo info (EXIF)
         <span className="text-graphite-400">{open ? "▾" : "▸"}</span>
       </button>
       {open && (
-        <div className="px-3 py-2 text-xs space-y-1 border-t border-graphite-100">
+        <div className="px-3 py-2 text-xs space-y-1 border-t border-graphite-100 dark:border-graphite-800">
           {visible.map(([label, value]) => (
             <div key={label} className="flex justify-between">
               <span className="text-graphite-400">{label}</span>
-              <span className="text-graphite-700 font-medium">{String(value)}</span>
+              <span className="text-graphite-700 dark:text-graphite-200 font-medium">{String(value)}</span>
             </div>
           ))}
         </div>

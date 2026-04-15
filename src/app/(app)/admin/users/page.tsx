@@ -55,7 +55,7 @@ export default async function AdminUsersPage() {
                   return (
                     <tr
                       key={user.id}
-                      className="border-b border-graphite-50 dark:border-graphite-800 hover:bg-graphite-50 dark:hover:bg-graphite-800/40 transition-colors"
+                      className="border-b border-graphite-50 dark:border-graphite-800 bg-white dark:bg-graphite-900 hover:bg-graphite-50 dark:hover:bg-graphite-800/40 transition-colors"
                     >
                       <td className="py-3 px-5 font-medium text-graphite-900 dark:text-white">
                         {user.name || "—"}

@@ -60,9 +60,9 @@ export function NotesPopover({ jobId, initialNotes }: { jobId: string; initialNo
         Notes{hasNotes && " \u25CF"}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-graphite-200 rounded-xl shadow-xl p-3 z-30">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-graphite-900 border border-graphite-200 dark:border-graphite-700 rounded-xl shadow-xl p-3 z-30">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-graphite-700">Job Notes</span>
+            <span className="text-xs font-semibold text-graphite-700 dark:text-graphite-200">Job Notes</span>
             <span className="text-[10px] text-graphite-400">
               {saving ? "Saving..." : savedAt ? "Saved" : "Auto-saves"}
             </span>
@@ -72,12 +72,12 @@ export function NotesPopover({ jobId, initialNotes }: { jobId: string; initialNo
             onChange={(e) => setNotes(e.target.value)}
             rows={6}
             placeholder="Add notes about this job - special instructions, client preferences, etc."
-            className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-xs focus:outline-none focus:border-cyan resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 text-xs focus:outline-none focus:border-cyan resize-none"
           />
           <div className="text-[10px] text-graphite-400 mt-1">Markdown supported — **bold**, lists, [links](url)</div>
           {hasNotes && (
-            <div className="mt-3 pt-3 border-t border-graphite-200">
-              <span className="text-[10px] font-semibold text-graphite-600 block mb-2">Preview:</span>
+            <div className="mt-3 pt-3 border-t border-graphite-200 dark:border-graphite-700">
+              <span className="text-[10px] font-semibold text-graphite-600 dark:text-graphite-300 block mb-2">Preview:</span>
               <Markdown>{notes}</Markdown>
             </div>
           )}

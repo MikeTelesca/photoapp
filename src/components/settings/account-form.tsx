@@ -74,30 +74,30 @@ export function AccountForm({ initialName, email, role }: Props) {
     <div className="space-y-4">
       <form onSubmit={handleSaveName} className="space-y-3">
         <div>
-          <label className="text-xs font-semibold text-graphite-500 uppercase tracking-wider mb-1.5 block">Name</label>
+          <label className="text-xs font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wider mb-1.5 block">Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
+            className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white text-sm focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-graphite-500 uppercase tracking-wider mb-1.5 block">Email</label>
+          <label className="text-xs font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wider mb-1.5 block">Email</label>
           <input
             type="email"
             value={email}
             disabled
-            className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm bg-graphite-50 text-graphite-500"
+            className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 text-sm bg-graphite-50 dark:bg-graphite-900 text-graphite-500 dark:text-graphite-400"
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-graphite-500 uppercase tracking-wider mb-1.5 block">Role</label>
+          <label className="text-xs font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wider mb-1.5 block">Role</label>
           <input
             type="text"
             value={role}
             disabled
-            className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm bg-graphite-50 text-graphite-500 capitalize"
+            className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 text-sm bg-graphite-50 dark:bg-graphite-900 text-graphite-500 dark:text-graphite-400 capitalize"
           />
         </div>
         <Button type="submit" disabled={savingName || name === initialName}>
@@ -105,39 +105,39 @@ export function AccountForm({ initialName, email, role }: Props) {
         </Button>
       </form>
 
-      <hr className="border-graphite-200" />
+      <hr className="border-graphite-200 dark:border-graphite-700" />
 
       <form onSubmit={handleChangePassword} className="space-y-3">
-        <h4 className="text-sm font-bold text-graphite-900">Change Password</h4>
+        <h4 className="text-sm font-bold text-graphite-900 dark:text-white">Change Password</h4>
         <div>
-          <label className="text-xs font-semibold text-graphite-500 uppercase tracking-wider mb-1.5 block">Current Password</label>
+          <label className="text-xs font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wider mb-1.5 block">Current Password</label>
           <input
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan"
+            className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white text-sm focus:outline-none focus:border-cyan"
             required
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-graphite-500 uppercase tracking-wider mb-1.5 block">New Password</label>
+          <label className="text-xs font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wider mb-1.5 block">New Password</label>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan"
+            className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white text-sm focus:outline-none focus:border-cyan"
             required
             minLength={8}
             placeholder="At least 8 characters"
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-graphite-500 uppercase tracking-wider mb-1.5 block">Confirm New Password</label>
+          <label className="text-xs font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wider mb-1.5 block">Confirm New Password</label>
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan"
+            className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white text-sm focus:outline-none focus:border-cyan"
             required
           />
         </div>

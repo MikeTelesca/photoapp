@@ -41,9 +41,9 @@ export function CommentForm({ token, photoId, initialComments }: Props) {
       {comments.length > 0 && (
         <div className="space-y-2 mb-3">
           {comments.map(c => (
-            <div key={c.id} className="bg-graphite-50 rounded p-2">
-              <div className="font-semibold text-xs text-graphite-700">{c.authorName}</div>
-              <div className="text-xs text-graphite-600 whitespace-pre-wrap">{c.message}</div>
+            <div key={c.id} className="bg-graphite-50 dark:bg-graphite-900 rounded p-2">
+              <div className="font-semibold text-xs text-graphite-700 dark:text-graphite-200">{c.authorName}</div>
+              <div className="text-xs text-graphite-600 dark:text-graphite-300 whitespace-pre-wrap">{c.message}</div>
             </div>
           ))}
         </div>
@@ -55,7 +55,7 @@ export function CommentForm({ token, photoId, initialComments }: Props) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
           maxLength={100}
-          className="px-2 py-1 text-xs rounded border border-graphite-200"
+          className="px-2 py-1 text-xs rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white"
           required
         />
         <textarea
@@ -64,7 +64,7 @@ export function CommentForm({ token, photoId, initialComments }: Props) {
           placeholder="Comment on this photo..."
           maxLength={1000}
           rows={2}
-          className="px-2 py-1 text-xs rounded border border-graphite-200 resize-none"
+          className="px-2 py-1 text-xs rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white resize-none"
           required
         />
         <button type="submit" disabled={sending || !name.trim() || !message.trim()}

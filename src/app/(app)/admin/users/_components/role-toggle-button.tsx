@@ -48,7 +48,7 @@ export function RoleToggleButton({ userId, currentRole, userName }: RoleToggleBu
       <button
         onClick={handleToggle}
         disabled={loading}
-        className="text-xs px-2.5 py-1.5 rounded-md bg-graphite-100 dark:bg-graphite-700 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-200 dark:hover:bg-graphite-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+        className="text-xs px-2.5 py-1.5 rounded-md bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-200 dark:hover:bg-graphite-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
       >
         {loading ? "..." : `Make ${newRole === "admin" ? "admin" : "photographer"}`}
       </button>

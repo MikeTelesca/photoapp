@@ -78,6 +78,7 @@ interface Photo {
   caption?: string | null;
   colorLabel?: string | null;
   retouchRequest?: string | null;
+  customFilename?: string | null;
   ratings?: { id: string; authorName: string; rating: number; createdAt: string }[];
   createdAt: string;
   updatedAt: string;
@@ -108,6 +109,9 @@ interface Job {
   shareViewCount?: number;
   shareLastViewedAt?: string | null;
   sharePasswordSet?: boolean;
+  clientApprovalStatus?: string | null;
+  clientApprovedAt?: string | null;
+  clientApprovalNote?: string | null;
   listingDescription?: string | null;
   sequenceNumber?: number | null;
   trackedTimeSeconds?: number;
@@ -323,6 +327,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [job, setJob] = useState(initialJob);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [customInstruction, setCustomInstruction] = useState("");
+  // Inline filename rename (per active photo)
+  const [renamingPhotoId, setRenamingPhotoId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState<string>("");
+  const [renameSaving, setRenameSaving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEnhancingAll, setIsEnhancingAll] = useState(false);
   const [enhanceProgress, setEnhanceProgress] = useState(0);
@@ -758,6 +766,52 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   const photos = job.photos;
   const currentPhoto = photos[currentIndex];
+
+  // ------------------ Inline filename rename ------------------
+  const startRename = useCallback(() => {
+    if (!currentPhoto) return;
+    setRenameValue(currentPhoto.customFilename ?? "");
+    setRenamingPhotoId(currentPhoto.id);
+  }, [currentPhoto]);
+
+  const cancelRename = useCallback(() => {
+    setRenamingPhotoId(null);
+    setRenameValue("");
+  }, []);
+
+  const saveRename = useCallback(async () => {
+    if (!currentPhoto || renamingPhotoId !== currentPhoto.id) return;
+    const trimmed = renameValue.trim();
+    setRenameSaving(true);
+    try {
+      const res = await fetch(`/api/photos/${currentPhoto.id}/rename`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: trimmed.length === 0 ? null : trimmed }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        addToast("error", data?.error || "Rename failed");
+        return;
+      }
+      const data = await res.json();
+      setJob((prev) => ({
+        ...prev,
+        photos: prev.photos.map((p) =>
+          p.id === currentPhoto.id
+            ? { ...p, customFilename: data.customFilename ?? null }
+            : p
+        ),
+      }));
+      addToast("success", data.customFilename ? "Filename updated" : "Filename cleared");
+      setRenamingPhotoId(null);
+      setRenameValue("");
+    } catch (e) {
+      addToast("error", (e as Error).message || "Rename failed");
+    } finally {
+      setRenameSaving(false);
+    }
+  }, [currentPhoto, renamingPhotoId, renameValue, addToast]);
 
   // Pre-populate custom instruction and photo override from saved photo value when navigating
   useEffect(() => {
@@ -2081,10 +2135,73 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 </div>
               )}
             </div>
-            <div className="text-xs text-graphite-400 flex gap-3">
+            <div className="text-xs text-graphite-400 flex gap-3 items-center flex-wrap">
               <span>{job.photographer.name}</span>
               <span>{photos.length} photos</span>
               <span className="capitalize hidden sm:inline">{job.preset} preset</span>
+              {job.clientApprovalStatus === "approved" && (
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-semibold"
+                  title={job.clientApprovalNote || undefined}
+                >
+                  Client Approved ✅
+                </span>
+              )}
+              {job.clientApprovalStatus === "changes_requested" && (
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[11px] font-semibold"
+                  title={job.clientApprovalNote || undefined}
+                >
+                  Changes Requested 📝
+                </span>
+              )}
+              {currentPhoto && (
+                <span className="flex items-center gap-1 text-graphite-500 dark:text-graphite-300">
+                  {renamingPhotoId === currentPhoto.id ? (
+                    <>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveRename();
+                          } else if (e.key === "Escape") {
+                            e.preventDefault();
+                            cancelRename();
+                          }
+                          e.stopPropagation();
+                        }}
+                        onBlur={cancelRename}
+                        disabled={renameSaving}
+                        placeholder="Custom filename"
+                        maxLength={120}
+                        className="text-xs px-1.5 py-0.5 rounded border border-cyan bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white min-w-[160px] focus:outline-none"
+                      />
+                      <span className="text-[10px] text-graphite-400">Enter saves · Esc cancels</span>
+                    </>
+                  ) : (
+                    <>
+                      <span
+                        className="font-mono truncate max-w-[220px]"
+                        title={currentPhoto.customFilename || "No custom filename"}
+                      >
+                        {currentPhoto.customFilename || <em className="not-italic opacity-60">unnamed</em>}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={startRename}
+                        className="text-[11px] px-1.5 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800"
+                        title="Rename this photo's output filename"
+                      >
+                        ✏ Rename
+                      </button>
+                    </>
+                  )}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -3003,6 +3120,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                     <SortableThumb key={photo.id} id={photo.id}>
                       <button
                         data-thumb-id={photo.id}
+                        title={photo.customFilename ? `${photo.customFilename} — photo ${idx + 1}` : `Photo ${idx + 1}`}
                         onClick={() => setCurrentIndex(sortedPhotos.findIndex(p => p.id === photo.id))}
                         onMouseEnter={(e) => {
                           if (!hoverEnabled) return;

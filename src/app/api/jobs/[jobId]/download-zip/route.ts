@@ -89,8 +89,20 @@ export async function GET(
         index: idx,
         total: photos.length,
       });
+      // Per-photo custom filename override (preserve extension)
+      if (photo.customFilename && photo.customFilename.trim().length > 0) {
+        // Strip any path separators / illegal chars defensively
+        const safeBase = photo.customFilename
+          .replace(/[\\/:*?"<>|\x00-\x1f]/g, "")
+          .replace(/^\.+|\.+$/g, "")
+          .trim();
+        if (safeBase.length > 0) {
+          // Strip any extension the user typed; we control the final extension.
+          filename = safeBase.replace(/\.[^/.]+$/, "");
+        }
+      }
       // Replace extension in case pattern includes one
-      filename = filename.replace(/\.[^/.]+$/, `.${extension}`);
+      filename = filename.replace(/\.[^/.]+$/, "") + `.${extension}`;
 
       zip.file(filename, buf);
 

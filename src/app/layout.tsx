@@ -4,6 +4,8 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { ServiceWorkerRegister } from "@/components/pwa/sw-register";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -41,6 +43,8 @@ export default function RootLayout({
         <Providers>{children}</Providers>
         <SpeedInsights />
         <Analytics />
+        <InstallPrompt />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

@@ -22,6 +22,16 @@
     --purple: #7C3AED;
     --purple-light: #EDE9FE;
   }
+
+  .dark {
+    --background: #0a0a0a;
+    --card: #18181B;
+    --card-border: #27272A;
+    --text-primary: #FAFAFA;
+    --text-secondary: #D4D4D8;
+    --text-muted: #A1A1AA;
+    --text-faint: #71717A;
+  }
 }
 
 body {

@@ -29,9 +29,9 @@ export function StatCard({ label, value, subtext, icon, iconColor = "cyan", high
   }
 
   return (
-    <div className="bg-white rounded-card border border-graphite-200 p-5 relative overflow-hidden hover:-translate-y-0.5 hover:shadow-md transition-all duration-250">
+    <div className="bg-white dark:bg-graphite-900 rounded-card border border-graphite-200 dark:border-graphite-800 p-5 relative overflow-hidden hover:-translate-y-0.5 hover:shadow-md transition-all duration-250">
       <div className="text-xs font-semibold text-graphite-400 uppercase tracking-wider mb-3">{label}</div>
-      <div className="text-[32px] font-extrabold text-graphite-900 tracking-tight tabular-nums">{value}</div>
+      <div className="text-[32px] font-extrabold text-graphite-900 dark:text-white tracking-tight tabular-nums">{value}</div>
       {subtext && <div className="text-xs text-graphite-400 mt-1.5">{subtext}</div>}
       <div className={`absolute top-4 right-4 w-9 h-9 rounded-lg flex items-center justify-center ${iconBg[iconColor]}`}>{icon}</div>
     </div>

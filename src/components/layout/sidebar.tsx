@@ -16,7 +16,11 @@ import {
   Bars3Icon,
   XMarkIcon,
   ChartBarIcon,
+  SunIcon,
+  MoonIcon,
+  ComputerDesktopIcon,
 } from "@heroicons/react/24/outline";
+import { useTheme } from "@/components/theme-provider";
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
@@ -37,6 +41,7 @@ export function Sidebar() {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [needsReviewCount, setNeedsReviewCount] = useState<number | null>(null);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const fetchCount = () => {
@@ -56,11 +61,11 @@ export function Sidebar() {
         <div className="w-[34px] h-[34px] bg-gradient-to-br from-graphite-900 to-graphite-700 rounded-[10px] flex items-center justify-center shadow-md">
           <CameraIcon className="w-[18px] h-[18px] text-white" />
         </div>
-        <span className="text-[17px] font-bold text-graphite-900 tracking-tight">PhotoApp</span>
+        <span className="text-[17px] font-bold text-graphite-900 dark:text-white tracking-tight">PhotoApp</span>
         {/* Close button on mobile */}
         <button
           onClick={() => setIsOpen(false)}
-          className="ml-auto md:hidden p-1 text-graphite-400 hover:text-graphite-600"
+          className="ml-auto md:hidden p-1 text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-300"
         >
           <XMarkIcon className="w-5 h-5" />
         </button>
@@ -80,7 +85,7 @@ export function Sidebar() {
               className={`flex items-center gap-2.5 px-6 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
-                  : "text-graphite-500 hover:bg-graphite-100 hover:text-graphite-700"
+                  : "text-graphite-500 dark:text-graphite-400 hover:bg-graphite-100 dark:hover:bg-graphite-800 hover:text-graphite-700 dark:hover:text-graphite-200"
               }`}
             >
               <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
@@ -108,7 +113,7 @@ export function Sidebar() {
                 className={`flex items-center gap-2.5 px-6 py-2 mx-2.5 rounded-[10px] text-[13.5px] font-medium transition-all duration-150 ${
                   isActive
                     ? "bg-gradient-to-br from-graphite-900 to-graphite-800 text-white shadow-md"
-                    : "text-graphite-500 hover:bg-graphite-100 hover:text-graphite-700"
+                    : "text-graphite-500 dark:text-graphite-400 hover:bg-graphite-100 dark:hover:bg-graphite-800 hover:text-graphite-700 dark:hover:text-graphite-200"
                 }`}
               >
                 <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
@@ -121,12 +126,51 @@ export function Sidebar() {
 
       <div className="flex-1" />
 
-      <div className="px-6 py-4 border-t border-graphite-200 flex items-center gap-2.5">
+      {/* Theme toggle */}
+      <div className="px-3 mb-2 mx-3">
+        <div className="flex items-center justify-center gap-1 bg-graphite-100 dark:bg-graphite-800 rounded-lg p-1">
+          <button
+            onClick={() => setTheme("light")}
+            className={`flex-1 flex items-center justify-center py-1.5 rounded transition-all ${
+              theme === "light"
+                ? "bg-white dark:bg-graphite-700 shadow-sm text-graphite-900 dark:text-white"
+                : "text-graphite-500 dark:text-graphite-400 hover:text-graphite-700 dark:hover:text-graphite-200"
+            }`}
+            title="Light mode"
+          >
+            <SunIcon className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setTheme("dark")}
+            className={`flex-1 flex items-center justify-center py-1.5 rounded transition-all ${
+              theme === "dark"
+                ? "bg-graphite-700 text-white shadow-sm"
+                : "text-graphite-500 dark:text-graphite-400 hover:text-graphite-700 dark:hover:text-graphite-200"
+            }`}
+            title="Dark mode"
+          >
+            <MoonIcon className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setTheme("system")}
+            className={`flex-1 flex items-center justify-center py-1.5 rounded transition-all ${
+              theme === "system"
+                ? "bg-white dark:bg-graphite-700 shadow-sm text-graphite-900 dark:text-white"
+                : "text-graphite-500 dark:text-graphite-400 hover:text-graphite-700 dark:hover:text-graphite-200"
+            }`}
+            title="System default"
+          >
+            <ComputerDesktopIcon className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="px-6 py-4 border-t border-graphite-200 dark:border-graphite-800 flex items-center gap-2.5">
         <div className="w-[34px] h-[34px] rounded-full bg-gradient-to-br from-cyan to-cyan-light flex items-center justify-center text-[13px] font-bold text-white">
           {session?.user?.name?.charAt(0) || "?"}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold text-graphite-900 truncate">
+          <div className="text-[13px] font-semibold text-graphite-900 dark:text-white truncate">
             {session?.user?.name || "User"}
           </div>
           <div className="text-[11px] text-graphite-400 truncate">
@@ -135,7 +179,7 @@ export function Sidebar() {
         </div>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-graphite-400 hover:text-graphite-600 transition-colors"
+          className="text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-300 transition-colors"
           title="Sign out"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -149,17 +193,17 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile header - shows only on small screens */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-graphite-200 px-4 py-3 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-graphite-900 border-b border-graphite-200 dark:border-graphite-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button onClick={() => setIsOpen(true)} className="p-1">
-            <Bars3Icon className="w-6 h-6 text-graphite-700" />
+            <Bars3Icon className="w-6 h-6 text-graphite-700 dark:text-graphite-300" />
           </button>
-          <span className="text-base font-bold text-graphite-900">PhotoApp</span>
+          <span className="text-base font-bold text-graphite-900 dark:text-white">PhotoApp</span>
         </div>
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:w-[230px] md:fixed md:top-0 md:left-0 md:bottom-0 bg-white border-r border-graphite-200 flex-col z-20">
+      <aside className="hidden md:flex md:w-[230px] md:fixed md:top-0 md:left-0 md:bottom-0 bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-800 flex-col z-20">
         {sidebarContent}
       </aside>
 
@@ -172,7 +216,7 @@ export function Sidebar() {
             onClick={() => setIsOpen(false)}
           />
           {/* Sidebar panel */}
-          <aside className="relative w-[270px] bg-white flex flex-col z-10 shadow-xl">
+          <aside className="relative w-[270px] bg-white dark:bg-graphite-900 flex flex-col z-10 shadow-xl">
             {sidebarContent}
           </aside>
         </div>

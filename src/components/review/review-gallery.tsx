@@ -1843,7 +1843,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               >Dismiss</button>
             </div>
           )}
-          <NotesPopover jobId={job.id} initialNotes={job.notes ?? null} />
+          <NotesPopover jobId={job.id} initialNotes={job.notes ?? null} jobStatus={job.status} />
           <div className="space-y-1">
             <button
               onClick={loadTagSuggestions}

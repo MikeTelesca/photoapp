@@ -4,8 +4,17 @@ import { useState, useRef, useEffect } from "react";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import { Markdown } from "@/components/ui/markdown";
 import { SnippetPicker } from "@/components/notes/snippet-picker";
+import { StatusSnippetPicker } from "@/components/notes/status-snippet-picker";
 
-export function NotesPopover({ jobId, initialNotes }: { jobId: string; initialNotes: string | null }) {
+export function NotesPopover({
+  jobId,
+  initialNotes,
+  jobStatus,
+}: {
+  jobId: string;
+  initialNotes: string | null;
+  jobStatus?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(initialNotes || "");
   const [saving, setSaving] = useState(false);
@@ -76,7 +85,12 @@ export function NotesPopover({ jobId, initialNotes }: { jobId: string; initialNo
               placeholder="Add notes about this job - special instructions, client preferences, etc."
               className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 text-xs focus:outline-none focus:border-cyan resize-none"
             />
-            <SnippetPicker category="job" onInsert={(text) => setNotes(prev => prev ? `${prev}\n${text}` : text)} />
+            <div className="flex items-center gap-2 flex-wrap">
+              <SnippetPicker category="job" onInsert={(text) => setNotes(prev => prev ? `${prev}\n${text}` : text)} />
+              {jobStatus && (
+                <StatusSnippetPicker status={jobStatus} onInsert={(text) => setNotes(prev => prev ? `${prev}\n${text}` : text)} />
+              )}
+            </div>
           </div>
           <div className="text-[10px] text-graphite-400 mt-1">Markdown supported — **bold**, lists, [links](url)</div>
           {hasNotes && (

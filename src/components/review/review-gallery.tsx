@@ -250,19 +250,20 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
 
     // Otherwise, set twilight and regenerate
+    const photoId = currentPhoto.id;
     const instruction = customInstruction.trim() || "Convert to twilight/dusk with warm lighting, all lights on";
-    setEnhanceError(null);
-    setEnhanceLoading(true);
+    setEnhanceErrors((prev) => { const n = { ...prev }; delete n[photoId]; return n; });
+    setEnhancingIds((prev) => new Set(prev).add(photoId));
 
     setJob((prev) => ({
       ...prev,
       photos: prev.photos.map((p) =>
-        p.id === currentPhoto.id ? { ...p, status: "regenerating", editedUrl: null, isTwilight: true } : p
+        p.id === photoId ? { ...p, status: "regenerating", editedUrl: null, isTwilight: true } : p
       ),
     }));
 
     try {
-      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/enhance`, {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${photoId}/enhance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ customInstructions: instruction, makeTwilight: true }),
@@ -273,24 +274,24 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         setJob((prev) => ({
           ...prev,
           photos: prev.photos.map((p) =>
-            p.id === currentPhoto.id
+            p.id === photoId
               ? { ...p, status: "edited", editedUrl: data.editedUrl, isTwilight: true }
               : p
           ),
         }));
       } else {
-        setEnhanceError(data.error || "Twilight conversion failed");
+        setEnhanceErrors((prev) => ({ ...prev, [photoId]: data.error || "Twilight conversion failed" }));
         setJob((prev) => ({
           ...prev,
           photos: prev.photos.map((p) =>
-            p.id === currentPhoto.id ? { ...p, status: "pending", isTwilight: false } : p
+            p.id === photoId ? { ...p, status: "pending", isTwilight: false } : p
           ),
         }));
       }
     } catch (err: any) {
-      setEnhanceError(err.message || "Network error");
+      setEnhanceErrors((prev) => ({ ...prev, [photoId]: err.message || "Network error" }));
     } finally {
-      setEnhanceLoading(false);
+      setEnhancingIds((prev) => { const n = new Set(prev); n.delete(photoId); return n; });
       setCustomInstruction("");
     }
   }, [currentPhoto, job.id, customInstruction, updatePhoto]);

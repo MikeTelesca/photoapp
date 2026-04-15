@@ -4,6 +4,7 @@ import { enhancePhoto, analyzePhoto } from "@/lib/ai-enhance";
 import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
+import { logActivity } from "@/lib/activity";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -260,6 +261,14 @@ export async function POST(
     await prisma.photo.update({
       where: { id: photo.id },
       data: { editedUrl, status: "edited" },
+    });
+
+    await logActivity({
+      type: "photo_enhanced",
+      message: `Photo enhanced (HDR merge)`,
+      jobId: jobId,
+      photoId: photo.id,
+      userId: access.userId,
     });
 
     // Track cost

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/api-auth";
+import { logActivity } from "@/lib/activity";
 
 // GET /api/jobs - list all jobs
 export async function GET(request: NextRequest) {
@@ -77,6 +78,13 @@ export async function POST(request: NextRequest) {
           select: { id: true, name: true, email: true },
         },
       },
+    });
+
+    await logActivity({
+      type: "job_created",
+      message: `Created job for ${job.address}`,
+      jobId: job.id,
+      userId: userId,
     });
 
     return NextResponse.json(job, { status: 201 });

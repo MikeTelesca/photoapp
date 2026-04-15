@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { logActivity } from "@/lib/activity";
 
 // PATCH /api/jobs/:jobId/photos/:photoId - update a photo (approve, reject, etc)
 export async function PATCH(
@@ -50,6 +51,7 @@ export async function PATCH(
   ]);
 
   const job = await prisma.job.findUnique({ where: { id: photo.jobId } });
+  const jobNowApproved = job && (approvedCount + rejectedCount === job.totalPhotos && job.totalPhotos > 0) && job.status !== "approved";
   if (job) {
     await prisma.job.update({
       where: { id: job.id },
@@ -62,6 +64,33 @@ export async function PATCH(
           ? "approved"
           : job.status,
       },
+    });
+
+    if (jobNowApproved) {
+      await logActivity({
+        type: "job_approved",
+        message: `All ${job.totalPhotos} photos reviewed — job approved`,
+        jobId: job.id,
+        userId: access.userId,
+      });
+    }
+  }
+
+  if (body.status === "approved") {
+    await logActivity({
+      type: "photo_approved",
+      message: `Photo approved`,
+      jobId: photo.jobId,
+      photoId: photo.id,
+      userId: access.userId,
+    });
+  } else if (body.status === "rejected") {
+    await logActivity({
+      type: "photo_rejected",
+      message: `Photo rejected`,
+      jobId: photo.jobId,
+      photoId: photo.id,
+      userId: access.userId,
     });
   }
 

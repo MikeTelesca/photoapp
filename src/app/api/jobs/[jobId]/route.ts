@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { logActivity } from "@/lib/activity";
 
 // GET /api/jobs/:jobId - get a single job with its photos
 export async function GET(
@@ -106,9 +107,16 @@ export async function DELETE(
     if ("error" in access) return access.error;
 
     // Soft delete - preserve cost data
-    await prisma.job.update({
+    const deletedJob = await prisma.job.update({
       where: { id: jobId },
       data: { status: "deleted" },
+    });
+
+    await logActivity({
+      type: "job_deleted",
+      message: `Deleted job for ${deletedJob.address}`,
+      jobId: jobId,
+      userId: access.userId,
     });
 
     return NextResponse.json({ success: true });

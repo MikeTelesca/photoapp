@@ -9,6 +9,7 @@ import { enhancePhoto, convertToTwilight, analyzePhoto } from "@/lib/ai-enhance"
 import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
+import { logActivity } from "@/lib/activity";
 
 // Download a file from Dropbox shared link using raw API
 async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
@@ -232,6 +233,14 @@ export async function POST(
         customInstructions: customInstructions || null,
         isTwilight: makeTwilight || photo.isTwilight,
       },
+    });
+
+    await logActivity({
+      type: "photo_regenerated",
+      message: makeTwilight ? `Photo regenerated as twilight` : `Photo regenerated`,
+      jobId: jobId,
+      photoId: photoId,
+      userId: access.userId,
     });
 
     // Track cost

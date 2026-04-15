@@ -106,52 +106,6 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
   }
 }
 
-async function getRecentActivity() {
-  try {
-    const recentJobs = await prisma.job.findMany({
-      where: {
-        status: { in: ["approved", "review", "processing"] },
-      },
-      include: {
-        photographer: { select: { name: true } },
-      },
-      orderBy: { updatedAt: "desc" },
-      take: 5,
-    });
-
-    return recentJobs.map((j, i) => ({
-      id: `a${i}`,
-      icon: (j.status === "approved"
-        ? "approved"
-        : j.status === "processing"
-        ? "uploaded"
-        : "regenerated") as "approved" | "uploaded" | "regenerated",
-      highlight: j.status === "approved" ? j.address : j.photographer.name,
-      text:
-        j.status === "approved"
-          ? "approved"
-          : j.status === "processing"
-          ? `uploaded ${j.address}`
-          : `ready for review — ${j.totalPhotos} photos`,
-      time: formatTime(j.updatedAt),
-    }));
-  } catch (error) {
-    console.error("Failed to fetch recent activity:", error);
-    return [];
-  }
-}
-
-function formatTime(date: Date): string {
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hrs ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "Yesterday";
-  return `${days} days ago`;
-}
 
 export default async function DashboardPage({
   searchParams,
@@ -167,10 +121,9 @@ export default async function DashboardPage({
   const userRole = (session?.user as any)?.role;
   const where = userRole === "admin" ? {} : { photographerId: userId };
 
-  const [stats, jobs, activity] = await Promise.all([
+  const [stats, jobs] = await Promise.all([
     getStats(where),
     getJobs(where, search, tag),
-    getRecentActivity(),
   ]);
 
   return (
@@ -220,7 +173,7 @@ export default async function DashboardPage({
               imageCount={stats.totalImages}
               budget={150}
             />
-            <ActivityFeed items={activity} />
+            <ActivityFeed />
           </div>
         </div>
 

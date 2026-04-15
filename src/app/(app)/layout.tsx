@@ -9,6 +9,7 @@ import { CommandPalette } from "@/components/layout/command-palette";
 import { ShortcutCheatsheet } from "@/components/layout/shortcut-cheatsheet";
 import { LiveProgressIndicator } from "@/components/dashboard/live-progress-indicator";
 import { GlobalShortcuts } from "@/components/layout/global-shortcuts";
+import { QuickAddFab } from "@/components/layout/quick-add-fab";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,6 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <ShortcutCheatsheet />
       <LiveProgressIndicator />
       <GlobalShortcuts />
+      <QuickAddFab />
     </div>
   );
 }

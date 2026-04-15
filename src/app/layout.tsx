@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { ServiceWorkerRegister } from "@/components/pwa/sw-register";
 import { UpdateBanner } from "@/components/pwa/update-banner";
+import { CookieConsent } from "@/components/legal/cookie-consent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -90,6 +91,7 @@ export default function RootLayout({
         <InstallPrompt />
         <ServiceWorkerRegister />
         <UpdateBanner />
+        <CookieConsent />
       </body>
     </html>
   );

@@ -36,6 +36,7 @@ import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { SidebarSearch } from "@/components/layout/sidebar-search";
+import { SidebarBadge } from "@/components/layout/sidebar-badge";
 
 const menuItems = [
   { label: "Dashboard", href: "/dashboard", icon: Squares2X2Icon },
@@ -150,6 +151,9 @@ export function Sidebar() {
             >
               <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
               {!collapsed && item.label}
+              {!collapsed && item.label === "Dashboard" && (
+                <SidebarBadge endpoint="/api/jobs/inbox-count" countKey="count" />
+              )}
               {!collapsed && item.label === "Needs Review" && needsReviewCount !== null && needsReviewCount > 0 && (
                 <span className="ml-auto bg-cyan text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                   {needsReviewCount}

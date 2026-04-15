@@ -161,7 +161,7 @@ export default async function SharePage({
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block hover:opacity-95 transition-opacity"
+                    className="block hover:opacity-95 transition-opacity relative"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -170,6 +170,16 @@ export default async function SharePage({
                       className="w-full h-auto object-cover"
                       loading="lazy"
                     />
+                    {photo.notePinned && photo.note && (
+                      <div className="absolute top-3 right-3 max-w-[240px] pointer-events-none">
+                        <div className="bg-amber-200 text-amber-900 text-xs px-3 py-2 rounded shadow-lg border border-amber-300 rotate-1 whitespace-pre-wrap break-words">
+                          <div className="flex items-start gap-1">
+                            <span>📌</span>
+                            <span>{photo.note}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </a>
                   <div className="px-3 pt-2 pb-1">
                     <StarRating

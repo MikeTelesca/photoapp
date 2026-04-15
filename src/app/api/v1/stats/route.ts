@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const auth = await requireApiKey(request);
   if ("error" in auth) return auth.error;
 
-  const rateErr = checkRate(auth.userId, "default");
+  const rateErr = await checkRate(auth.userId, "default");
   if (rateErr) return rateErr;
 
   const startOfMonth = new Date();

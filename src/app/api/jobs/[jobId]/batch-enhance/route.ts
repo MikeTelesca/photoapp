@@ -13,7 +13,7 @@ export async function POST(
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
 
-  const rateErr = checkRate(access.userId, "enhance");
+  const rateErr = await checkRate(access.userId, "enhance");
   if (rateErr) return rateErr;
 
   const body = await request.json();

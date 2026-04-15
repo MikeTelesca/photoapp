@@ -57,7 +57,7 @@ export async function POST(
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
 
-  const rateErr = checkRate(access.userId, "ai-lite");
+  const rateErr = await checkRate(access.userId, "ai-lite");
   if (rateErr) return rateErr;
 
   const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;

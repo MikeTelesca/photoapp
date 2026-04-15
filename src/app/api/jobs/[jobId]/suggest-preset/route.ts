@@ -13,7 +13,7 @@ export async function POST(
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
 
-  const rateErr = checkRate(access.userId, "ai-lite");
+  const rateErr = await checkRate(access.userId, "ai-lite");
   if (rateErr) return rateErr;
 
   // Get 3 sample photos from the job (first, middle, last if available)

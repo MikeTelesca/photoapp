@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireUser();
   if ("error" in auth) return auth.error;
 
-  const rateErr = checkRate(auth.userId, "enhance");
+  const rateErr = await checkRate(auth.userId, "enhance");
   if (rateErr) return rateErr;
 
   const formData = await request.formData();

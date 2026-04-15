@@ -17,7 +17,7 @@ export async function POST(
   const auth = await requireUser();
   if ("error" in auth) return auth.error;
 
-  const rateErr = checkRate(auth.userId, "ai-lite");
+  const rateErr = await checkRate(auth.userId, "ai-lite");
   if (rateErr) return rateErr;
 
   const photo = await prisma.photo.findUnique({ where: { id: photoId } });

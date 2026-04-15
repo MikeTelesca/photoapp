@@ -45,29 +45,63 @@ if (typeof setInterval !== "undefined") {
 
 // Convenience helper that creates a NextResponse 429 when exceeded
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 
-export function checkRate(userId: string, bucket: "enhance" | "ai-lite" | "default"): NextResponse | null {
+function rejectResponse(limit: number, resetAt: number, reason = "Rate limit exceeded"): NextResponse {
+  return NextResponse.json(
+    { error: reason, resetAt: new Date(resetAt).toISOString() },
+    {
+      status: 429,
+      headers: {
+        "X-RateLimit-Limit": String(limit),
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": String(Math.floor(resetAt / 1000)),
+        "Retry-After": String(Math.max(1, Math.ceil((resetAt - Date.now()) / 1000))),
+      },
+    }
+  );
+}
+
+export async function checkRate(
+  userId: string,
+  bucket: "enhance" | "ai-lite" | "default"
+): Promise<NextResponse | null> {
   const configs = {
     enhance: { limit: 120, windowMs: 60 * 60 * 1000 },  // 120/hour
     "ai-lite": { limit: 30, windowMs: 60 * 60 * 1000 }, // 30/hour
     default: { limit: 300, windowMs: 60 * 60 * 1000 },  // 300/hour
   };
-  const cfg = configs[bucket];
-  const result = rateLimit({ key: `${bucket}:${userId}`, ...cfg });
+
+  // Look up user tier; fall back to "standard" on any error
+  let tier: string = "standard";
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { rateLimitTier: true },
+    });
+    if (user?.rateLimitTier) tier = user.rateLimitTier;
+  } catch {
+    tier = "standard";
+  }
+
+  // Banned users are always rejected
+  if (tier === "banned") {
+    const resetAt = Date.now() + 60 * 60 * 1000;
+    return rejectResponse(0, resetAt, "Account rate-limited by administrator");
+  }
+
+  // Unlimited users skip the check entirely
+  if (tier === "unlimited") {
+    return null;
+  }
+
+  const baseCfg = configs[bucket];
+  const multiplier = tier === "pro" ? 2 : 1;
+  const cfg = { limit: baseCfg.limit * multiplier, windowMs: baseCfg.windowMs };
+  const result = rateLimit({ key: `${bucket}:${tier}:${userId}`, ...cfg });
 
   if (!result.allowed) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded", resetAt: new Date(result.resetAt).toISOString() },
-      {
-        status: 429,
-        headers: {
-          "X-RateLimit-Limit": String(result.limit),
-          "X-RateLimit-Remaining": "0",
-          "X-RateLimit-Reset": String(Math.floor(result.resetAt / 1000)),
-          "Retry-After": String(Math.ceil((result.resetAt - Date.now()) / 1000)),
-        },
-      }
-    );
+    return rejectResponse(result.limit, result.resetAt);
   }
 
   return null; // allowed

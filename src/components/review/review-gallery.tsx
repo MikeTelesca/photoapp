@@ -75,6 +75,7 @@ interface Photo {
   autoTags?: string | null;
   rejectionReason?: string | null;
   note?: string | null;
+  notePinned?: boolean;
   caption?: string | null;
   colorLabel?: string | null;
   retouchRequest?: string | null;
@@ -3812,6 +3813,17 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   {currentPhoto && (
                     <PhotoPins jobId={job.id} photoId={currentPhoto.id} enabled={pinMode} />
                   )}
+                  {/* Pinned note overlay (post-it) */}
+                  {currentPhoto?.notePinned && currentPhoto?.note && (
+                    <div className="absolute top-2.5 right-2.5 z-20 max-w-[240px] pointer-events-none">
+                      <div className="bg-amber-200 text-amber-900 text-xs px-3 py-2 rounded shadow-lg border border-amber-300 rotate-1 whitespace-pre-wrap break-words">
+                        <div className="flex items-start gap-1">
+                          <span>📌</span>
+                          <span>{currentPhoto.note}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -3838,7 +3850,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {/* Photo Note */}
           {currentPhoto && (
             <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
-              <PhotoNote jobId={job.id} photoId={currentPhoto.id} initialNote={currentPhoto.note} />
+              <PhotoNote
+                jobId={job.id}
+                photoId={currentPhoto.id}
+                initialNote={currentPhoto.note}
+                initialPinned={currentPhoto.notePinned}
+                onPinnedChange={(pinned) => {
+                  setJob(prev => ({
+                    ...prev,
+                    photos: prev.photos.map(p =>
+                      p.id === currentPhoto.id ? { ...p, notePinned: pinned } : p
+                    ),
+                  }));
+                }}
+                onNoteChange={(note) => {
+                  setJob(prev => ({
+                    ...prev,
+                    photos: prev.photos.map(p =>
+                      p.id === currentPhoto.id ? { ...p, note } : p
+                    ),
+                  }));
+                }}
+              />
             </div>
           )}
 

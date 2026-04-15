@@ -32,6 +32,7 @@ import { BackupRestore } from "@/components/settings/backup-restore";
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
 import { FilenamePatternForm } from "@/components/settings/filename-pattern-form";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
+import { ReplayOnboardingButton } from "@/components/settings/replay-onboarding-button";
 import { EmailSubjectForm } from "@/components/settings/email-subject-form";
 import { prisma } from "@/lib/db";
 
@@ -529,6 +530,16 @@ export default async function SettingsPage() {
                 <div className="text-xs text-graphite-400">Customize your keyboard bindings</div>
               </div>
             </Link>
+          </div>
+        </Card>
+
+        {/* Onboarding */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Onboarding</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <ReplayOnboardingButton />
           </div>
         </Card>
 

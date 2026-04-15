@@ -377,3 +377,8 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "invoiceCounter" INTEGER NOT NULL DE
 -- Job.invoiceNumber: assigned on first finalize/download; unique (nullable)
 ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "invoiceNumber" TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS "Job_invoiceNumber_key" ON "Job"("invoiceNumber");
+
+-- ---------------------------------------------------------------------------
+-- First-run onboarding product tour: tracks when user completed/skipped tour
+-- ---------------------------------------------------------------------------
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMP(3);

@@ -3,6 +3,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { MainContent } from "@/components/layout/main-content";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { WelcomeModal } from "@/components/onboarding/welcome-modal";
+import { ProductTour } from "@/components/onboarding/product-tour";
+import { prisma } from "@/lib/db";
 import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
 import { ImpersonateBanner } from "@/components/layout/impersonate-banner";
 import { DropboxAlertBanner } from "@/components/layout/dropbox-alert-banner";
@@ -28,6 +30,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/maintenance");
   }
 
+  // Show the first-run product tour only if the user hasn't completed it yet.
+  let showTour = false;
+  if (session?.user?.id) {
+    try {
+      const u = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { onboardedAt: true },
+      });
+      showTour = !u?.onboardedAt;
+    } catch {
+      showTour = false;
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
       <DashboardBackground />
@@ -40,6 +56,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <MainContent>{children}</MainContent>
       </div>
       <WelcomeModal />
+      {showTour && <ProductTour />}
       <MobileBottomNav />
       <CommandPalette />
       <ShortcutCheatsheet />

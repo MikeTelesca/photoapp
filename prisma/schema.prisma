@@ -49,6 +49,7 @@ model User {
   portfolioBio      String?
   statusSnippets    String?  // JSON: { pending: string[], processing: string[], review: string[], approved: string[], rejected: string[] }
   tagsInheritFromJob Boolean @default(false)
+  onboardedAt        DateTime?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]

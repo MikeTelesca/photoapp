@@ -143,6 +143,7 @@ model Job {
   trackedTimeSeconds  Int      @default(0)
   coverPhotoId        String?
   colorLabel          String?  // null | "red" | "amber" | "emerald" | "blue" | "purple" | "pink"
+  deletedAt           DateTime?  // soft-delete timestamp; null = not trashed
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)
@@ -190,6 +191,7 @@ model Photo {
   rejectionReason      String?
   note                 String?
   caption              String?
+  colorLabel           String?  // null | "red" | "amber" | "emerald" | "blue" | "purple" | "pink"
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   comments             PhotoComment[]

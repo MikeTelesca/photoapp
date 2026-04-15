@@ -2804,6 +2804,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                             </div>
                           )}
                         </div>
+                        {photo.colorLabel && (
+                          <div
+                            className={`absolute inset-0 rounded-md pointer-events-none ring-2 ${
+                              photo.colorLabel === "red" ? "ring-red-500" :
+                              photo.colorLabel === "amber" ? "ring-amber-500" :
+                              photo.colorLabel === "emerald" ? "ring-emerald-500" :
+                              photo.colorLabel === "blue" ? "ring-blue-500" :
+                              photo.colorLabel === "purple" ? "ring-purple-500" :
+                              photo.colorLabel === "pink" ? "ring-pink-500" : ""
+                            }`}
+                            title={`Label: ${photo.colorLabel}`}
+                          />
+                        )}
                         {photo.isTwilight && (
                           <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
                         )}
@@ -3394,6 +3407,43 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <span>★</span>
                 <span className="hidden sm:inline">Favorite</span>
               </button>
+              {/* Color label picker */}
+              <div
+                className="flex items-center gap-1 px-2 py-2 rounded-lg bg-graphite-100 dark:bg-graphite-800"
+                title="Color label (Shift+1..6 to set, Shift+0 to clear)"
+              >
+                {[
+                  { c: "red", bg: "bg-red-500", key: "Shift+1" },
+                  { c: "amber", bg: "bg-amber-500", key: "Shift+2" },
+                  { c: "emerald", bg: "bg-emerald-500", key: "Shift+3" },
+                  { c: "blue", bg: "bg-blue-500", key: "Shift+4" },
+                  { c: "purple", bg: "bg-purple-500", key: "Shift+5" },
+                  { c: "pink", bg: "bg-pink-500", key: "Shift+6" },
+                ].map(({ c, bg, key }) => {
+                  const active = currentPhoto?.colorLabel === c;
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => handleColorLabel(active ? null : c)}
+                      disabled={!currentPhoto || isUpdating || enhanceLoading}
+                      className={`w-4 h-4 rounded-full ${bg} transition-all disabled:opacity-40 ${
+                        active
+                          ? "ring-2 ring-offset-1 ring-graphite-700 dark:ring-white scale-125"
+                          : "opacity-70 hover:opacity-100 hover:scale-110"
+                      }`}
+                      title={`${c} (${key})`}
+                      aria-label={`Set color label ${c}`}
+                    />
+                  );
+                })}
+                <button
+                  onClick={() => handleColorLabel(null)}
+                  disabled={!currentPhoto || isUpdating || enhanceLoading || !currentPhoto?.colorLabel}
+                  className="w-4 h-4 rounded-full border border-graphite-400 dark:border-graphite-500 flex items-center justify-center text-[9px] leading-none text-graphite-600 dark:text-graphite-300 hover:bg-graphite-200 dark:hover:bg-graphite-700 disabled:opacity-30"
+                  title="Clear color label (Shift+0)"
+                  aria-label="Clear color label"
+                >×</button>
+              </div>
               <button
                 onClick={handleToggleFlag}
                 disabled={isUpdating || enhanceLoading}

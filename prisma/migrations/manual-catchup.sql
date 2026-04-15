@@ -317,3 +317,14 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "statusSnippets" TEXT;
 -- =============================================================================
 -- END OF MANUAL CATCH-UP MIGRATION
 -- =============================================================================
+
+-- ---------------------------------------------------------------------------
+-- Trash / Recycle Bin: soft-delete timestamp on Job
+-- ---------------------------------------------------------------------------
+ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);
+CREATE INDEX IF NOT EXISTS "Job_deletedAt_idx" ON "Job"("deletedAt");
+
+-- ---------------------------------------------------------------------------
+-- Per-photo color label (Lightroom-style color flags)
+-- ---------------------------------------------------------------------------
+ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "colorLabel" TEXT;

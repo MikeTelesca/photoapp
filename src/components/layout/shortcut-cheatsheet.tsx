@@ -41,6 +41,12 @@ const SECTIONS: Section[] = [
       { keys: ["G", "S"], action: "Go to search" },
     ],
   },
+  {
+    title: "Notes & forms",
+    shortcuts: [
+      { keys: ["⌘", "/"], action: "Insert snippet (in note fields)" },
+    ],
+  },
 ];
 
 export function ShortcutCheatsheet() {

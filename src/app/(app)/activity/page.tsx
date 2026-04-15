@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/api-auth";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
+import { ActivityFilter } from "@/components/activity/activity-filter";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -45,42 +46,7 @@ export default async function ActivityPage() {
                 No activity yet
               </div>
             ) : (
-              <div className="space-y-0">
-                {logs.map((log, idx) => (
-                  <div
-                    key={log.id}
-                    className={`flex flex-col gap-1 py-3 px-4 text-xs rounded hover:bg-graphite-50 dark:hover:bg-graphite-800 transition-colors ${
-                      idx !== logs.length - 1
-                        ? "border-b border-graphite-100 dark:border-graphite-800"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="text-graphite-400 dark:text-graphite-500 font-mono">
-                        {formatTime(log.createdAt)}
-                      </div>
-                      <div className="flex-1 font-semibold text-graphite-800 dark:text-graphite-100">
-                        {log.type}
-                      </div>
-                      <div className="text-graphite-500 dark:text-graphite-400 text-[11px]">
-                        {log.userId ? `User: ${log.userId.slice(0, 8)}` : "System"}
-                      </div>
-                    </div>
-                    {log.message && (
-                      <div className="text-graphite-600 dark:text-graphite-300 text-[11px]">
-                        {log.message}
-                      </div>
-                    )}
-                    {log.metadata && (
-                      <div className="text-graphite-500 dark:text-graphite-400 font-mono text-[10px] bg-graphite-50 dark:bg-graphite-900 p-2 rounded border border-graphite-100 dark:border-graphite-800 overflow-x-auto">
-                        {typeof log.metadata === "string"
-                          ? log.metadata
-                          : JSON.stringify(log.metadata, null, 2)}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <ActivityFilter logs={JSON.parse(JSON.stringify(logs))} />
             )}
           </div>
         </Card>
@@ -89,19 +55,3 @@ export default async function ActivityPage() {
   );
 }
 
-function formatTime(date: Date): string {
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d ago`;
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-  });
-}

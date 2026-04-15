@@ -29,11 +29,26 @@ export function SnippetPicker({ category, onInsert }: Props) {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        const target = document.activeElement;
+        if (target?.tagName === "TEXTAREA" || target?.tagName === "INPUT") {
+          e.preventDefault();
+          setOpen(true);
+        }
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div ref={ref} className="relative inline-block">
       <button type="button" onClick={() => setOpen(!open)}
+        title="Insert snippet (Cmd+/)"
         className="text-[10px] px-2 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 text-graphite-500 dark:text-graphite-400 hover:bg-graphite-50 dark:hover:bg-graphite-800">
-        💬 Snippets
+        💬 Snippets <kbd className="text-[9px] ml-1 opacity-70">⌘/</kbd>
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 z-30 w-64 bg-white dark:bg-graphite-900 border border-graphite-200 dark:border-graphite-700 rounded shadow-lg max-h-60 overflow-y-auto">

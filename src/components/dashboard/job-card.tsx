@@ -19,6 +19,7 @@ import { InlinePresetSwitch } from "@/components/dashboard/inline-preset-switch"
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { ColorLabelPicker } from "@/components/dashboard/color-label-picker";
 import { JobHoverPreview } from "@/components/dashboard/job-hover-preview";
+import { LockButton } from "@/components/dashboard/lock-button";
 import { formatJobNumber } from "@/lib/job-number";
 import { tagColor } from "@/lib/tag-color";
 import { checkStale } from "@/lib/job-stale";
@@ -238,6 +239,12 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
         {job.status === "approved" && (
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
+            {job.lockedAt && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold uppercase tracking-wide">
+                🔒 Locked
+              </span>
+            )}
+            <LockButton jobId={job.id} locked={!!job.lockedAt} />
             <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
             <CopyJobLinkButton jobId={job.id} />
             <DownloadButton jobId={job.id} />

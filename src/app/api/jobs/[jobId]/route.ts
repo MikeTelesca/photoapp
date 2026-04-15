@@ -50,6 +50,14 @@ export async function PATCH(
     if ("error" in access) return access.error;
     const { role, job: existingJob } = access;
 
+    // Check if job is locked
+    if (existingJob.lockedAt) {
+      return NextResponse.json(
+        { error: "Job is locked. Unlock to make changes." },
+        { status: 423 }
+      );
+    }
+
     const body = await request.json();
 
     // Mass assignment defense: whitelist allowed fields
@@ -105,6 +113,14 @@ export async function DELETE(
     const { jobId } = await params;
     const access = await requireJobAccess(jobId);
     if ("error" in access) return access.error;
+
+    // Check if job is locked
+    if (access.job.lockedAt) {
+      return NextResponse.json(
+        { error: "Job is locked. Unlock to delete." },
+        { status: 423 }
+      );
+    }
 
     // Soft delete - preserve cost data
     const deletedJob = await prisma.job.update({

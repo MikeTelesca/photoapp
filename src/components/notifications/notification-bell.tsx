@@ -29,8 +29,24 @@ export function NotificationBell() {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 60000);
-    return () => clearInterval(timer);
+    let timer: ReturnType<typeof setInterval> | null = null;
+    function start() {
+      if (timer) return;
+      timer = setInterval(load, 30000);
+    }
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+    function onVisibility() {
+      if (document.visibilityState === "visible") { load(); start(); }
+      else { stop(); }
+    }
+    start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      stop();
+    };
   }, []);
 
   async function markAllRead() {

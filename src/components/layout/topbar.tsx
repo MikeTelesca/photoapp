@@ -7,6 +7,7 @@ import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { DropboxStatus } from "./dropbox-status";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { TodayCountChip } from "./today-count-chip";
 
 interface TopbarProps {
   title: string;
@@ -59,6 +60,7 @@ export function Topbar({ title, subtitle, actions }: TopbarProps) {
             {aiStatus.processing} processing
           </div>
         )}
+        <TodayCountChip />
         <DropboxStatus />
         <NotificationBell />
         <button

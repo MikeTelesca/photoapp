@@ -24,6 +24,12 @@ ONLY DO THESE SAFE ADJUSTMENTS:
 4. SATURATION: Very mild saturation boost for natural-looking colors. Do not oversaturate.
 5. SHARPNESS: Gentle sharpening for crisp detail.
 6. NOISE: Reduce noise if visible.
+7. STRAIGHTEN VERTICALS: Make all vertical lines (walls, doorframes, columns, fence posts) perfectly vertical. Fix any tilted/leaning verticals.
+8. STRAIGHTEN HORIZONTALS: Level the horizon. Make countertops, ceilings, floors, and other horizontal lines perfectly straight.
+9. LENS DISTORTION: Fix barrel/pincushion distortion. Correct converging vertical lines from wide-angle shots so walls appear straight up-and-down (not leaning inward at top).
+10. PERSPECTIVE: Architecturally correct — rooms should look square and properly proportioned.
+
+NOTE on #7-10: Adjust the geometry/perspective WITHOUT changing what's in the photo. Same furniture, same walls, same content — just straightened.
 
 The goal: make the photo look like it was taken with perfect lighting and exposure. NOT like a different photo of a different place.
 

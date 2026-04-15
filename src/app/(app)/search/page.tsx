@@ -18,6 +18,16 @@ interface Job {
   tags?: string;
 }
 
+const DATE_PRESETS = [
+  { label: "Today", days: 0 },
+  { label: "Yesterday", days: 1 },
+  { label: "7 days", days: 7 },
+  { label: "30 days", days: 30 },
+  { label: "This month", days: -1 },
+  { label: "Last month", days: -2 },
+  { label: "Quarter", days: -3 },
+];
+
 export default function SearchPage() {
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
@@ -30,6 +40,41 @@ export default function SearchPage() {
   const [results, setResults] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+
+  function applyPreset(label: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let fromDate = new Date(today);
+    let toDate = new Date(today);
+    toDate.setHours(23, 59, 59, 999);
+
+    if (label === "Today") {
+      fromDate = new Date(today);
+      toDate = new Date(today);
+    } else if (label === "Yesterday") {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      fromDate = yesterday;
+      toDate = yesterday;
+    } else if (label === "7 days") {
+      fromDate = new Date(today);
+      fromDate.setDate(fromDate.getDate() - 7);
+    } else if (label === "30 days") {
+      fromDate = new Date(today);
+      fromDate.setDate(fromDate.getDate() - 30);
+    } else if (label === "This month") {
+      fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    } else if (label === "Last month") {
+      fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      toDate = new Date(today.getFullYear(), today.getMonth(), 0);
+    } else if (label === "Quarter") {
+      const quarterStart = Math.floor(today.getMonth() / 3) * 3;
+      fromDate = new Date(today.getFullYear(), quarterStart, 1);
+    }
+
+    setFrom(fromDate.toISOString().slice(0, 10));
+    setTo(toDate.toISOString().slice(0, 10));
+  }
 
   async function runSearch() {
     setLoading(true);
@@ -89,6 +134,31 @@ export default function SearchPage() {
               value={to}
               onChange={setTo}
             />
+            <div className="md:col-span-3 flex flex-wrap gap-1 items-center">
+              <span className="text-[11px] uppercase tracking-wide font-semibold text-graphite-500 dark:text-graphite-400 mr-1">
+                Quick:
+              </span>
+              {DATE_PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => applyPreset(p.label)}
+                  className="text-[11px] px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:border-cyan"
+                >
+                  {p.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setFrom("");
+                  setTo("");
+                }}
+                className="text-[11px] px-2 py-1 rounded text-graphite-500"
+              >
+                Clear dates
+              </button>
+            </div>
             <SearchInput
               label="Min cost ($)"
               type="number"

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import { applyWatermark } from "@/lib/watermark";
+import { applyPattern } from "@/lib/filename-pattern";
 
 // GET /api/jobs/:jobId/photos/:photoId/download
 export async function GET(
@@ -19,7 +20,7 @@ export async function GET(
         job: {
           include: {
             photographer: {
-              select: { watermarkLogoPath: true },
+              select: { watermarkLogoPath: true, name: true, filenamePattern: true },
             },
           },
         },
@@ -72,10 +73,17 @@ export async function GET(
       buffer = await sharp(buffer).jpeg({ quality: 92 }).toBuffer();
     }
 
-    const sanitizedAddress = photo.job.address
-      .replace(/[^a-zA-Z0-9]/g, "_")
-      .substring(0, 50);
-    const filename = `${sanitizedAddress}_${String(photo.orderIndex + 1).padStart(3, "0")}.jpg`;
+    const user = photo.job.photographer;
+    const pattern = user?.filenamePattern || "{address}-{seq}";
+    const filename = applyPattern({
+      pattern,
+      address: photo.job.address,
+      client: photo.job.clientName || "",
+      preset: photo.job.preset || "",
+      photographer: user?.name || "",
+      index: photo.orderIndex + 1,
+      total: 1,
+    });
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {

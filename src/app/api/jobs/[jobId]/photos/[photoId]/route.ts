@@ -26,6 +26,7 @@ export async function PATCH(
     "editedUrl",
     "rejectionReason",
     "note",
+    "flagged",
   ] as const;
   for (const field of allowedFields) {
     if (body[field] !== undefined) allowed[field] = body[field];

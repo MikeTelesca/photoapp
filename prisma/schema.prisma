@@ -37,6 +37,7 @@ model User {
   emailSignature    String?
   autoArchiveDays   Int?      // null = disabled; otherwise days
   promptPrefix      String?   // Custom prompt prefix prepended to all enhance prompts
+  filenamePattern   String   @default("{address}-{seq}") // Download filename pattern
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]
@@ -139,6 +140,7 @@ model Photo {
   isExterior           Boolean  @default(false)
   isTwilight           Boolean  @default(false)
   isFavorite           Boolean  @default(false)
+  flagged              Boolean  @default(false)
   twilightInstructions String?
   twilightStyle        String?  // "warm-dusk", "blue-hour", "deep-night"
   customInstructions   String?

@@ -10,6 +10,7 @@ export const SHORTCUTS: Shortcut[] = [
   { id: "next", label: "Next photo", defaultKey: "ArrowRight" },
   { id: "prev", label: "Previous photo", defaultKey: "ArrowLeft" },
   { id: "favorite", label: "Toggle favorite", defaultKey: "f" },
+  { id: "flag", label: "Flag for review", defaultKey: "t" },
   { id: "reenhance", label: "Re-enhance photo", defaultKey: "e" },
   { id: "slider", label: "Toggle slider view", defaultKey: "s" },
   { id: "zoom", label: "Toggle zoom", defaultKey: "z" },

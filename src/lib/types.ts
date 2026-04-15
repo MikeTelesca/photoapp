@@ -46,6 +46,7 @@ export interface Photo {
   isExterior: boolean;
   isTwilight: boolean;
   isFavorite?: boolean;
+  flagged?: boolean;
   twilightInstructions: string | null;
   twilightStyle?: string | null;
   customInstructions: string | null;

@@ -28,6 +28,7 @@ const SECTIONS: Section[] = [
       { keys: ["R"], action: "Reject photo" },
       { keys: ["E"], action: "Re-enhance photo" },
       { keys: ["F"], action: "Favorite photo" },
+      { keys: ["T"], action: "Flag photo for review" },
       { keys: ["S"], action: "Toggle slider view" },
       { keys: ["Z"], action: "Toggle zoom" },
       { keys: ["←", "→"], action: "Navigate photos" },

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
 import sharp from "sharp";
+import { applyPattern } from "@/lib/filename-pattern";
 
 export const maxDuration = 300;
 
@@ -31,7 +32,14 @@ export async function GET(
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
 
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: {
+      photographer: {
+        select: { filenamePattern: true, name: true },
+      },
+    },
+  });
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const photos = await prisma.photo.findMany({
@@ -43,7 +51,8 @@ export async function GET(
   }
 
   const zip = new JSZip();
-  const addr = job.address.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  const user = job.photographer;
+  const pattern = user?.filenamePattern || "{address}-{seq}";
   let idx = 0;
 
   for (const photo of photos) {
@@ -61,7 +70,16 @@ export async function GET(
         .toBuffer();
 
       idx++;
-      zip.file(`${addr}-${String(idx).padStart(3, "0")}.jpg`, resized);
+      const filename = applyPattern({
+        pattern,
+        address: job.address,
+        client: job.clientName || "",
+        preset: job.preset || "",
+        photographer: user?.name || "",
+        index: idx,
+        total: photos.length,
+      });
+      zip.file(filename, resized);
     } catch (err) {
       console.error("mls export err:", err);
     }
@@ -71,7 +89,7 @@ export async function GET(
   return new NextResponse(new Uint8Array(buf), {
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${addr}-${preset}.zip"`,
+      "Content-Disposition": `attachment; filename="${job.address}-${preset}.zip"`,
     },
   });
 }

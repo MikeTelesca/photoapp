@@ -49,6 +49,7 @@ interface Photo {
   isExterior: boolean;
   isTwilight: boolean;
   isFavorite?: boolean;
+  flagged?: boolean;
   twilightInstructions: string | null;
   twilightStyle?: string | null;
   customInstructions: string | null;
@@ -260,12 +261,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     } else if (sortBy === "date") {
       arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } else if (sortBy === "flagged") {
-      // Photos with quality flags first
+      // Flagged photos first
       arr.sort((a, b) => {
-        const aFlagged = !!a.qualityFlags;
-        const bFlagged = !!b.qualityFlags;
-        if (aFlagged === bFlagged) return 0;
-        return aFlagged ? -1 : 1;
+        const aFlagged = a.flagged ? 0 : 1;
+        const bFlagged = b.flagged ? 0 : 1;
+        return aFlagged - bFlagged;
       });
     } else if (sortBy === "rejected") {
       // Rejected photos first
@@ -524,6 +524,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       }
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
+    }
+  }, [currentPhoto, job.id]);
+
+  const handleToggleFlag = useCallback(async () => {
+    if (!currentPhoto) return;
+    const newFlag = !currentPhoto.flagged;
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flagged: newFlag }),
+      });
+      if (res.ok) {
+        setJob((prev) => ({
+          ...prev,
+          photos: prev.photos.map((p) =>
+            p.id === currentPhoto.id ? { ...p, flagged: newFlag } : p
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to toggle flag:", error);
     }
   }, [currentPhoto, job.id]);
 
@@ -1053,6 +1075,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         case "favorite":
           handleFavorite();
           break;
+        case "flag":
+          handleToggleFlag();
+          break;
         case "help":
           e.preventDefault();
           setShowHelpOverlay(prev => !prev);
@@ -1077,7 +1102,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleApprove, handleReject, handleRegenerate, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay]);
+  }, [handleApprove, handleReject, handleRegenerate, handleToggleFlag, goNext, goPrev, showPromptEditor, showMobileNav, twilightMenuOpen, showHelpOverlay]);
 
   // Close twilight menu when clicking outside
   useEffect(() => {
@@ -1880,6 +1905,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                         {photo.isFavorite && (
                           <div className="absolute top-1 right-1 text-amber-400 text-sm drop-shadow">★</div>
                         )}
+                        {photo.flagged && (
+                          <div className="absolute top-1 left-1 text-orange-400 text-sm drop-shadow z-10" title="Flagged">🚩</div>
+                        )}
                         {photo.note && (
                           <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-400 drop-shadow" title="Has note" />
                         )}
@@ -2327,6 +2355,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               >
                 <span>★</span>
                 <span className="hidden sm:inline">Favorite</span>
+              </button>
+              <button
+                onClick={handleToggleFlag}
+                disabled={isUpdating || enhanceLoading}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
+                  currentPhoto?.flagged
+                    ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300"
+                    : "border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+                }`}
+                title="Flag for review (press T)"
+              >
+                <span>🚩</span>
+                <span className="hidden sm:inline">{currentPhoto?.flagged ? "Flagged" : "Flag"}</span>
               </button>
               {currentPhoto && (
                 <a

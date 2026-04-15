@@ -26,6 +26,7 @@ import { EmailSignatureForm } from "@/components/settings/email-signature-form";
 import { AutoArchiveSelect } from "@/components/settings/auto-archive-select";
 import { BackupRestore } from "@/components/settings/backup-restore";
 import { PushSubscribeButton } from "@/components/notifications/push-subscribe-button";
+import { FilenamePatternForm } from "@/components/settings/filename-pattern-form";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,7 @@ export default async function SettingsPage() {
   let budgetPerJob = 20;
   let emailSignature: string | null = null;
   let autoArchiveDays: number | null = null;
+  let filenamePattern: string | null = null;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -79,6 +81,7 @@ export default async function SettingsPage() {
         budgetPerJob: true,
         emailSignature: true,
         autoArchiveDays: true,
+        filenamePattern: true,
       },
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
@@ -94,6 +97,7 @@ export default async function SettingsPage() {
     budgetPerJob = user?.budgetPerJob ?? 20;
     emailSignature = user?.emailSignature ?? null;
     autoArchiveDays = user?.autoArchiveDays ?? null;
+    filenamePattern = user?.filenamePattern ?? null;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -200,6 +204,17 @@ export default async function SettingsPage() {
               Automatically archive approved jobs older than this. Archived jobs remain in search but are hidden from the dashboard.
             </p>
             <AutoArchiveSelect initial={autoArchiveDays} />
+          </div>
+        </Card>
+
+        {/* Download Filename Pattern */}
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-1 dark:text-white">Download filename pattern</h2>
+            <p className="text-xs text-graphite-500 dark:text-graphite-400 mb-3">
+              Customize how downloaded photos are named. Use tokens like {"{address}"}, {"{client}"}, {"{date}"}, {"{preset}"}, {"{photographer}"}, and {"{seq}"}.
+            </p>
+            <FilenamePatternForm initial={filenamePattern} />
           </div>
         </Card>
 

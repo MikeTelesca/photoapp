@@ -7,6 +7,7 @@ import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ZoomableImage } from "./zoomable-image";
+import { WatermarkPreviewOverlay } from "./watermark-preview-overlay";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { formatJobNumber } from "@/lib/job-number";
 import Link from "next/link";
@@ -225,6 +226,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Multi-select state
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
+  const [showWatermark, setShowWatermark] = useState(false);
   const [bulkNote, setBulkNote] = useState("");
 
   // Deep-link state
@@ -1586,6 +1588,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             >
               Compare preset
             </button>
+            <button
+              onClick={() => setShowWatermark(!showWatermark)}
+              className={`text-xs px-3 py-1.5 rounded ${showWatermark ? "bg-amber-500 text-white" : "border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300"}`}
+              title="Toggle watermark preview overlay"
+            >
+              {showWatermark ? "🏷 Watermark on" : "🏷 Preview watermark"}
+            </button>
           </div>
           {suggestion && (
             <div className="text-xs px-3 py-2 rounded bg-purple-50 border border-purple-200 flex items-center gap-2 hidden md:flex">
@@ -2521,14 +2530,23 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   )}
 
                   {currentPhoto?.editedUrl ? (
-                    <ZoomableImage
-                      src={currentPhoto.editedUrl}
-                      alt="After"
-                      zoom={zoom}
-                      pan={pan}
-                      onZoomChange={setZoom}
-                      onPanChange={setPan}
-                    />
+                    <div className="relative w-full h-full">
+                      <ZoomableImage
+                        src={currentPhoto.editedUrl}
+                        alt="After"
+                        zoom={zoom}
+                        pan={pan}
+                        onZoomChange={setZoom}
+                        onPanChange={setPan}
+                      />
+                      <WatermarkPreviewOverlay
+                        text={job.watermarkText}
+                        position={job.watermarkPosition}
+                        size={job.watermarkSize}
+                        opacity={job.watermarkOpacity}
+                        visible={showWatermark}
+                      />
+                    </div>
                   ) : enhanceLoading ? (
                     <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
                       <ArrowPathIcon className="w-8 h-8 text-cyan animate-spin" />

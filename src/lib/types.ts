@@ -62,6 +62,7 @@ export interface Photo {
   twilightInstructions: string | null;
   twilightStyle?: string | null;
   customInstructions: string | null;
+  customPromptOverride?: string | null;
   detections: string[];
   qualityFlags?: string | null;
   autoTags?: string | null;

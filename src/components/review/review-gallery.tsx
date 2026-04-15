@@ -62,6 +62,7 @@ interface Photo {
   twilightInstructions: string | null;
   twilightStyle?: string | null;
   customInstructions: string | null;
+  customPromptOverride?: string | null;
   detections: string;
   exifData: string | null;
   errorMessage: string | null;

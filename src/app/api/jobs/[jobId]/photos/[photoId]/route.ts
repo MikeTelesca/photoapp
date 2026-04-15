@@ -19,6 +19,7 @@ export async function PATCH(
   const allowedFields = [
     "status",
     "customInstructions",
+    "customPromptOverride",
     "isTwilight",
     "isFavorite",
     "twilightInstructions",

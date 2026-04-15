@@ -1,3 +1,4 @@
+import { formatJobNumber } from "@/lib/job-number";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import { redirect } from "next/navigation";
@@ -32,6 +33,7 @@ export default async function PrintInvoicePage({
   const photoCount = job.approvedPhotos || job.totalPhotos;
   const subtotal = photoCount * rate;
   const invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String(((user as any).invoiceCounter || 1000)).padStart(4, "0")}`;
+  const jobNum = (job as any).sequenceNumber ? formatJobNumber({ sequence: (job as any).sequenceNumber, createdAt: job.createdAt, prefix: (user as any).jobSequencePrefix }) : null;
   const client = (job as any).client;
 
   return (
@@ -149,6 +151,7 @@ export default async function PrintInvoicePage({
               Job
             </div>
             <div style={{ fontWeight: 600 }}>{job.address}</div>
+            {jobNum && <div style={{ fontSize: 13, color: "#0891b2", fontWeight: 600 }}>Job #{jobNum}</div>}
             <div style={{ fontSize: 13, color: "#444" }}>
               Completed: {job.createdAt.toLocaleDateString()}
             </div>

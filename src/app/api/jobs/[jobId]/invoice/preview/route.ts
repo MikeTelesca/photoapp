@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { formatJobNumber } from "@/lib/job-number";
 
 export async function GET(
   _request: NextRequest,
@@ -29,6 +30,7 @@ export async function GET(
   const photoCount = job.approvedPhotos || job.totalPhotos;
   const subtotal = photoCount * rate;
   const invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String(((user as any).invoiceCounter || 1000)).padStart(4, "0")}`;
+  const jobNum = job.sequenceNumber ? formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt, prefix: (user as any).jobSequencePrefix }) : null;
 
   return NextResponse.json({
     invoiceNum,
@@ -36,6 +38,7 @@ export async function GET(
     client: client ? { name: client.name, email: client.email, phone: client.phone, company: client.company } : { name: job.clientName },
     job: {
       address: job.address,
+      jobNum: jobNum || undefined,
       preset: job.preset,
       completedAt: job.createdAt,
     },

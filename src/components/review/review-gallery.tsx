@@ -7,6 +7,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from "@dnd-kit/utilities";
 import { ZoomableImage } from "./zoomable-image";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { formatJobNumber } from "@/lib/job-number";
 import Link from "next/link";
 import {
   ChevronLeftIcon,
@@ -1251,7 +1252,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
           <div>
-            <div className="text-sm md:text-base font-bold text-graphite-900 dark:text-white">{job.address}</div>
+            <div className="flex gap-2 items-baseline">
+              <div className="text-sm md:text-base font-bold text-graphite-900 dark:text-white">{job.address}</div>
+              {job.sequenceNumber && (
+                <div className="text-[9px] font-mono font-semibold text-cyan dark:text-cyan">
+                  {formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt })}
+                </div>
+              )}
+            </div>
             <div className="text-xs text-graphite-400 flex gap-3">
               <span>{job.photographer.name}</span>
               <span>{photos.length} photos</span>

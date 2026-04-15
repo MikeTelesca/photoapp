@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import PDFDocument from "pdfkit";
+import { formatJobNumber } from "@/lib/job-number";
 import { logDownload } from "@/lib/download-log";
 
 export const runtime = "nodejs";
@@ -48,6 +49,7 @@ export async function GET(
   const photoCount = job.approvedPhotos || job.totalPhotos;
   const subtotal = photoCount * rate;
   const invoiceNum = `${(user as any).invoicePrefix || "INV"}-${String((user as any).invoiceCounter || 1000).padStart(4, "0")}`;
+  const jobNum = job.sequenceNumber ? formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt, prefix: (user as any).jobSequencePrefix }) : null;
 
   // Header
   doc.fontSize(22).font("Helvetica-Bold").text(businessName);
@@ -87,6 +89,7 @@ export async function GET(
   // Job details
   doc.font("Helvetica-Bold").text("Job:");
   doc.font("Helvetica").text(job.address);
+  if (jobNum) doc.text(`Job #${jobNum}`);
   doc.text(`Completed: ${job.createdAt.toLocaleDateString()}`);
   doc.moveDown(1.5);
 

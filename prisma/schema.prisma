@@ -24,6 +24,8 @@ model User {
   invoiceRate       Float?    @default(50)  // default $/photo for invoicing
   invoicePrefix     String?   @default("INV")
   invoiceCounter    Int       @default(1000)
+  jobSequenceCounter Int       @default(0)   // auto-incrementing job sequence
+  jobSequencePrefix  String    @default("JOB") // prefix for job numbers
   slackWebhookUrl   String?
   twoFactorEnabled  Boolean  @default(false)
   twoFactorSecret   String?
@@ -104,6 +106,7 @@ model Job {
   clientName       String?
   clientId         String?
   client           Client?  @relation(fields: [clientId], references: [id])
+  sequenceNumber   Int?     // auto-incrementing per user
   shareToken          String?  @unique
   shareEnabled        Boolean  @default(false)
   sharePassword       String?  // bcrypt hash when set

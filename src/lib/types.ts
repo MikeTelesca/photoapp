@@ -30,6 +30,7 @@ export interface Job {
   watermarkOpacity?: number;
   dropboxUrl?: string | null;
   listingDescription?: string | null;
+  sequenceNumber?: number | null;
   archivedAt?: Date | string | null;
   pinnedAt?: Date | string | null;
   createdAt: Date;

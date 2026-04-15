@@ -14,6 +14,13 @@ export async function POST(
   const source = access.job;
   if (!source) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // Increment job sequence counter and get updated values
+  const updated = await prisma.user.update({
+    where: { id: source.photographerId },
+    data: { jobSequenceCounter: { increment: 1 } },
+    select: { jobSequenceCounter: true },
+  });
+
   // Clone all settings but no photos, no dropbox URL, cost reset
   const cloned = await prisma.job.create({
     data: {
@@ -39,6 +46,7 @@ export async function POST(
       twilightCount: 0,
       cost: 0,
       dropboxUrl: "", // user will provide new source
+      sequenceNumber: updated.jobSequenceCounter,
     },
   });
 

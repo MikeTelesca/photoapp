@@ -25,6 +25,7 @@ export async function PATCH(request: NextRequest) {
     businessAddress,
     invoiceRate,
     invoicePrefix,
+    jobSequencePrefix,
     timezone,
     budgetPerJob,
     emailSignature,
@@ -76,6 +77,7 @@ export async function PATCH(request: NextRequest) {
   if (businessAddress !== undefined) updateData.businessAddress = businessAddress?.trim() || null;
   if (invoiceRate !== undefined) updateData.invoiceRate = parseFloat(invoiceRate) || 50;
   if (invoicePrefix !== undefined) updateData.invoicePrefix = invoicePrefix?.trim() || "INV";
+  if (jobSequencePrefix !== undefined) updateData.jobSequencePrefix = jobSequencePrefix?.trim().toUpperCase() || "JOB";
   if (timezone !== undefined) updateData.timezone = timezone?.trim() || null;
   if (budgetPerJob !== undefined) updateData.budgetPerJob = parseFloat(budgetPerJob) || 20;
   if (emailSignature !== undefined) updateData.emailSignature = emailSignature?.trim() || null;

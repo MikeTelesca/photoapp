@@ -14,6 +14,7 @@ import { ArchiveButton } from "@/components/dashboard/archive-button";
 import { EtaBadge } from "@/components/dashboard/eta-badge";
 import { PinButton } from "@/components/dashboard/pin-button";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
+import { formatJobNumber } from "@/lib/job-number";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -85,6 +86,11 @@ function JobCardInternal({ job }: JobCardProps) {
         <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
         <div>
           <div className="flex gap-1 items-center mb-0.5">
+            {job.sequenceNumber && (
+              <span className="text-[9px] font-mono font-semibold text-cyan dark:text-cyan">
+                {formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt })}
+              </span>
+            )}
             {job.pinnedAt && (
               <span className="text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400 font-semibold">📌 Pinned</span>
             )}

@@ -60,6 +60,13 @@ export async function POST(request: NextRequest) {
       userId = sessionUserId;
     }
 
+    // Increment job sequence counter and get updated values
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { jobSequenceCounter: { increment: 1 } },
+      select: { jobSequenceCounter: true, jobSequencePrefix: true },
+    });
+
     const job = await prisma.job.create({
       data: {
         address,
@@ -75,6 +82,7 @@ export async function POST(request: NextRequest) {
         tags: tags?.trim() || "",
         status: dropboxUrl ? "pending" : "pending",
         photographerId: userId,
+        sequenceNumber: updated.jobSequenceCounter,
       },
       include: {
         photographer: {

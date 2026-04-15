@@ -18,7 +18,7 @@ export default function HelpPage() {
     },
     {
       q: "What does each preset do?",
-      a: "Standard: balanced exposure correction + window pull. Bright & Airy: lighter, warmer tones. Luxury: rich contrast, magazine feel. Flambient: HDR + simulated flash fill (clean colors, low noise). You can edit any preset's prompt on the Presets page or directly in the review gallery.",
+      a: "Standard: balanced exposure correction + window pull. Bright & Airy: lighter, warmer tones. Luxury: rich contrast, magazine feel. MLS Standard: conservative MLS-compliant editing. Flambient: HDR + simulated flash fill (clean colors, low noise). You can edit any preset's prompt on the Presets page or directly in the review gallery.",
     },
     {
       q: "Can I customize the AI's instructions per photo?",

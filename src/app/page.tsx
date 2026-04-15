@@ -62,7 +62,7 @@ export default async function LandingPage() {
           <Feature
             icon="🎨"
             title="4 editing presets"
-            desc="Standard, Bright & Airy, Luxury, Flambient. Plus customizable prompts and seasonal style variants."
+            desc="Standard, Bright & Airy, Luxury, MLS Standard, Flambient. Plus customizable prompts and seasonal style variants."
           />
           <Feature
             icon="📦"

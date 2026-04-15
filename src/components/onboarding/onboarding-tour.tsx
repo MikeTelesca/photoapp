@@ -14,7 +14,7 @@ const STEPS = [
   },
   {
     title: "AI enhances in minutes",
-    body: "The AI merges brackets into HDR images, fixes vertical lines, pulls windows, and applies your selected preset (Standard, Bright & Airy, Luxury, or Flambient).",
+    body: "The AI merges brackets into HDR images, fixes vertical lines, pulls windows, and applies your selected preset (Standard, Bright & Airy, Luxury, MLS Standard, or Flambient).",
     emoji: "✨",
   },
   {

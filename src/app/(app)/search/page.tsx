@@ -199,6 +199,7 @@ export default function SearchPage() {
                 { value: "standard", label: "Standard" },
                 { value: "bright", label: "Bright" },
                 { value: "luxury", label: "Luxury" },
+                { value: "mls-standard", label: "MLS Standard" },
                 { value: "flambient", label: "Flambient" },
               ]}
             />

@@ -90,7 +90,7 @@ const RELEASES: Release[] = [
     date: "2026-01",
     highlights: [
       { icon: "🚀", title: "HDR Merge", desc: "Auto-merge bracketed exposures via Google Gemini" },
-      { icon: "🎨", title: "4 Presets", desc: "Standard, Bright & Airy, Luxury, Flambient" },
+      { icon: "🎨", title: "5 Presets", desc: "Standard, Bright & Airy, Luxury, MLS Standard, Flambient" },
       { icon: "📤", title: "Dropbox Integration", desc: "Direct ingestion from Dropbox shared folders" },
       { icon: "✅", title: "Review Gallery", desc: "Approve/reject flow with before/after comparison" },
       { icon: "📥", title: "ZIP Download", desc: "Download all approved photos as a ZIP" },

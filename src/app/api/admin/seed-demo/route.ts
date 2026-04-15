@@ -20,7 +20,7 @@ const DEMO_CLIENTS = [
   { name: "Century 21", email: "linda@c21.com", phone: "312-555-0104", company: "C21" },
 ];
 
-const PRESETS = ["standard", "bright-airy", "luxury", "custom"];
+const PRESETS = ["standard", "bright-airy", "luxury", "mls-standard", "custom"];
 const STATUSES: Array<"review" | "approved" | "pending" | "processing"> = [
   "review",
   "approved",

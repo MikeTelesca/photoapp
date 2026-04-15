@@ -334,3 +334,8 @@ ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "colorLabel" TEXT;
 -- ---------------------------------------------------------------------------
 ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "sharePasswordHash" TEXT;
 ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "sharePasswordSalt" TEXT;
+
+-- ---------------------------------------------------------------------------
+-- User preference: auto-inherit photo tags from job tags on ingest
+-- ---------------------------------------------------------------------------
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "tagsInheritFromJob" BOOLEAN NOT NULL DEFAULT false;

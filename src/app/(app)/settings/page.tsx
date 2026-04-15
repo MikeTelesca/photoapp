@@ -21,6 +21,7 @@ import { InvoiceLogoUpload } from "@/components/settings/invoice-logo-upload";
 import { AccentPicker } from "@/components/settings/accent-picker";
 import { BackgroundPicker } from "@/components/settings/background-picker";
 import { NotificationPrefs } from "@/components/settings/notification-prefs";
+import { TagsInheritToggle } from "@/components/settings/tags-inherit-toggle";
 import { TimezonePicker } from "@/components/settings/timezone-picker";
 import { DateFormatPicker } from "@/components/settings/date-format-picker";
 import { SoundToggle } from "@/components/settings/sound-toggle";
@@ -59,6 +60,7 @@ export default async function SettingsPage() {
   let filenamePattern: string | null = null;
   let shareEmailSubject: string | null = null;
   let jobReadyEmailSubject: string | null = null;
+  let tagsInheritFromJob = false;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -95,6 +97,7 @@ export default async function SettingsPage() {
         filenamePattern: true,
         shareEmailSubject: true,
         jobReadyEmailSubject: true,
+        tagsInheritFromJob: true,
       },
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
@@ -115,6 +118,7 @@ export default async function SettingsPage() {
     filenamePattern = user?.filenamePattern ?? null;
     shareEmailSubject = user?.shareEmailSubject ?? null;
     jobReadyEmailSubject = user?.jobReadyEmailSubject ?? null;
+    tagsInheritFromJob = user?.tagsInheritFromJob ?? false;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -393,6 +397,14 @@ export default async function SettingsPage() {
               notifyClientComment,
               notifyPhotoFailed,
             }} />
+          </div>
+        </Card>
+
+        {/* Photo Preferences */}
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 dark:text-white">Photo preferences</h2>
+            <TagsInheritToggle initial={tagsInheritFromJob} />
           </div>
         </Card>
 

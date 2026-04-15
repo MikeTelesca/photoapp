@@ -19,7 +19,10 @@ const RAW_EXTENSIONS = [".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf", ".tif", 
  * Actual downloading and AI enhancement happens separately per-photo.
  */
 export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: { photographer: { select: { tagsInheritFromJob: true } } },
+  });
   if (!job) throw new Error(`Job ${jobId} not found`);
   if (!job.dropboxUrl) throw new Error(`Job ${jobId} has no Dropbox URL`);
 
@@ -118,6 +121,22 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
     const bracketCount = imageFiles.length % 5 === 0 ? 5 : 3;
     const groupCount = Math.ceil(imageFiles.length / bracketCount);
 
+    // Compute inherited auto-tags from job tags if user opted in
+    let inheritedAutoTags: string | null = null;
+    if (job.photographer?.tagsInheritFromJob && job.tags && job.tags.trim().length > 0) {
+      const jobTagList = Array.from(
+        new Set(
+          job.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t) => t.length > 0)
+        )
+      );
+      if (jobTagList.length > 0) {
+        inheritedAutoTags = JSON.stringify(jobTagList);
+      }
+    }
+
     // Create Photo records — one per bracket group (final output image)
     const photoRecords = [];
     for (let g = 0; g < groupCount; g++) {
@@ -140,6 +159,7 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
         }),
         isExterior: false,
         isTwilight: false,
+        ...(inheritedAutoTags ? { autoTags: inheritedAutoTags } : {}),
       });
     }
 

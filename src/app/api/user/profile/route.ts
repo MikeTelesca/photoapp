@@ -39,6 +39,7 @@ export async function PATCH(request: NextRequest) {
     portfolioEnabled,
     portfolioBio,
     statusSnippets,
+    tagsInheritFromJob,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -163,6 +164,10 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Invalid statusSnippets JSON" }, { status: 400 });
       }
     }
+  }
+
+  if (tagsInheritFromJob !== undefined) {
+    updateData.tagsInheritFromJob = Boolean(tagsInheritFromJob);
   }
 
   if (Object.keys(updateData).length === 0) {

@@ -191,7 +191,7 @@ export async function POST(
       if (customInstructions) additionalInstructions.push(customInstructions);
       const combinedInstructions = additionalInstructions.join("\n");
 
-      result = await enhancePhoto(bracketBuffers, mimeType, job.preset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions);
+      result = await enhancePhoto(bracketBuffers, mimeType, job.preset, customPresetPrompt ? `${customPresetPrompt}\n\n${combinedInstructions}` : combinedInstructions, job.seasonalStyle);
     }
 
     if (!result.success) {

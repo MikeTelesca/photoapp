@@ -315,7 +315,7 @@ export async function POST(
       : combinedInstructions;
 
     // Enhance the photo - pass ALL brackets for HDR merge
-    const result = await enhancePhoto(validBrackets, mimeType, job.preset, fullPrompt);
+    const result = await enhancePhoto(validBrackets, mimeType, job.preset, fullPrompt, job.seasonalStyle);
 
     if (!result.success) {
       log.error("[start-enhance] failed", { jobId, photoId: photo.id, error: result.error });

@@ -152,7 +152,8 @@ export async function enhancePhoto(
   imageInput: Buffer | Buffer[],
   mimeType: string,
   preset: string,
-  customInstructions?: string | null
+  customInstructions?: string | null,
+  seasonalStyle?: string | null
 ): Promise<EnhanceResult> {
   try {
     // Use preset prompt, or fall back to standard
@@ -164,9 +165,16 @@ export async function enhancePhoto(
       extraInstructions = null;
     }
 
-    const prompt = extraInstructions
+    let prompt = extraInstructions
       ? `${basePrompt}\n\nADDITIONAL INSTRUCTIONS: ${extraInstructions}`
       : basePrompt;
+
+    // Append seasonal style modifier if provided
+    const { getSeasonalModifier } = await import("./seasonal-styles");
+    const seasonalText = getSeasonalModifier(seasonalStyle);
+    if (seasonalText) {
+      prompt = `${prompt}\n\nSEASONAL STYLE: ${seasonalText}`;
+    }
 
     // Support single image or array of brackets (for HDR merge)
     const imageBuffers = Array.isArray(imageInput) ? imageInput : [imageInput];

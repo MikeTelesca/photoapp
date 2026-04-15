@@ -1,4 +1,7 @@
 import { Resend } from "resend";
+import { prisma } from "@/lib/db";
+import { shouldNotify } from "@/lib/notify";
+import { applySubject } from "@/lib/email-subject";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.FROM_EMAIL || "ATH Media <noreply@athmedia.ca>";
@@ -226,6 +229,55 @@ export function shareLinkTemplate(opts: {
       ${opts.trackingPixelUrl ? `<img src="${opts.trackingPixelUrl}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;">` : ""}
     </div>
   `;
+}
+
+/**
+ * Send the "job is ready for review" email to the job's photographer, gated
+ * by the user's opt-out preferences (`notifyJobReady` and `emailNotifications`).
+ * Safe to call after a job transitions from "processing" → "review". Never throws.
+ */
+export async function sendJobReadyEmailIfEnabled(opts: {
+  photographerId: string;
+  jobId: string;
+  address: string;
+  clientName?: string | null;
+  totalPhotos: number;
+}): Promise<void> {
+  try {
+    const allowed = await shouldNotify(opts.photographerId, "job-ready");
+    if (!allowed) return;
+
+    const user = await prisma.user.findUnique({
+      where: { id: opts.photographerId },
+      select: {
+        email: true,
+        emailNotifications: true,
+        emailSignature: true,
+        jobReadyEmailSubject: true,
+      },
+    });
+    if (!user?.email || !user.emailNotifications) return;
+
+    const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
+    const subjectTemplate = user.jobReadyEmailSubject || "Your job is ready: {address}";
+    const subject = applySubject(subjectTemplate, {
+      address: opts.address,
+      client: opts.clientName || undefined,
+      count: opts.totalPhotos,
+    });
+    await sendEmail({
+      to: user.email,
+      subject,
+      html: jobCompleteTemplate({
+        address: opts.address,
+        photoCount: opts.totalPhotos,
+        jobUrl: `${baseUrl}/review/${opts.jobId}`,
+        signature: user.emailSignature || undefined,
+      }),
+    });
+  } catch (err) {
+    console.error("[email] job-ready notification failed (non-fatal):", err);
+  }
 }
 
 function escapeHtml(s: string): string {

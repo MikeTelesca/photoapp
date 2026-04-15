@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { logError } from "@/lib/error-log";
+import { sendJobReadyEmailIfEnabled } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -72,11 +73,18 @@ export async function GET(request: NextRequest) {
         );
 
       if (allDone) {
-        await prisma.job.update({
+        const updated = await prisma.job.update({
           where: { id: job.id },
           data: { status: "review" },
         });
         reviewCount++;
+        await sendJobReadyEmailIfEnabled({
+          photographerId: updated.photographerId,
+          jobId: updated.id,
+          address: updated.address,
+          clientName: updated.clientName,
+          totalPhotos: updated.totalPhotos,
+        });
       }
     }
 

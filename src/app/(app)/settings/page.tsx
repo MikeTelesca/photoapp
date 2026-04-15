@@ -34,6 +34,7 @@ import { FilenamePatternForm } from "@/components/settings/filename-pattern-form
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { ReplayOnboardingButton } from "@/components/settings/replay-onboarding-button";
 import { EmailSubjectForm } from "@/components/settings/email-subject-form";
+import { ReferralCard } from "@/components/settings/referral-card";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +63,8 @@ export default async function SettingsPage() {
   let shareEmailSubject: string | null = null;
   let jobReadyEmailSubject: string | null = null;
   let tagsInheritFromJob = false;
+  let referralCode: string | null = null;
+  let referredByName: string | null = null;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -105,8 +108,18 @@ export default async function SettingsPage() {
         shareEmailSubject: true,
         jobReadyEmailSubject: true,
         tagsInheritFromJob: true,
+        referralCode: true,
+        referredByUserId: true,
       },
     });
+    referralCode = user?.referralCode ?? null;
+    if (user?.referredByUserId) {
+      const referrer = await prisma.user.findUnique({
+        where: { id: user.referredByUserId },
+        select: { name: true, email: true },
+      });
+      referredByName = referrer?.name || referrer?.email || null;
+    }
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
     emailNotificationsEnabled = user?.emailNotifications ?? true;
     weeklyDigestEnabled = user?.weeklyDigest ?? true;
@@ -192,6 +205,16 @@ export default async function SettingsPage() {
               email={session?.user?.email || ""}
               role={session?.user?.role || ""}
             />
+          </div>
+        </Card>
+
+        {/* Referral */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your referral code</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <ReferralCard code={referralCode} referredByName={referredByName} />
           </div>
         </Card>
 

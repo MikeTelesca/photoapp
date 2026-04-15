@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail, welcomeTemplate } from "@/lib/email";
+import { generateUniqueReferralCode } from "@/lib/referral-code";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, name, email, password } = body;
+    const { token, name, email, password, referralCode } = body;
 
     if (!token || !name || !email || !password) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -27,14 +28,28 @@ export async function POST(request: NextRequest) {
     const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (existing) return NextResponse.json({ error: "Email already registered" }, { status: 409 });
 
-    // Create user
+    // Resolve optional referral code to referring user id
+    let referredByUserId: string | null = null;
+    if (typeof referralCode === "string" && referralCode.trim().length > 0) {
+      const normalized = referralCode.trim().toUpperCase();
+      const referrer = await prisma.user.findUnique({
+        where: { referralCode: normalized },
+        select: { id: true },
+      });
+      if (referrer) referredByUserId = referrer.id;
+    }
+
+    // Create user with auto-generated unique referral code
     const hashedPassword = await bcrypt.hash(password, 10);
+    const newReferralCode = await generateUniqueReferralCode();
     const user = await prisma.user.create({
       data: {
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
         role: invite.role,
+        referralCode: newReferralCode,
+        referredByUserId,
       },
     });
 

@@ -54,6 +54,8 @@ model User {
   tagsInheritFromJob Boolean @default(false)
   rateLimitTier      String   @default("standard") // "standard" | "pro" | "unlimited" | "banned"
   onboardedAt        DateTime?
+  referralCode       String?  @unique
+  referredByUserId   String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]
@@ -187,6 +189,7 @@ model Photo {
   twilightStyle        String?  // "warm-dusk", "blue-hour", "deep-night"
   customInstructions   String?
   customPromptOverride String?  // per-photo custom prompt override (overrides job-level on re-enhance)
+  presetOverride       String?  // per-photo preset override (e.g. "standard", "luxury") — overrides job.preset on re-enhance
   retouchRequest       String?  // free-text note describing a specific retouch request for this photo
   detections           String   @default("[]") // JSON array stored as string
   bracketGroup         Int?     // which bracket group this belongs to

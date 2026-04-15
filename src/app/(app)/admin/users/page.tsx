@@ -15,13 +15,28 @@ export default async function AdminUsersPage() {
   const auth = await requireAdmin();
   if ("error" in auth) redirect("/");
 
-  const users = await prisma.user.findMany({
+  const usersRaw = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { jobs: true } },
       jobs: { select: { cost: true, totalPhotos: true } },
     },
   });
+
+  // Compute referral counts (number of users whose referredByUserId === this user id)
+  const referralGroups = await prisma.user.groupBy({
+    by: ["referredByUserId"],
+    _count: { _all: true },
+    where: { referredByUserId: { not: null } },
+  });
+  const referralCountMap = new Map<string, number>();
+  for (const g of referralGroups) {
+    if (g.referredByUserId) referralCountMap.set(g.referredByUserId, g._count._all);
+  }
+  const users = usersRaw.map((u) => ({
+    ...u,
+    referralCount: referralCountMap.get(u.id) ?? 0,
+  }));
 
   return (
     <>
@@ -47,6 +62,7 @@ export default async function AdminUsersPage() {
                   <th className="text-right py-3 px-5 font-semibold">Jobs</th>
                   <th className="text-right py-3 px-5 font-semibold">Photos</th>
                   <th className="text-right py-3 px-5 font-semibold">Total Cost</th>
+                  <th className="text-right py-3 px-5 font-semibold">Referrals</th>
                   <th className="text-right py-3 px-5 font-semibold">Joined</th>
                   <th className="text-center py-3 px-5 font-semibold">Actions</th>
                 </tr>
@@ -87,6 +103,9 @@ export default async function AdminUsersPage() {
                       </td>
                       <td className="py-3 px-5 text-right text-graphite-600 dark:text-graphite-300 font-medium">
                         ${totalCost.toFixed(2)}
+                      </td>
+                      <td className="py-3 px-5 text-right text-graphite-600 dark:text-graphite-300">
+                        {user.referralCount}
                       </td>
                       <td className="py-3 px-5 text-right text-xs text-graphite-400">
                         {user.createdAt.toLocaleDateString()}

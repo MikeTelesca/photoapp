@@ -14,6 +14,7 @@ export default function SignupPage({ params }: { params: Promise<{ token: string
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function SignupPage({ params }: { params: Promise<{ token: string
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, name, email, password }),
+        body: JSON.stringify({ token, name, email, password, referralCode: referralCode.trim() || undefined }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -100,6 +101,19 @@ export default function SignupPage({ params }: { params: Promise<{ token: string
                 placeholder="At least 8 characters"
                 className="w-full px-3.5 py-2.5 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan" />
               <PasswordStrength password={password} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-graphite-700 mb-1.5 block">
+                Referral code <span className="text-graphite-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                maxLength={6}
+                placeholder="ABC123"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-graphite-200 text-sm uppercase tracking-wider focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
+              />
             </div>
             {error && <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</div>}
             <button type="submit" disabled={submitting}

@@ -397,3 +397,13 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "fixedFeeCents" INTEGER;
 
 -- Wave 110: Pinnable photo notes (note overlay on image)
 ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "notePinned" BOOLEAN NOT NULL DEFAULT false;
+
+-- ---------------------------------------------------------------------------
+-- Referral codes for signup flow
+-- ---------------------------------------------------------------------------
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "referralCode"     TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "referredByUserId" TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS "User_referralCode_key" ON "User"("referralCode");
+
+-- Wave 111: Per-photo preset override (applies a different enhancement preset to one photo)
+ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "presetOverride" TEXT;

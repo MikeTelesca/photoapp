@@ -17,6 +17,8 @@ export interface Job {
   twilightCount: number;
   cost: number;
   notes?: string | null;
+  clientName?: string | null;
+  tags?: string;
   createdAt: Date;
   updatedAt: Date;
 }

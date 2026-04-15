@@ -35,11 +35,16 @@ model Job {
   cost             Float    @default(0)
   notes            String?
   watermarkText    String?
+  tags             String   @default("")  // comma-separated tags
+  clientName       String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id])
   photographerId   String
   photos           Photo[]
+
+  @@index([photographerId, createdAt(sort: Desc)])
+  @@index([status])
 }
 
 model Photo {
@@ -64,6 +69,9 @@ model Photo {
   heightPx             Int?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+
+  @@index([jobId, status])
+  @@index([jobId, orderIndex])
 }
 
 model Preset {

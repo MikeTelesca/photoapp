@@ -12,6 +12,8 @@ import {
   CheckIcon,
   ArrowPathIcon,
   CheckCircleIcon,
+  UserIcon,
+  TagIcon,
 } from "@heroicons/react/24/outline";
 
 function formatFileSize(bytes: number): string {
@@ -30,6 +32,8 @@ export default function NewJobPage() {
   const [tvStyle, setTvStyle] = useState("off");
   const [skyStyle, setSkyStyle] = useState("as-is");
   const [watermarkText, setWatermarkText] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [tags, setTags] = useState("");
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
     { slug: "standard", name: "Standard", description: "Window-pulled HDR, natural + magazine style" },
   ]);
@@ -127,6 +131,8 @@ export default function NewJobPage() {
           tvStyle,
           skyStyle,
           watermarkText: watermarkText.trim() || null,
+          clientName: clientName.trim() || null,
+          tags: tags.trim(),
         }),
       });
 
@@ -168,6 +174,36 @@ export default function NewJobPage() {
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="e.g. 123 Main Street, Toronto"
                 className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
+              />
+            </div>
+
+            {/* Client Name */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-2">
+                <UserIcon className="w-4 h-4 text-graphite-500" />
+                Client Name <span className="text-xs font-normal text-graphite-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="e.g. John Smith Realty"
+                className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
+              />
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-graphite-900 mb-2">
+                <TagIcon className="w-4 h-4 text-graphite-500" />
+                Tags <span className="text-xs font-normal text-graphite-400">(comma-separated, optional)</span>
+              </label>
+              <input
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="e.g. luxury, condo, urgent"
+                className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
               />
             </div>
 

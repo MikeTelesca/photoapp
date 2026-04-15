@@ -62,11 +62,14 @@ async function getStats(where: object) {
   }
 }
 
-async function getJobs(where: object, search?: string): Promise<Job[]> {
+async function getJobs(where: object, search?: string, tag?: string): Promise<Job[]> {
   try {
     const baseWhere: any = { ...where, status: { not: "deleted" } };
     if (search) {
       baseWhere.address = { contains: search, mode: "insensitive" };
+    }
+    if (tag) {
+      baseWhere.tags = { contains: tag, mode: "insensitive" };
     }
     const dbJobs = await prisma.job.findMany({
       where: baseWhere,
@@ -92,6 +95,8 @@ async function getJobs(where: object, search?: string): Promise<Job[]> {
       rejectedPhotos: j.rejectedPhotos,
       twilightCount: j.twilightCount,
       cost: j.cost,
+      clientName: j.clientName,
+      tags: j.tags,
       createdAt: j.createdAt,
       updatedAt: j.updatedAt,
     }));
@@ -151,10 +156,11 @@ function formatTime(date: Date): string {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }>;
+  searchParams: Promise<{ search?: string; tag?: string }>;
 }) {
   const params = await searchParams;
   const search = params.search;
+  const tag = params.tag;
 
   const session = await auth();
   const userId = (session?.user as any)?.id;
@@ -163,7 +169,7 @@ export default async function DashboardPage({
 
   const [stats, jobs, activity] = await Promise.all([
     getStats(where),
-    getJobs(where, search),
+    getJobs(where, search, tag),
     getRecentActivity(),
   ]);
 

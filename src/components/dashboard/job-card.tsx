@@ -250,7 +250,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             )}
           </div>
           {job.clientName && (
-            <div className="text-[11px] text-graphite-500 dark:text-graphite-400 mt-0.5 flex items-center gap-1">
+            <div className="text-[11px] text-graphite-500 dark:text-graphite-400 mt-0.5 flex items-center gap-2">
               <span>{job.clientName}</span>
               <button
                 type="button"
@@ -259,11 +259,11 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
                   e.stopPropagation();
                   setNotesOpen((v) => !v);
                 }}
-                className="text-[11px] opacity-60 hover:opacity-100"
+                className="text-[10px] uppercase tracking-wide text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-200"
                 title={notesSaved ? "Edit notes" : "Add notes"}
                 aria-label="Edit job notes"
               >
-                📝
+                {notesSaved ? "Edit notes" : "+ Notes"}
               </button>
             </div>
           )}
@@ -275,11 +275,11 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
                 e.stopPropagation();
                 setNotesOpen((v) => !v);
               }}
-              className="text-[11px] opacity-60 hover:opacity-100 mt-0.5"
+              className="text-[10px] uppercase tracking-wide text-graphite-400 hover:text-graphite-600 dark:hover:text-graphite-200 mt-0.5"
               title={notesSaved ? "Edit notes" : "Add notes"}
               aria-label="Edit job notes"
             >
-              📝
+              {notesSaved ? "Edit notes" : "+ Notes"}
             </button>
           )}
           {notesSaved && !notesOpen && renderNotePreview(notesSaved)}
@@ -321,7 +321,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
                 className="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold uppercase tracking-wide"
                 title={job.clientApprovalNote || undefined}
               >
-                Client Approved ✅
+                Client Approved
               </span>
               {job.clientApprovalNote && (
                 <div className="mt-1 text-[10px] text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 border-l-2 border-emerald-400 px-2 py-1 rounded max-w-md whitespace-pre-wrap">
@@ -336,7 +336,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
                 className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wide"
                 title={job.clientApprovalNote || undefined}
               >
-                Changes Requested 📝
+                Changes Requested
               </span>
               {job.clientApprovalNote && (
                 <div className="mt-1 text-[10px] text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 border-l-2 border-amber-400 px-2 py-1 rounded max-w-md whitespace-pre-wrap">

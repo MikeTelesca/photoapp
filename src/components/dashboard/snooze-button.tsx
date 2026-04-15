@@ -45,7 +45,7 @@ export function SnoozeButton({
         className="text-xs px-2 py-1 rounded bg-graphite-100 dark:bg-graphite-800 text-graphite-500"
         title={`Snoozed until ${new Date(snoozedUntil).toLocaleDateString()}. Click to wake.`}
       >
-        💤 Snoozed
+        Snoozed
       </button>
     );
   }
@@ -63,7 +63,7 @@ export function SnoozeButton({
         className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
         title="Snooze"
       >
-        💤 Snooze
+        Snooze
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 z-30 w-40 bg-white dark:bg-graphite-900 border border-graphite-200 dark:border-graphite-700 rounded shadow-lg">

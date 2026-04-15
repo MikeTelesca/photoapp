@@ -446,7 +446,7 @@ export function JobFilterBar({ jobs }: Props) {
             disabled={isLoading}
             className="px-3 py-1 rounded bg-graphite-600 text-white text-xs font-semibold hover:bg-graphite-700 disabled:opacity-50"
           >
-            📦 Archive
+            Archive
           </button>
           <button
             onClick={bulkDelete}
@@ -460,7 +460,7 @@ export function JobFilterBar({ jobs }: Props) {
             disabled={isLoading}
             className="px-3 py-1 rounded bg-indigo-500 text-white text-xs font-semibold hover:bg-indigo-600 disabled:opacity-50"
           >
-            👤 Assign Client
+            Assign Client
           </button>
 
           <div className="flex gap-1 items-center ml-2">
@@ -486,9 +486,9 @@ export function JobFilterBar({ jobs }: Props) {
             <select value={bulkPriority} onChange={(e) => setBulkPriority(e.target.value)}
               disabled={isLoading}
               className="text-xs px-1 py-1 rounded border border-cyan-300 dark:border-cyan-700 dark:bg-graphite-800 dark:text-white">
-              <option value="high">🔴 High</option>
-              <option value="medium">🟡 Medium</option>
-              <option value="low">🟢 Low</option>
+              <option value="high">High priority</option>
+              <option value="medium">Medium priority</option>
+              <option value="low">Low priority</option>
             </select>
             <button onClick={bulkSetPriority}
               disabled={isLoading}
@@ -554,14 +554,14 @@ export function JobFilterBar({ jobs }: Props) {
           className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700"
           title="Export filtered jobs as CSV"
         >
-          ⬇ Export CSV
+          Export CSV
         </a>
         <div className="flex gap-0.5 ml-auto">
           {(["compact", "normal", "comfortable"] as Density[]).map(d => (
             <button key={d} onClick={() => setDensity(d)}
               className={`text-[10px] px-2 py-1 rounded ${density === d ? "bg-cyan text-white" : "border border-graphite-200 dark:border-graphite-700 text-graphite-500 dark:text-graphite-400"}`}
               title={`${d} layout`}>
-              {d === "compact" ? "≡" : d === "normal" ? "☰" : "▤"}
+              {d === "compact" ? "S" : d === "normal" ? "M" : "L"}
             </button>
           ))}
         </div>
@@ -631,7 +631,7 @@ export function JobFilterBar({ jobs }: Props) {
             <div key={group.name}>
               <div className="px-5 py-1.5 bg-graphite-50 dark:bg-graphite-800/50 border-b border-graphite-100 dark:border-graphite-800">
                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-graphite-500 dark:text-graphite-400">
-                  {group.name === "Pinned" ? "📌 " : ""}{group.name}
+                  {group.name}
                   <span className="ml-2 text-graphite-400 dark:text-graphite-500 normal-case font-normal">{group.jobs.length}</span>
                 </h3>
               </div>

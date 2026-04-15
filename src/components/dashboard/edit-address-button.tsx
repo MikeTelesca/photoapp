@@ -54,10 +54,10 @@ export function EditAddressButton({ jobId, initial }: Props) {
   return (
     <button
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditing(true); }}
-      className="text-[10px] text-graphite-400 hover:text-cyan ml-1"
+      className="text-[10px] uppercase tracking-wide text-graphite-400 hover:text-cyan ml-2"
       title="Edit address"
     >
-      ✎
+      Edit
     </button>
   );
 }

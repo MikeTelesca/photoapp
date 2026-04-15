@@ -61,7 +61,7 @@ export function WatchButton({ jobId }: Props) {
           : "border-graphite-200 dark:border-graphite-700 text-graphite-600 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
       } ${busy ? "opacity-50 cursor-wait" : ""}`}
     >
-      {isOn ? "👁 Watching" : "👁"}
+      {isOn ? "Watching" : "Watch"}
     </button>
   );
 }

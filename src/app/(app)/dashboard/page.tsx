@@ -192,100 +192,43 @@ export default async function DashboardPage({
         status: j.status,
       }))} />
       <OnboardingTour hasJobs={jobs.length > 0} />
-      <Topbar title="Dashboard" subtitle="Manage your photo editing jobs" actions={<CustomizeButton />} />
-      <div className="p-6">
-        {/* Greeting Widget */}
-        <GreetingWidget userId={userId || ""} userName={session?.user?.name || null} />
-
-        {/* Today/Week/Month Stats Cards */}
-        <WidgetWrapper widgetKey="stats-cards">
-          <StatsCards userId={userId || ""} />
-        </WidgetWrapper>
-
-        {/* Photo throughput widget */}
-        <WidgetWrapper widgetKey="photo-stats">
-          <PhotoStatsWidget />
-        </WidgetWrapper>
-
-        {/* Onboarding Checklist */}
-        <WidgetWrapper widgetKey="onboarding">
-          <OnboardingChecklist userId={userId || ""} />
-        </WidgetWrapper>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <StatCard
-            label="Total Jobs"
-            value={stats.totalJobs}
-            subtext="This week"
-            icon={<FolderIcon className="w-[18px] h-[18px]" />}
-            highlight
-          />
-          <StatCard
-            label="Processing"
-            value={stats.processingJobs}
-            subtext={stats.processingJobs > 0 ? "In progress" : "None"}
-            icon={<ArrowPathIcon className="w-[18px] h-[18px]" />}
-            iconColor="amber"
-          />
-          <StatCard
-            label="Needs Review"
-            value={stats.reviewJobs}
-            subtext={`${stats.reviewJobs} properties`}
-            icon={<EyeIcon className="w-[18px] h-[18px]" />}
-            iconColor="cyan"
-          />
-          <StatCard
-            label="Approved Today"
-            value={stats.approvedToday}
-            subtext="Today"
-            icon={<CheckCircleIcon className="w-[18px] h-[18px]" />}
-            iconColor="green"
-          />
-        </div>
-
-        {/* Activity heatmap */}
-        <WidgetWrapper widgetKey="activity-heatmap">
-          <ActivityHeatmap />
-        </WidgetWrapper>
-
-        {/* Grid: Jobs + Right Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
+      <div className="mx-auto max-w-7xl px-6 py-10">
+        <div className="flex items-end justify-between mb-8 gap-4 flex-wrap">
           <div>
-            <WidgetWrapper widgetKey="inbox">
-              <InboxWidget userId={userId || ""} />
-            </WidgetWrapper>
-            <JobList jobs={jobs} />
+            <h1 className="text-2xl font-semibold tracking-tight text-graphite-900 dark:text-white">
+              {session?.user?.name ? `Hey, ${session.user.name.split(" ")[0]}.` : "Dashboard"}
+            </h1>
+            <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-1">
+              {stats.reviewJobs > 0
+                ? `${stats.reviewJobs} job${stats.reviewJobs === 1 ? "" : "s"} waiting on your review.`
+                : stats.processingJobs > 0
+                ? `${stats.processingJobs} job${stats.processingJobs === 1 ? "" : "s"} processing.`
+                : "No jobs in flight."}
+            </p>
           </div>
-          <div className="flex flex-col gap-4">
-            <WidgetWrapper widgetKey="quick-actions">
-              <QuickActions />
-            </WidgetWrapper>
-            <WidgetWrapper widgetKey="cost-tracker">
-              <CostTracker
-                amount={stats.monthlyCost}
-                imageCount={stats.totalImages}
-                budget={150}
-              />
-            </WidgetWrapper>
-            <WidgetWrapper widgetKey="recently-viewed">
-              <RecentlyViewedWidget />
-            </WidgetWrapper>
-            <WidgetWrapper widgetKey="recent-activity">
-              <RecentActivityWidget userId={userId || ""} isAdmin={userRole === "admin"} />
-            </WidgetWrapper>
-            <WidgetWrapper widgetKey="activity-feed">
-              <ActivityFeed />
-            </WidgetWrapper>
-          </div>
+          <QuickActions />
         </div>
 
-        {/* Empty state */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+          <StatCard label="Total jobs" value={stats.totalJobs} subtext="This week" icon={<FolderIcon className="w-[18px] h-[18px]" />} highlight />
+          <StatCard label="Processing" value={stats.processingJobs} subtext={stats.processingJobs > 0 ? "In progress" : "None"} icon={<ArrowPathIcon className="w-[18px] h-[18px]" />} iconColor="amber" />
+          <StatCard label="Needs review" value={stats.reviewJobs} subtext={`${stats.reviewJobs} propert${stats.reviewJobs === 1 ? "y" : "ies"}`} icon={<EyeIcon className="w-[18px] h-[18px]" />} iconColor="cyan" />
+          <StatCard label="Approved today" value={stats.approvedToday} subtext="Today" icon={<CheckCircleIcon className="w-[18px] h-[18px]" />} iconColor="green" />
+        </div>
+
+        <JobList jobs={jobs} />
+
         {jobs.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-graphite-400 text-sm">
-              No jobs yet. Click &quot;New Job&quot; to create your first one.
+          <div className="text-center py-16 rounded-xl border border-dashed border-graphite-200 dark:border-graphite-800 bg-white/40 dark:bg-graphite-900/40">
+            <p className="text-graphite-500 dark:text-graphite-400 text-sm mb-3">
+              No jobs yet.
             </p>
+            <a
+              href="/jobs/new"
+              className="inline-block px-4 py-2 rounded-md bg-cyan-500 text-white font-medium text-sm hover:bg-cyan-600"
+            >
+              Create your first job
+            </a>
           </div>
         )}
       </div>

@@ -216,6 +216,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   // Slideshow state
   const [slideshowOpen, setSlideshowOpen] = useState(false);
 
+  // Rotation state
+  const [rotating, setRotating] = useState(false);
+
   // Load view mode from localStorage on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -504,6 +507,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [currentPhoto, job.id]);
 
+
+  const rotate = useCallback(async (degrees: number) => {
+    if (!currentPhoto) return;
+    setRotating(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/rotate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ degrees }),
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed");
+      }
+    } finally {
+      setRotating(false);
+    }
+  }, [currentPhoto, job.id]);
 
   const [enhanceErrors, setEnhanceErrors] = useState<Record<string, string>>({});
   const [enhancingIds, setEnhancingIds] = useState<Set<string>>(new Set());
@@ -2044,6 +2067,23 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <ArrowPathIcon className="w-4 h-4" />
                 <span className="hidden sm:inline">Regenerate</span>
               </button>
+              <div className="flex gap-0.5">
+                <button onClick={() => rotate(-90)} disabled={rotating || isUpdating || enhanceLoading}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
+                  title="Rotate left (90° counter-clockwise)">
+                  ↺
+                </button>
+                <button onClick={() => rotate(90)} disabled={rotating || isUpdating || enhanceLoading}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
+                  title="Rotate right (90° clockwise)">
+                  ↻
+                </button>
+                <button onClick={() => rotate(180)} disabled={rotating || isUpdating || enhanceLoading}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
+                  title="Flip 180°">
+                  ↻↻
+                </button>
+              </div>
               <button
                 onClick={handleFavorite}
                 disabled={isUpdating || enhanceLoading}

@@ -69,7 +69,7 @@ async function getStats(where: object) {
 
 async function getJobs(where: object, search?: string, tag?: string): Promise<Job[]> {
   try {
-    const baseWhere: any = { ...where, status: { not: "deleted" } };
+    const baseWhere: any = { ...where, status: { not: "deleted" }, archivedAt: null };
     if (search) {
       baseWhere.address = { contains: search, mode: "insensitive" };
     }

@@ -97,6 +97,7 @@ model Job {
   shareEnabled        Boolean  @default(false)
   sharePassword       String?  // bcrypt hash when set
   listingDescription  String?
+  archivedAt          DateTime?
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id])

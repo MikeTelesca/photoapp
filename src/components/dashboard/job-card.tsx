@@ -10,6 +10,7 @@ import { DeleteJobButton } from "@/components/dashboard/delete-job-button";
 import { DuplicateJobButton } from "@/components/dashboard/duplicate-job-button";
 import { SaveTemplateButton } from "@/components/dashboard/save-template-button";
 import { EditTagsButton } from "@/components/dashboard/edit-tags-button";
+import { ArchiveButton } from "@/components/dashboard/archive-button";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -145,6 +146,7 @@ function JobCardInternal({ job }: JobCardProps) {
             >
               PDF
             </a>
+            <ArchiveButton jobId={job.id} archived={!!job.archivedAt} />
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />

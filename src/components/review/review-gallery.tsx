@@ -70,6 +70,7 @@ interface Job {
   skyStyle?: string | null;
   shareToken?: string | null;
   shareEnabled?: boolean;
+  listingDescription?: string | null;
   photographer: { name: string };
   photos: Photo[];
 }
@@ -134,6 +135,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   // Swipe hint state
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+
+  // MLS listing description state
+  const [generating, setGenerating] = useState(false);
+  const [description, setDescription] = useState(initialJob.listingDescription || "");
+  const [showDescModal, setShowDescModal] = useState(false);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -584,6 +590,22 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [job.id, addToast]);
 
+  async function generateDescription() {
+    setGenerating(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/generate-description`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setDescription(data.description);
+        setShowDescModal(true);
+      } else {
+        alert(data.error || "Failed to generate");
+      }
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   const handleApproveAll = useCallback(async () => {
     setIsUpdating(true);
     try {
@@ -889,6 +911,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <ArrowPathIcon className={`w-4 h-4 ${isEnhancingAll ? 'animate-spin' : ''}`} />
               {isEnhancingAll ? `Enhancing ${enhanceProgress}%` : `Enhance All (${photos.filter(p => p.status === "pending").length})`}
             </Button>
+          )}
+          {(job.status === "review" || job.status === "approved") && photos.some(p => p.status === "approved") && (
+            <button
+              onClick={generateDescription}
+              disabled={generating}
+              className="text-xs px-3 py-1.5 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-60"
+            >
+              {generating ? "Writing..." : "✨ Generate listing"}
+            </button>
           )}
           <ShareButton
             jobId={job.id}
@@ -1695,6 +1726,35 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       )}
 
       <KeyboardHint />
+
+      {/* MLS Listing Description Modal */}
+      {showDescModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDescModal(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold mb-2">MLS Listing Description</h2>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={14}
+              className="w-full p-3 text-sm border border-graphite-200 rounded"
+            />
+            <div className="flex gap-2 mt-3 justify-end">
+              <button
+                onClick={() => navigator.clipboard.writeText(description)}
+                className="text-xs px-3 py-1.5 rounded bg-cyan text-white"
+              >
+                Copy to clipboard
+              </button>
+              <button
+                onClick={() => setShowDescModal(false)}
+                className="text-xs px-3 py-1.5 rounded border"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

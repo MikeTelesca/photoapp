@@ -43,9 +43,10 @@ model Job {
   watermarkOpacity  Float   @default(0.7)
   tags             String   @default("")  // comma-separated tags
   clientName       String?
-  shareToken       String?  @unique
-  shareEnabled     Boolean  @default(false)
-  createdAt        DateTime @default(now())
+  shareToken          String?  @unique
+  shareEnabled        Boolean  @default(false)
+  listingDescription  String?
+  createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id])
   photographerId   String

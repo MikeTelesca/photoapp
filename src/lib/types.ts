@@ -28,6 +28,7 @@ export interface Job {
   watermarkSize?: number;
   watermarkOpacity?: number;
   dropboxUrl?: string | null;
+  listingDescription?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

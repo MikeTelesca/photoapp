@@ -15,6 +15,7 @@ import { EtaBadge } from "@/components/dashboard/eta-badge";
 import { PinButton } from "@/components/dashboard/pin-button";
 import { SnoozeButton } from "@/components/dashboard/snooze-button";
 import { CopyJobLinkButton } from "@/components/dashboard/copy-job-link-button";
+import { InlinePresetSwitch } from "@/components/dashboard/inline-preset-switch";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { formatJobNumber } from "@/lib/job-number";
 import { tagColor } from "@/lib/tag-color";
@@ -145,9 +146,13 @@ function JobCardInternal({ job }: JobCardProps) {
                 ⏱ {Math.round(job.trackedTimeSeconds / 60)}m
               </span>
             )}
-            <Badge variant={job.preset === "luxury" ? "luxury" : "standard"}>
-              {job.preset.charAt(0).toUpperCase() + job.preset.slice(1)}
-            </Badge>
+            {job.status === "pending" ? (
+              <InlinePresetSwitch jobId={job.id} current={job.preset} />
+            ) : (
+              <Badge variant={job.preset === "luxury" ? "luxury" : "standard"}>
+                {job.preset.charAt(0).toUpperCase() + job.preset.slice(1)}
+              </Badge>
+            )}
           </div>
           {job.clientName && (
             <div className="text-[11px] text-graphite-500 dark:text-graphite-400 mt-0.5">{job.clientName}</div>

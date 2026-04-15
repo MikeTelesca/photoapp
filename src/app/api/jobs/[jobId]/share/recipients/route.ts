@@ -12,6 +12,13 @@ export async function GET(
 
   const logs = await prisma.shareEmailLog.findMany({
     where: { jobId },
+    select: {
+      id: true,
+      toEmail: true,
+      sentAt: true,
+      openedAt: true,
+      openCount: true,
+    },
     orderBy: { sentAt: "desc" },
     take: 20,
   }).catch(() => []);

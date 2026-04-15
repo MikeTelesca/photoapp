@@ -50,6 +50,17 @@ export async function POST(
   let sent = 0;
   let failed = 0;
   for (const recipient of recipients) {
+    // Create log entry first to get the ID for tracking pixel
+    const log = await prisma.shareEmailLog.create({
+      data: {
+        jobId,
+        toEmail: recipient,
+        sentBy: access.userId,
+      },
+    }).catch(() => null);
+
+    const trackingPixelUrl = log ? `${baseUrl}/api/track/email-open/${log.id}` : undefined;
+
     const ok = await sendEmail({
       to: recipient,
       subject: `Photos ready: ${job.address}`,
@@ -61,19 +72,12 @@ export async function POST(
         password: password?.trim() || undefined,
         personalMessage: personalMessage?.trim() || undefined,
         signature: user?.emailSignature || undefined,
+        trackingPixelUrl,
       }),
     });
 
     if (ok) {
       sent++;
-      // Log each recipient (Wave 48)
-      await prisma.shareEmailLog.create({
-        data: {
-          jobId,
-          toEmail: recipient,
-          sentBy: access.userId,
-        },
-      }).catch(err => console.error("share log err:", err));
     } else {
       failed++;
     }

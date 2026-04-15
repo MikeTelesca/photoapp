@@ -194,6 +194,7 @@ export function shareLinkTemplate(opts: {
   password?: string;
   personalMessage?: string;
   signature?: string;
+  trackingPixelUrl?: string;
 }) {
   return `
     <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
@@ -222,6 +223,7 @@ export function shareLinkTemplate(opts: {
       ` : `<p style="color: #999; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
         This link gives view-only access to the photos. If you have questions, reply to this email to contact ${escapeHtml(opts.photographerName)} directly.
       </p>`}
+      ${opts.trackingPixelUrl ? `<img src="${opts.trackingPixelUrl}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;">` : ""}
     </div>
   `;
 }

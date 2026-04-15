@@ -19,7 +19,7 @@ export function ShareButton({
   const [emailMsg, setEmailMsg] = useState("");
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
-  const [recipients, setRecipients] = useState<{ id: string; toEmail: string; sentAt: string }[]>([]);
+  const [recipients, setRecipients] = useState<{ id: string; toEmail: string; sentAt: string; openedAt?: string; openCount?: number }[]>([]);
 
   useEffect(() => {
     if (!emailOpen) return;

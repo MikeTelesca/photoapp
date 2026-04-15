@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { trackVisit } from "@/lib/recently-viewed";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -177,8 +178,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [savingPreset, setSavingPreset] = useState(false);
   const [compareMode, setCompareMode] = useState<"split" | "slider">("split");
   const [showMobileNav, setShowMobileNav] = useState(false);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState<number>(() => {
+    if (typeof window === "undefined") return 1;
+    const saved = sessionStorage.getItem("review-zoom-level");
+    return saved ? parseFloat(saved) : 1;
+  });
+  const [pan, setPan] = useState<{ x: number; y: number }>(() => {
+    if (typeof window === "undefined") return { x: 0, y: 0 };
+    const saved = sessionStorage.getItem("review-pan-state");
+    return saved ? JSON.parse(saved) : { x: 0, y: 0 };
+  });
   const [showZoomHint, setShowZoomHint] = useState(true);
   const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
   const twilightMenuRef = useRef<HTMLDivElement>(null);
@@ -268,6 +277,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     localStorage.setItem("gallery-view-mode", viewMode);
     localStorage.setItem("gallery-grid-cols", String(gridCols));
   }, [viewMode, gridCols]);
+
+  // Track job visit for recently viewed
+  useEffect(() => {
+    if (job?.id && job?.address) {
+      trackVisit({ id: job.id, address: job.address });
+    }
+  }, [job?.id, job?.address]);
 
   // Compute sorted photos
   const sortedPhotos = useMemo(() => {
@@ -479,11 +495,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [currentPhoto?.id, currentPhoto?.customInstructions]);
 
-  // Reset zoom and pan when navigating to a different photo
+  // Persist zoom level to sessionStorage; reset pan when zoom returns to 1
   useEffect(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, [currentPhoto?.id]);
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem("review-zoom-level", String(zoom));
+  }, [zoom]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem("review-pan-state", JSON.stringify(pan));
+  }, [pan]);
 
   // Show zoom hint briefly when photo changes
   useEffect(() => {

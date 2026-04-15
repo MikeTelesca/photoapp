@@ -21,6 +21,10 @@
       "schedule": "0 14 * * *"
     },
     {
+      "path": "/api/cron/pre-archive-warn",
+      "schedule": "0 13 * * *"
+    },
+    {
       "path": "/api/cron/purge-logs",
       "schedule": "0 5 * * 0"
     }

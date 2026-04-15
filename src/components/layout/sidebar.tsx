@@ -58,6 +58,7 @@ const settingsItems = [
   { label: "Activity", href: "/activity", icon: ClockIcon },
   { label: "Billing", href: "/billing", icon: CreditCardIcon },
   { label: "Users", href: "/admin/users", icon: UsersIcon },
+  { label: "📊 System Stats", href: "/admin/stats", icon: ChartBarIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
   { label: "Feature Flags", href: "/admin/flags", icon: AdjustmentsHorizontalIcon },

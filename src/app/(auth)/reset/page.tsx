@@ -2,6 +2,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { PasswordStrength } from "@/components/ui/password-strength";
 
 function ResetForm() {
   const router = useRouter();
@@ -68,6 +69,7 @@ function ResetForm() {
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
               placeholder="New password"
               className="w-full text-sm px-3 py-2 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-900 dark:text-white" />
+            <PasswordStrength password={password} />
             <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required
               placeholder="Confirm password"
               className="w-full text-sm px-3 py-2 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-900 dark:text-white" />

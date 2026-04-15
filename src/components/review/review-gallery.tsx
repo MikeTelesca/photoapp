@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { ZoomableImage } from "./zoomable-image";
 import Link from "next/link";
 import {
   ChevronLeftIcon,
@@ -73,6 +74,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [savingPreset, setSavingPreset] = useState(false);
   const [compareMode, setCompareMode] = useState<"split" | "slider">("split");
   const [showMobileNav, setShowMobileNav] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [showZoomHint, setShowZoomHint] = useState(true);
   const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
   const twilightMenuRef = useRef<HTMLDivElement>(null);
   const [thumbFilter, setThumbFilter] = useState<"all" | "pending" | "edited" | "approved" | "rejected">("all");
@@ -130,6 +134,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       setCustomInstruction("");
     }
   }, [currentPhoto?.id, currentPhoto?.customInstructions]);
+
+  // Reset zoom and pan when navigating to a different photo
+  useEffect(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [currentPhoto?.id]);
+
+  // Show zoom hint briefly when photo changes
+  useEffect(() => {
+    setShowZoomHint(true);
+    const t = setTimeout(() => setShowZoomHint(false), 4000);
+    return () => clearTimeout(t);
+  }, [currentPhoto?.id]);
   const approvedCount = photos.filter((p) => p.status === "approved").length;
   const rejectedCount = photos.filter((p) => p.status === "rejected").length;
   const progress = photos.length > 0 ? Math.round((approvedCount / photos.length) * 100) : 0;
@@ -885,45 +902,64 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 />
               </div>
             ) : (
-              <div className="flex flex-col md:flex-row gap-0.5 w-full h-full">
+              <div className="flex flex-col md:flex-row gap-0.5 w-full h-full relative">
+                {/* Zoom level indicator + reset (shown when zoomed) */}
+                {zoom > 1 && (
+                  <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
+                    <span>{Math.round(zoom * 100)}%</span>
+                    <button
+                      onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+                      className="ml-1 px-1.5 py-0.5 rounded bg-white/20 hover:bg-white/30 text-[10px]"
+                    >Reset</button>
+                  </div>
+                )}
+                {/* Zoom hint */}
+                {showZoomHint && zoom === 1 && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 text-[10px] text-white/70 bg-black/40 px-2 py-1 rounded backdrop-blur-sm pointer-events-none">
+                    Click to zoom · Scroll to zoom · Drag to pan
+                  </div>
+                )}
                 {/* Before */}
-                <div className="flex-1 rounded-lg overflow-hidden relative flex items-center justify-center bg-graphite-800">
-                  <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10">
+                <div className="flex-1 rounded-lg overflow-hidden relative bg-graphite-800">
+                  <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10 pointer-events-none">
                     Before
                   </div>
                   {currentPhoto ? (
-                    <img
+                    <ZoomableImage
                       src={currentPhoto.originalUrl || `/api/jobs/${job.id}/photos/${currentPhoto.id}/original`}
-                      alt="Original"
-                      className="max-w-full max-h-full object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
+                      alt="Before"
+                      zoom={zoom}
+                      pan={pan}
+                      onZoomChange={setZoom}
+                      onPanChange={setPan}
                     />
                   ) : (
-                    <div className="text-graphite-500 text-sm">Original HDR Merge</div>
+                    <div className="flex items-center justify-center w-full h-full text-graphite-500 text-sm">Original HDR Merge</div>
                   )}
                 </div>
 
                 {/* After */}
-                <div className="flex-1 rounded-lg overflow-hidden relative flex items-center justify-center bg-graphite-800">
-                  <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10">
+                <div className="flex-1 rounded-lg overflow-hidden relative bg-graphite-800">
+                  <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10 pointer-events-none">
                     After
                   </div>
                   {currentPhoto?.editedUrl ? (
-                    <img
+                    <ZoomableImage
                       src={currentPhoto.editedUrl}
-                      alt="Edited"
-                      className="max-w-full max-h-full object-contain"
+                      alt="After"
+                      zoom={zoom}
+                      pan={pan}
+                      onZoomChange={setZoom}
+                      onPanChange={setPan}
                     />
                   ) : enhanceLoading ? (
-                    <div className="flex flex-col items-center gap-3">
+                    <div className="flex flex-col items-center justify-center gap-3 w-full h-full">
                       <ArrowPathIcon className="w-8 h-8 text-cyan animate-spin" />
                       <div className="text-cyan text-sm font-medium">Enhancing Photo {currentIndex + 1} with AI...</div>
                       <div className="text-graphite-500 text-xs">This may take 15-30 seconds</div>
                     </div>
                   ) : enhanceError ? (
-                    <div className="flex flex-col items-center gap-2 max-w-sm text-center px-4">
+                    <div className="flex flex-col items-center justify-center gap-2 w-full h-full max-w-sm text-center px-4">
                       <div className="text-red-400 text-sm font-medium">Enhancement failed</div>
                       <div className="text-graphite-500 text-xs">{enhanceError}</div>
                       <button
@@ -934,7 +970,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       </button>
                     </div>
                   ) : (
-                    <div className="text-graphite-500 text-sm">
+                    <div className="flex items-center justify-center w-full h-full text-graphite-500 text-sm">
                       {currentPhoto?.status === "regenerating"
                         ? "Regenerating..."
                         : "Click 'Enhance with AI' to edit this photo"}

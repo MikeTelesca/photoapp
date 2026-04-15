@@ -11,7 +11,7 @@ STRICT RULES — DO NOT VIOLATE:
 - DO NOT add, remove, or change ANY physical content in the image
 - DO NOT replace the sky (even if it looks dull — keep it as-is)
 - DO NOT add clouds that aren't there
-- DO NOT make grass greener than it actually is
+- Enhance grass UNIFORMLY across the entire visible lawn (front AND back, foreground AND background). Healthy, natural green — never neon. If one patch of grass looks greener than another purely due to shadow or exposure, even them out. Do not hallucinate grass where there isn't any.
 - DO NOT change what's visible through windows (no fake views, no fake scenery)
 - DO NOT add, remove, or modify any buildings, landscaping, cars, or objects
 - DO NOT change construction/dirt areas into grass
@@ -43,7 +43,8 @@ Output the corrected image.`,
 
 STRICT RULES — DO NOT VIOLATE:
 - DO NOT add, remove, or change ANY physical content
-- DO NOT replace the sky, add clouds, or make grass greener than reality
+- DO NOT replace the sky or add clouds that aren't there
+- Enhance grass UNIFORMLY across the entire visible lawn (front AND back). Natural green, never neon. Do not hallucinate grass where there is dirt or stone.
 - DO NOT change what's visible through windows
 - DO NOT modify buildings, landscaping, or any objects
 - DO NOT add or remove anything structural
@@ -63,7 +64,8 @@ Output the corrected image.`,
 
 STRICT RULES — DO NOT VIOLATE:
 - DO NOT add, remove, or change ANY physical content
-- DO NOT replace the sky, add clouds, or make grass greener than reality
+- DO NOT replace the sky or add clouds that aren't there
+- Enhance grass UNIFORMLY across the entire visible lawn (front AND back). Natural green, never neon. Do not hallucinate grass where there is dirt or stone.
 - DO NOT change what's visible through windows
 - DO NOT modify buildings, landscaping, or any objects
 - DO NOT add or remove anything structural
@@ -83,7 +85,8 @@ Output the corrected image.`,
 
 STRICT RULES — DO NOT VIOLATE:
 - DO NOT add, remove, or change ANY physical content
-- DO NOT replace the sky, add clouds, or make grass greener than reality
+- DO NOT replace the sky or add clouds that aren't there
+- Enhance grass UNIFORMLY across the entire visible lawn (front AND back). Natural green, never neon. Do not hallucinate grass where there is dirt or stone.
 - DO NOT change what's visible through windows
 - DO NOT modify buildings, landscaping, or any objects
 - DO NOT add or remove anything structural
@@ -103,6 +106,33 @@ EDITING APPROACH:
 10. Remove dust spots and minor lens artifacts.
 
 The output must be THE EXACT SAME SCENE — same sky, same grass, same objects — just straightened, corrected, and ready for MLS.
+
+Output the corrected image.`,
+
+  flambient: `You are performing REAL ESTATE PHOTO CORRECTION in a FLAMBIENT (flash + ambient hybrid) style — the gold-standard magazine look. Combine ambient window light with balanced fill flash for clean, natural interiors with crisp detail throughout. This is a LISTING PHOTO that must accurately represent the property. Do NOT embellish reality.
+
+STRICT RULES — DO NOT VIOLATE:
+- DO NOT add, remove, or change ANY physical content
+- DO NOT replace the sky, add clouds, or fake what's visible through windows
+- Enhance grass UNIFORMLY across the entire visible lawn (front AND back). Natural green, never neon.
+- DO NOT modify buildings, landscaping, furniture, or any objects
+- DO NOT add or remove anything structural
+
+FLAMBIENT CHARACTERISTICS:
+1. WINDOW PULL: Strong window pull so exteriors through windows are visible (never blown out), but natural — not HDR-halo.
+2. AMBIENT BASE: Preserve the warmth of practical lights (lamps, chandeliers, pot lights). Mixed color temp is OK and looks human.
+3. FLASH FILL: Subtle, even fill across the room — no harsh flash shadow, no flat/washed-out look. Shadows stay soft and directional.
+4. WHITES CLEAN: Walls and trim should read clean white/warm-white, NOT yellow or green cast.
+5. COLORS NATURAL: Wood tones rich and warm, fabrics true-to-color. No oversaturation.
+6. CONTRAST MEDIUM-HIGH: Editorial but not crushed. Shadow detail preserved.
+7. REFLECTIVE FLOOR FIX: Polished floors often pick up blue cast from window light — neutralize to true wood/tile color.
+8. WINDOW FRAMES CRISP: Detail in window muntins/frames visible against bright outside.
+9. SHARPNESS: Crisp but not over-sharpened.
+10. STRAIGHTEN verticals and horizontals (walls, counters, ceilings, doorframes).
+
+The look: like a pro used off-camera flash bounced into ambient, then finished in Lightroom. Clean, balanced, inviting, magazine-ready.
+
+The output must be THE EXACT SAME SCENE — same sky, same grass, same everything — just with flambient lighting balance.
 
 Output the corrected image.`,
 };

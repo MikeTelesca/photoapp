@@ -18,6 +18,7 @@ import { PinButton } from "@/components/dashboard/pin-button";
 import { SnoozeButton } from "@/components/dashboard/snooze-button";
 import { CopyJobLinkButton } from "@/components/dashboard/copy-job-link-button";
 import { InlinePresetSwitch } from "@/components/dashboard/inline-preset-switch";
+import { RowOverflowMenu, RowOverflowItem } from "@/components/dashboard/row-overflow-menu";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import { ColorLabelPicker } from "@/components/dashboard/color-label-picker";
 import { JobHoverPreview } from "@/components/dashboard/job-hover-preview";
@@ -371,14 +372,27 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
         {job.status === "review" && (
           <>
             <span {...statusHoverHandlers} className="text-xs font-semibold text-cyan">Ready for Review</span>
-            <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
-            <CopyJobLinkButton jobId={job.id} />
-            <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
-            <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
-            {isAdmin && <WatchButton jobId={job.id} />}
-            <SaveTemplateButton jobId={job.id} />
-            <DuplicateJobButton jobId={job.id} />
-            <DeleteJobButton jobId={job.id} />
+            <RowOverflowMenu>
+              <RowOverflowItem
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(`${window.location.origin}/review/${job.id}`);
+                  } catch {}
+                }}
+              >
+                Copy review link
+              </RowOverflowItem>
+              <div className="px-3 py-1 text-[10px] uppercase tracking-wide text-graphite-400">Label</div>
+              <div className="px-3 py-1"><ColorLabelPicker jobId={job.id} current={job.colorLabel} /></div>
+              <div className="h-px bg-graphite-100 dark:bg-graphite-800 my-1" />
+              <div className="px-3 py-1"><SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} /></div>
+              <div className="px-3 py-1"><PinButton jobId={job.id} pinned={!!job.pinnedAt} /></div>
+              {isAdmin && <div className="px-3 py-1"><WatchButton jobId={job.id} /></div>}
+              <div className="px-3 py-1"><SaveTemplateButton jobId={job.id} /></div>
+              <div className="px-3 py-1"><DuplicateJobButton jobId={job.id} /></div>
+              <div className="h-px bg-graphite-100 dark:bg-graphite-800 my-1" />
+              <div className="px-3 py-1"><DeleteJobButton jobId={job.id} /></div>
+            </RowOverflowMenu>
             <span className="text-graphite-300 dark:text-graphite-600 text-base">›</span>
           </>
         )}
@@ -392,13 +406,18 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             >
               {isStarting ? "Starting..." : "Start Processing"}
             </Button>
-            <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
-            <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
-            <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
-            {isAdmin && <WatchButton jobId={job.id} />}
-            <SaveTemplateButton jobId={job.id} />
-            <DuplicateJobButton jobId={job.id} />
-            <DeleteJobButton jobId={job.id} />
+            <RowOverflowMenu>
+              <div className="px-3 py-1 text-[10px] uppercase tracking-wide text-graphite-400">Label</div>
+              <div className="px-3 py-1"><ColorLabelPicker jobId={job.id} current={job.colorLabel} /></div>
+              <div className="h-px bg-graphite-100 dark:bg-graphite-800 my-1" />
+              <div className="px-3 py-1"><SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} /></div>
+              <div className="px-3 py-1"><PinButton jobId={job.id} pinned={!!job.pinnedAt} /></div>
+              {isAdmin && <div className="px-3 py-1"><WatchButton jobId={job.id} /></div>}
+              <div className="px-3 py-1"><SaveTemplateButton jobId={job.id} /></div>
+              <div className="px-3 py-1"><DuplicateJobButton jobId={job.id} /></div>
+              <div className="h-px bg-graphite-100 dark:bg-graphite-800 my-1" />
+              <div className="px-3 py-1"><DeleteJobButton jobId={job.id} /></div>
+            </RowOverflowMenu>
           </>
         )}
         {job.status === "approved" && (
@@ -409,35 +428,42 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
                 Locked
               </span>
             )}
-            <LockButton jobId={job.id} locked={!!job.lockedAt} />
-            <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
-            <CopyJobLinkButton jobId={job.id} />
             <DownloadButton jobId={job.id} />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setPreviewOpen(true);
-              }}
-              className="text-xs px-2 py-1 rounded border border-graphite-200 hover:bg-graphite-50 dark:border-graphite-700 dark:hover:bg-graphite-800"
-            >
-              Invoice
-            </button>
-            <a
-              href={`/api/jobs/${job.id}/pdf-gallery`}
-              download
-              className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
-              onClick={(e) => e.stopPropagation()}
-            >
-              PDF
-            </a>
-            <ArchiveButton jobId={job.id} archived={!!job.archivedAt} />
-            <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
-            <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
-            {isAdmin && <WatchButton jobId={job.id} />}
-            <SaveTemplateButton jobId={job.id} />
-            <DuplicateJobButton jobId={job.id} />
-            <DeleteJobButton jobId={job.id} />
+            <RowOverflowMenu>
+              <RowOverflowItem
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(`${window.location.origin}/review/${job.id}`);
+                  } catch {}
+                }}
+              >
+                Copy review link
+              </RowOverflowItem>
+              <RowOverflowItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  setPreviewOpen(true);
+                }}
+              >
+                Preview invoice
+              </RowOverflowItem>
+              <RowOverflowItem href={`/api/jobs/${job.id}/pdf-gallery`}>
+                Download PDF gallery
+              </RowOverflowItem>
+              <div className="h-px bg-graphite-100 dark:bg-graphite-800 my-1" />
+              <div className="px-3 py-1 text-[10px] uppercase tracking-wide text-graphite-400">Label</div>
+              <div className="px-3 py-1"><ColorLabelPicker jobId={job.id} current={job.colorLabel} /></div>
+              <div className="h-px bg-graphite-100 dark:bg-graphite-800 my-1" />
+              <div className="px-3 py-1"><LockButton jobId={job.id} locked={!!job.lockedAt} /></div>
+              <div className="px-3 py-1"><ArchiveButton jobId={job.id} archived={!!job.archivedAt} /></div>
+              <div className="px-3 py-1"><SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} /></div>
+              <div className="px-3 py-1"><PinButton jobId={job.id} pinned={!!job.pinnedAt} /></div>
+              {isAdmin && <div className="px-3 py-1"><WatchButton jobId={job.id} /></div>}
+              <div className="px-3 py-1"><SaveTemplateButton jobId={job.id} /></div>
+              <div className="px-3 py-1"><DuplicateJobButton jobId={job.id} /></div>
+              <div className="h-px bg-graphite-100 dark:bg-graphite-800 my-1" />
+              <div className="px-3 py-1"><DeleteJobButton jobId={job.id} /></div>
+            </RowOverflowMenu>
             <span className="text-graphite-300 dark:text-graphite-600 text-base">›</span>
           </>
         )}

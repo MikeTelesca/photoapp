@@ -180,7 +180,40 @@ OUTPUT: 4K, sharp, MLS-ready, neutral white balance.`;
     },
   });
 
-  console.log("Seeded:", { admin: admin.id, presets: 4 });
+  const flambientPrompt = `FLAMBIENT (flash + ambient hybrid) — the gold-standard real estate magazine look.
+Combine ambient window light with balanced fill flash for clean, natural interiors with crisp detail throughout.
+
+STRICT RULES:
+- DO NOT add, remove, or change any physical content.
+- DO NOT replace sky or fake what's visible through windows.
+- Enhance grass UNIFORMLY across the entire visible lawn (front AND back), natural green, never neon.
+
+FLAMBIENT CHARACTERISTICS:
+1. WINDOW PULL: Strong window pull — exteriors visible through windows, never blown out, never HDR-halo.
+2. AMBIENT BASE: Preserve the warmth of practical lights (lamps, chandeliers, pot lights). Mixed color temperature is OK and looks natural.
+3. FLASH FILL: Subtle, even fill across the room — no harsh flash shadow, no flat/washed-out look. Soft, directional shadows.
+4. WHITES CLEAN: Walls and trim read clean white/warm-white, never yellow or green cast.
+5. COLORS NATURAL: Wood tones rich and warm, fabrics true-to-color. No oversaturation.
+6. CONTRAST MEDIUM-HIGH: Editorial but not crushed. Shadow detail preserved.
+7. REFLECTIVE FLOOR FIX: Polished floors often pick up blue cast from window light — neutralize to true wood/tile color.
+8. WINDOW FRAMES CRISP: Detail in window muntins/frames visible against bright outside.
+9. SHARPNESS: Crisp but not over-sharpened.
+10. STRAIGHTEN verticals and horizontals.
+
+OUTPUT: 4K, clean, balanced, inviting, magazine-ready.`;
+
+  await prisma.preset.upsert({
+    where: { slug: "flambient" },
+    update: { promptModifiers: flambientPrompt },
+    create: {
+      name: "Flambient",
+      slug: "flambient",
+      description: "Flash + ambient hybrid, magazine-ready",
+      promptModifiers: flambientPrompt,
+    },
+  });
+
+  console.log("Seeded:", { admin: admin.id, presets: 5 });
 }
 
 main()

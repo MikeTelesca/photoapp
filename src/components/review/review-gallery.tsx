@@ -4733,19 +4733,21 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
           {/* Custom Instructions */}
           <div className="bg-white dark:bg-graphite-900 border-t border-graphite-100 dark:border-graphite-800 px-6 py-3 flex items-center gap-2.5">
-            <div className="flex gap-1.5 flex-wrap">
-              {["Remove car", "Make brighter", "Fix sky", "Enhance grass", "Pot lights on", "Remove photographer", "TV: Netflix home screen", "TV: fireplace video", "TV: black screen off", "TV: beach scene"].map(
-                (tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleQuickTag(tag)}
-                    className="px-2.5 py-1 rounded-md bg-graphite-100 dark:bg-graphite-800 text-graphite-500 dark:text-graphite-400 text-[11px] font-semibold border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-200 hover:text-graphite-700 dark:text-graphite-200 transition-colors"
-                  >
-                    {tag}
-                  </button>
-                )
-              )}
-            </div>
+            {showMoreActions && (
+              <div className="flex gap-1.5 flex-wrap">
+                {["Remove car", "Make brighter", "Fix sky", "Enhance grass", "Pot lights on", "Remove photographer", "TV: Netflix home screen", "TV: fireplace video", "TV: black screen off", "TV: beach scene"].map(
+                  (tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => handleQuickTag(tag)}
+                      className="px-2.5 py-1 rounded-md bg-graphite-100 dark:bg-graphite-800 text-graphite-500 dark:text-graphite-400 text-[11px] font-semibold border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-200 hover:text-graphite-700 dark:text-graphite-200 transition-colors"
+                    >
+                      {tag}
+                    </button>
+                  )
+                )}
+              </div>
+            )}
             <input
               type="text"
               value={customInstruction}

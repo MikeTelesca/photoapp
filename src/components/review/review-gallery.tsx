@@ -210,6 +210,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [sorting, setSorting] = useState(false);
   const [tagging, setTagging] = useState(false);
   const [tagFilter, setTagFilter] = useState<string>("");
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+  const [loadingTags, setLoadingTags] = useState(false);
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
   const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
   const [mlsPreset, setMlsPreset] = useState("mls-hi");
@@ -1533,6 +1535,44 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function loadTagSuggestions() {
+    setLoadingTags(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/suggest-tags`);
+      const data = await res.json();
+      setTagSuggestions(data.suggestions || []);
+    } catch (err) {
+      console.error("Error loading tag suggestions:", err);
+      setTagSuggestions([]);
+    } finally {
+      setLoadingTags(false);
+    }
+  }
+
+  async function applyTagSuggestion(tag: string) {
+    const currentTags = (job.tags || "")
+      .split(",")
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+    if (currentTags.includes(tag)) return;
+    const newTags = [...currentTags, tag].join(",");
+    try {
+      const res = await fetch(`/api/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: newTags }),
+      });
+      if (res.ok) {
+        setJob((prev) => ({ ...prev, tags: newTags }));
+        setTagSuggestions((prev) => prev.filter((t) => t !== tag));
+        addToast("success", `Added tag: ${tag}`);
+      }
+    } catch (err) {
+      console.error("Error applying tag:", err);
+      addToast("error", "Failed to apply tag");
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen">
       {/* Top Bar */}
@@ -1644,6 +1684,28 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </div>
           )}
           <NotesPopover jobId={job.id} initialNotes={job.notes ?? null} />
+          <div className="space-y-1">
+            <button
+              onClick={loadTagSuggestions}
+              disabled={loadingTags}
+              className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-60"
+            >
+              {loadingTags ? "..." : "🪄 Suggest tags"}
+            </button>
+            {tagSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {tagSuggestions.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => applyTagSuggestion(t)}
+                    className="text-[10px] px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 hover:bg-purple-100"
+                  >
+                    + {t}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <CustomFieldsEditor jobId={job.id} initial={job.customFields ?? null} />
           <button
             onClick={() => setShowWatermarkPanel(p => !p)}

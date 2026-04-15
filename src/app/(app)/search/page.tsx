@@ -229,7 +229,7 @@ export default function SearchPage() {
               </button>
             </div>
             <div className="text-xs text-graphite-500 dark:text-graphite-400">
-              Looking for a specific photo? <Link href="/search/photos" className="text-cyan hover:underline">Search photos by EXIF/caption →</Link>
+              Search <Link href="/search/comments" className="text-cyan hover:underline">comments</Link> or <Link href="/search/photos" className="text-cyan hover:underline">photos</Link>.
             </div>
           </div>
         </Card>

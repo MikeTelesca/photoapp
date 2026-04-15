@@ -64,7 +64,7 @@ export async function GET(
       .jpeg({ quality: 85, mozjpeg: true })
       .toBuffer();
 
-    return new NextResponse(resized, {
+    return new NextResponse(new Uint8Array(resized), {
       headers: {
         "Content-Type": "image/jpeg",
         // Cache for 7 days - photos rarely change, browser will use cached version

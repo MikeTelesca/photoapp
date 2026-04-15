@@ -13,6 +13,7 @@ import { NotificationToggle } from "@/components/settings/notification-toggle";
 import { EmailNotificationToggle } from "@/components/settings/email-notification-toggle";
 import { InvoiceSettingsForm } from "@/components/settings/invoice-settings-form";
 import { WebhookForm } from "@/components/settings/webhook-form";
+import { TwoFactorForm } from "@/components/settings/two-factor-form";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export default async function SettingsPage() {
 
   let emailNotificationsEnabled = true;
   let slackWebhookUrl: string | null = null;
+  let twoFactorEnabled = false;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -38,6 +40,7 @@ export default async function SettingsPage() {
       select: {
         slackWebhookUrl: true,
         emailNotifications: true,
+        twoFactorEnabled: true,
         businessName: true,
         businessEmail: true,
         businessPhone: true,
@@ -48,6 +51,7 @@ export default async function SettingsPage() {
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
     emailNotificationsEnabled = user?.emailNotifications ?? true;
+    twoFactorEnabled = user?.twoFactorEnabled ?? false;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -79,6 +83,16 @@ export default async function SettingsPage() {
               email={session?.user?.email || ""}
               role={session?.user?.role || ""}
             />
+          </div>
+        </Card>
+
+        {/* Two-Factor Authentication */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Two-Factor Authentication</CardTitle>
+          </CardHeader>
+          <div className="p-5">
+            <TwoFactorForm initiallyEnabled={twoFactorEnabled} />
           </div>
         </Card>
 

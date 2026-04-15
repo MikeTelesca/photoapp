@@ -23,6 +23,7 @@ import {
   BookmarkIcon,
   CreditCardIcon,
   ClockIcon,
+  HeartIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/components/theme-provider";
 import { useSidebar } from "@/components/layout/sidebar-context";
@@ -43,6 +44,7 @@ const settingsItems = [
   { label: "Users", href: "/admin/users", icon: UsersIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
+  { label: "Health", href: "/admin/health", icon: HeartIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];
 

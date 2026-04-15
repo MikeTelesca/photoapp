@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PaintBrushIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PaintBrushIcon, PlusIcon, TrashIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 
 interface Preset {
   id: string;
@@ -22,6 +22,8 @@ export function PresetsManager({ initialPresets }: { initialPresets: Preset[] })
   const [newDesc, setNewDesc] = useState("");
   const [newPrompt, setNewPrompt] = useState("");
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSave(id: string, data: Partial<Preset>) {
     setSaving(true);
@@ -83,8 +85,100 @@ export function PresetsManager({ initialPresets }: { initialPresets: Preset[] })
     }
   }
 
+  async function handleExport() {
+    try {
+      const res = await fetch("/api/presets/export");
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `presets-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        alert("Failed to export presets");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error exporting presets");
+    }
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (!data.presets || !Array.isArray(data.presets)) {
+        alert("Invalid preset file format");
+        return;
+      }
+
+      const res = await fetch("/api/presets/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        const message = `Imported ${result.created} preset(s)${result.skipped > 0 ? `, skipped ${result.skipped}` : ""}`;
+        alert(message);
+        // Reload presets from server
+        const presetsRes = await fetch("/api/presets");
+        if (presetsRes.ok) {
+          const updated = await presetsRes.json();
+          setPresets(updated);
+        }
+      } else {
+        const error = await res.json();
+        alert(`Import failed: ${error.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error reading or importing file");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }
+
   return (
     <div className="max-w-3xl space-y-4">
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          className="text-sm"
+          onClick={handleExport}
+        >
+          <ArrowDownTrayIcon className="w-4 h-4" />
+          Export JSON
+        </Button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={importing}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-50 dark:hover:bg-graphite-800 hover:border-graphite-300 dark:hover:border-graphite-600"
+        >
+          <ArrowUpTrayIcon className="w-4 h-4" />
+          {importing ? "Importing..." : "Import JSON"}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          className="hidden"
+          onChange={handleImport}
+          disabled={importing}
+        />
+      </div>
+
       {presets.map((preset) => (
         <Card key={preset.id}>
           <div className="p-5">

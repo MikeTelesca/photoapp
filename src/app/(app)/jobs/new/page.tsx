@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { TemplatePicker } from "@/components/jobs/template-picker";
 import { ClientPicker } from "@/components/jobs/client-picker";
+import { DuplicateWarning } from "@/components/jobs/duplicate-warning";
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -232,6 +233,9 @@ export default function NewJobPage() {
                 placeholder="e.g. 123 Main Street, Toronto"
                 className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
               />
+              <div className="mt-2">
+                <DuplicateWarning address={address} />
+              </div>
             </div>
 
             {/* Client */}

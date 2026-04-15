@@ -31,7 +31,7 @@ export function WatermarkLogoUpload({ initial }: { initial: string | null }) {
       </div>
       {hasLogo && (
         <div className="flex items-center gap-3">
-          <img src="/api/user/watermark-logo/preview" alt="Logo" className="h-12 bg-graphite-100 dark:bg-graphite-800 p-1 rounded" />
+          <img src="/api/user/watermark-logo/preview" alt="Logo" className="h-12 bg-graphite-100 dark:bg-graphite-800 p-1 rounded" width={64} height={48} />
           <button onClick={remove} className="text-xs text-red-500 hover:underline">
             Remove
           </button>

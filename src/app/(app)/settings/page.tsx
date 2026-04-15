@@ -15,6 +15,7 @@ import { InvoiceSettingsForm } from "@/components/settings/invoice-settings-form
 import { WebhookForm } from "@/components/settings/webhook-form";
 import { TwoFactorForm } from "@/components/settings/two-factor-form";
 import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload";
+import { AccentPicker } from "@/components/settings/accent-picker";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -87,6 +88,17 @@ export default async function SettingsPage() {
               email={session?.user?.email || ""}
               role={session?.user?.role || ""}
             />
+          </div>
+        </Card>
+
+        {/* Accent Color */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+          </CardHeader>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-3 dark:text-white">Accent color</h2>
+            <AccentPicker />
           </div>
         </Card>
 

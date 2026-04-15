@@ -78,6 +78,7 @@ model Client {
   company   String?
   notes     String?
   defaultPreset String?
+  defaultTags String?  // comma-separated tags
   ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   jobs      Job[]

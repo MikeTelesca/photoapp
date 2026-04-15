@@ -57,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const body = await request.json();
-    const { name, email, phone, company, notes, defaultPreset } = body;
+    const { name, email, phone, company, notes, defaultPreset, defaultTags } = body;
 
     const updated = await prisma.client.update({
       where: { id },
@@ -68,6 +68,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         ...(company !== undefined && { company: company?.trim() || null }),
         ...(notes !== undefined && { notes: notes?.trim() || null }),
         ...(defaultPreset !== undefined && { defaultPreset: defaultPreset || null }),
+        ...(defaultTags !== undefined && { defaultTags: defaultTags || null }),
       },
     });
 

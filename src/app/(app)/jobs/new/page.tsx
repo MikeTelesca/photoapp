@@ -441,11 +441,18 @@ function NewJobPageInner() {
               </label>
               <ClientPicker
                 value={clientId}
-                onChange={(id, name, defaultPreset) => {
+                onChange={(id, name, defaultPreset, defaultTags) => {
                   setClientId(id);
                   setClientName(name);
                   if (defaultPreset) {
                     setPreset(defaultPreset);
+                  }
+                  if (defaultTags) {
+                    // Merge with existing tags, dedupe
+                    const existing = (tags || "").split(",").map(t => t.trim()).filter(Boolean);
+                    const fromClient = defaultTags.split(",").map((t: string) => t.trim()).filter(Boolean);
+                    const merged = Array.from(new Set([...existing, ...fromClient]));
+                    setTags(merged.join(", "));
                   }
                 }}
               />

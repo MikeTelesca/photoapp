@@ -13,6 +13,7 @@ interface Client {
   company: string | null;
   notes: string | null;
   defaultPreset: string | null;
+  defaultTags: string | null;
 }
 
 export function ClientDetailActions({ client }: { client: Client }) {
@@ -28,6 +29,7 @@ export function ClientDetailActions({ client }: { client: Client }) {
     company: client.company || "",
     notes: client.notes || "",
     defaultPreset: client.defaultPreset || "",
+    defaultTags: client.defaultTags || "",
   });
 
   async function handleSave() {
@@ -134,6 +136,13 @@ export function ClientDetailActions({ client }: { client: Client }) {
               <option value="flambient">Flambient</option>
             </select>
             <div className="text-[11px] text-graphite-400 dark:text-graphite-500 mt-1">Auto-applied when this client is selected on a new job</div>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold mb-1 block dark:text-graphite-300">Default tags (optional)</label>
+            <input type="text" value={form.defaultTags} onChange={(e) => setForm({ ...form, defaultTags: e.target.value })}
+              placeholder="rush, premium, kw-realty"
+              className="w-full text-sm px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan" />
+            <div className="text-[11px] text-graphite-400 mt-1">Comma-separated, auto-applied on new jobs for this client</div>
           </div>
         </div>
         {error && (

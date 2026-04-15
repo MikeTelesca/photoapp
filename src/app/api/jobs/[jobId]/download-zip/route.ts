@@ -41,11 +41,21 @@ export async function GET(
     );
   }
 
+  // Also fetch any photos with retouch requests (including non-approved),
+  // so notes aren't dropped from the delivery package.
+  const photosWithRetouch = await prisma.photo.findMany({
+    where: { jobId, retouchRequest: { not: null } },
+    orderBy: { orderIndex: "asc" },
+    select: { id: true, orderIndex: true, retouchRequest: true },
+  });
+
   const zip = new JSZip();
   const user = job.photographer;
   const pattern = user?.filenamePattern || "{address}-{seq}";
 
   let idx = 0;
+  const retouchLines: string[] = [];
+  const retouchedPhotoIdsIncluded = new Set<string>();
   for (const photo of photos) {
     const url = photo.editedUrl || photo.originalUrl;
     if (!url) continue;
@@ -83,6 +93,11 @@ export async function GET(
       filename = filename.replace(/\.[^/.]+$/, `.${extension}`);
 
       zip.file(filename, buf);
+
+      if (photo.retouchRequest && photo.retouchRequest.trim().length > 0) {
+        retouchLines.push(`${filename}: ${photo.retouchRequest.trim()}`);
+        retouchedPhotoIdsIncluded.add(photo.id);
+      }
     } catch (err) {
       console.error("zip fetch error:", err);
     }
@@ -93,6 +108,25 @@ export async function GET(
       { error: "No photos could be fetched" },
       { status: 500 }
     );
+  }
+
+  // Include retouch requests from non-approved photos too, so notes aren't lost.
+  for (const p of photosWithRetouch) {
+    if (!p.retouchRequest) continue;
+    if (retouchedPhotoIdsIncluded.has(p.id)) continue;
+    retouchLines.push(
+      `photo-#${p.orderIndex + 1} (not in export): ${p.retouchRequest.trim()}`
+    );
+  }
+
+  if (retouchLines.length > 0) {
+    const header = [
+      `Retouch requests for ${job.address}`,
+      `Generated: ${new Date().toISOString()}`,
+      `Total: ${retouchLines.length}`,
+      "",
+    ].join("\n");
+    zip.file("retouch-requests.txt", header + retouchLines.join("\n") + "\n");
   }
 
   const zipBuffer = await zip.generateAsync({

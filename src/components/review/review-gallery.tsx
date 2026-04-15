@@ -180,6 +180,144 @@ function GridView({ photos, cols, onPhotoClick, jobId }: {
   );
 }
 
+function RetouchRequestPopover({
+  photoId,
+  initialValue,
+  disabled,
+  onSaved,
+}: {
+  photoId: string;
+  initialValue: string | null | undefined;
+  disabled?: boolean;
+  onSaved: (value: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(initialValue || "");
+  const [saving, setSaving] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setValue(initialValue || "");
+  }, [photoId, initialValue]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }
+  }, [open]);
+
+  const hasRequest = (initialValue || "").trim().length > 0;
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const trimmed = value.trim();
+      const payload = trimmed.length === 0 ? null : trimmed;
+      const res = await fetch(`/api/photos/${photoId}/retouch-request`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request: payload }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onSaved(data.retouchRequest ?? null);
+        setOpen(false);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const clear = async () => {
+    setValue("");
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/photos/${photoId}/retouch-request`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request: null }),
+      });
+      if (res.ok) {
+        onSaved(null);
+        setOpen(false);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="relative" ref={popoverRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        disabled={disabled}
+        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
+          hasRequest
+            ? "bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-200 dark:bg-fuchsia-900/30 dark:text-fuchsia-300"
+            : "bg-graphite-100 text-graphite-600 hover:bg-graphite-200 dark:bg-graphite-800 dark:text-graphite-300"
+        }`}
+        title={hasRequest ? "Retouch request set" : "Request a specific retouch for this photo"}
+      >
+        <span>✂</span>
+        <span className="hidden sm:inline">Retouch Request{hasRequest ? " \u25CF" : ""}</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-graphite-900 border border-graphite-200 dark:border-graphite-700 rounded-xl shadow-xl p-3 z-40">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-graphite-700 dark:text-graphite-200">
+              Retouch Request
+            </span>
+            <span className="text-[10px] text-graphite-400">
+              Included in ZIP as retouch-requests.txt
+            </span>
+          </div>
+          <textarea
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            rows={5}
+            placeholder={`e.g. "remove car from driveway", "brighten ceiling"`}
+            className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white text-xs focus:outline-none focus:border-cyan resize-none"
+          />
+          <div className="flex items-center justify-between gap-2 mt-2">
+            <button
+              type="button"
+              onClick={clear}
+              disabled={saving || (!hasRequest && value.trim().length === 0)}
+              className="text-[11px] text-red-600 hover:underline disabled:opacity-40"
+            >
+              Clear
+            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="text-xs px-3 py-1.5 rounded-lg border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={save}
+                disabled={saving}
+                className="text-xs px-3 py-1.5 rounded-lg bg-cyan text-white font-semibold disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const { addToast } = useToast();
   const [job, setJob] = useState(initialJob);
@@ -2955,6 +3093,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                         {photo.flagged && (
                           <div className="absolute top-1 left-1 text-orange-400 text-sm drop-shadow z-10" title="Flagged">🚩</div>
                         )}
+                        {photo.retouchRequest && (
+                          <div
+                            className="absolute bottom-1 right-1 text-fuchsia-500 text-sm drop-shadow z-10 bg-white/80 dark:bg-graphite-900/80 rounded-full w-4 h-4 flex items-center justify-center leading-none"
+                            title={`Retouch: ${photo.retouchRequest}`}
+                          >
+                            ✂
+                          </div>
+                        )}
                         {photo.note && (
                           <div className="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-400 drop-shadow" title="Has note" />
                         )}
@@ -3546,6 +3692,21 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 <span>★</span>
                 <span className="hidden sm:inline">Favorite</span>
               </button>
+              {currentPhoto && (
+                <RetouchRequestPopover
+                  photoId={currentPhoto.id}
+                  initialValue={currentPhoto.retouchRequest}
+                  disabled={isUpdating || enhanceLoading}
+                  onSaved={(value) => {
+                    setJob((prev) => ({
+                      ...prev,
+                      photos: prev.photos.map((p) =>
+                        p.id === currentPhoto.id ? { ...p, retouchRequest: value } : p
+                      ),
+                    }));
+                  }}
+                />
+              )}
               {/* Color label picker */}
               <div
                 className="flex items-center gap-1 px-2 py-2 rounded-lg bg-graphite-100 dark:bg-graphite-800"

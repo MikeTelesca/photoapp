@@ -34,6 +34,8 @@ interface Photo {
   customInstructions: string | null;
   detections: string;
   exifData: string | null;
+  errorMessage: string | null;
+  errorAttempts: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -365,6 +367,35 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     setEnhanceProgress(100);
   }, [photos, job.id]);
 
+  const failedCount = photos.filter(p => p.errorMessage).length;
+
+  const handleRetryFailed = useCallback(async () => {
+    const failed = photos.filter(p => p.errorMessage && p.status === "pending");
+    if (failed.length === 0) return;
+
+    for (const photo of failed) {
+      setEnhancingIds(prev => new Set(prev).add(photo.id));
+      try {
+        const res = await fetch(`/api/jobs/${job.id}/photos/${photo.id}/enhance`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setJob(prev => ({
+            ...prev,
+            photos: prev.photos.map(p => p.id === photo.id ? { ...p, status: "edited", editedUrl: data.editedUrl, errorMessage: null } : p),
+          }));
+        }
+      } catch {
+        // continue to next photo
+      } finally {
+        setEnhancingIds(prev => { const n = new Set(prev); n.delete(photo.id); return n; });
+      }
+    }
+  }, [photos, job.id]);
+
   const handleDownload = useCallback(async () => {
     const approvedPhotos = photos.filter(
       (p) => p.status === "approved" && p.editedUrl
@@ -602,6 +633,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               </span>
             )}
           </div>
+          {failedCount > 0 && (
+            <button
+              onClick={handleRetryFailed}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200"
+              title={`Retry ${failedCount} failed photos`}
+            >
+              Retry Failed ({failedCount})
+            </button>
+          )}
           {photos.some(p => p.status === "pending") && (
             <Button onClick={handleEnhanceAll} disabled={isEnhancingAll}>
               <ArrowPathIcon className={`w-4 h-4 ${isEnhancingAll ? 'animate-spin' : ''}`} />
@@ -881,6 +921,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       {currentPhoto?.status === "regenerating"
                         ? "Regenerating..."
                         : "Click 'Enhance with AI' to edit this photo"}
+                    </div>
+                  )}
+                  {currentPhoto?.errorMessage && !enhanceLoading && !currentPhoto.editedUrl && (
+                    <div className="absolute inset-x-4 bottom-4 bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
+                      <div className="font-semibold mb-1">Last enhancement failed (attempt {currentPhoto.errorAttempts}):</div>
+                      <div className="font-mono opacity-80">{currentPhoto.errorMessage.substring(0, 200)}</div>
                     </div>
                   )}
                   {/* Detection badges */}

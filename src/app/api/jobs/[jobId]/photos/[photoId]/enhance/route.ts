@@ -10,6 +10,7 @@ import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 import { logActivity } from "@/lib/activity";
+import { log } from "@/lib/logger";
 
 // Download a file from Dropbox shared link using raw API
 async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
@@ -187,9 +188,14 @@ export async function POST(
     }
 
     if (!result.success) {
+      log.error("[enhance] failed", { jobId, photoId, error: result.error });
       await prisma.photo.update({
         where: { id: photoId },
-        data: { status: "pending" },
+        data: {
+          status: "pending",
+          errorMessage: result.error || "Unknown error",
+          errorAttempts: { increment: 1 },
+        },
       });
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
@@ -233,22 +239,32 @@ export async function POST(
     }
 
     if (!editedUrl) {
+      const uploadErr = `Dropbox upload failed after 3 attempts: ${lastError?.message}`;
+      log.error("[enhance] upload failed", { jobId, photoId, error: uploadErr });
       // Mark photo as pending again, don't bill
       await prisma.photo.update({
         where: { id: photoId },
-        data: { status: "pending" },
+        data: {
+          status: "pending",
+          errorMessage: uploadErr,
+          errorAttempts: { increment: 1 },
+        },
       });
       return NextResponse.json({
-        error: `Dropbox upload failed after 3 attempts: ${lastError?.message}`,
+        error: uploadErr,
         photoId,
       }, { status: 500 });
     }
+
+    log.info("[enhance] completed", { jobId, photoId, model: (result as any).model });
 
     await prisma.photo.update({
       where: { id: photoId },
       data: {
         editedUrl,
         status: "edited",
+        errorMessage: null,
+        errorAttempts: 0,
         customInstructions: customInstructions || null,
         isTwilight: makeTwilight || photo.isTwilight,
       },
@@ -271,10 +287,14 @@ export async function POST(
     return NextResponse.json({ success: true, photoId, editedUrl });
   } catch (error: unknown) {
     const err = error as Error;
-    console.error("Enhance error:", err);
+    log.error("[enhance] failed", { jobId, photoId, error: err.message });
     await prisma.photo.update({
       where: { id: photoId },
-      data: { status: "pending" },
+      data: {
+        status: "pending",
+        errorMessage: err.message || "Unknown error",
+        errorAttempts: { increment: 1 },
+      },
     }).catch(() => {});
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

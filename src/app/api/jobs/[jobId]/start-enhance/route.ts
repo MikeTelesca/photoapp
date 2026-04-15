@@ -5,6 +5,7 @@ import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 import { logActivity } from "@/lib/activity";
+import { log } from "@/lib/logger";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -44,6 +45,8 @@ export async function POST(
   const { jobId } = await params;
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
+
+  log.info("[start-enhance] received", { jobId });
 
   try {
     const job = await prisma.job.findUnique({
@@ -219,7 +222,32 @@ export async function POST(
     const result = await enhancePhoto(validBrackets, mimeType, job.preset, fullPrompt);
 
     if (!result.success) {
-      await prisma.photo.update({ where: { id: photo.id }, data: { status: "pending" } });
+      log.error("[start-enhance] failed", { jobId, photoId: photo.id, error: result.error });
+
+      // Fetch current errorAttempts before incrementing
+      const currentPhoto = await prisma.photo.findUnique({ where: { id: photo.id }, select: { errorAttempts: true } });
+      const newAttempts = (currentPhoto?.errorAttempts ?? 0) + 1;
+
+      if (newAttempts >= 5) {
+        await prisma.photo.update({
+          where: { id: photo.id },
+          data: {
+            status: "rejected",
+            errorMessage: result.error || "Failed too many times",
+            errorAttempts: newAttempts,
+          },
+        });
+        return NextResponse.json({ error: "Photo failed too many times, marked as rejected", photoId: photo.id });
+      }
+
+      await prisma.photo.update({
+        where: { id: photo.id },
+        data: {
+          status: "pending",
+          errorMessage: result.error || "Unknown error",
+          errorAttempts: { increment: 1 },
+        },
+      });
       return NextResponse.json({ error: result.error, photoId: photo.id });
     }
 
@@ -265,21 +293,29 @@ export async function POST(
     }
 
     if (!editedUrl) {
+      const uploadErr = `Dropbox upload failed after 3 attempts: ${lastError?.message}`;
+      log.error("[start-enhance] upload failed", { jobId, photoId: photo.id, error: uploadErr });
       // Mark photo as pending again, don't bill
       await prisma.photo.update({
         where: { id: photo.id },
-        data: { status: "pending" },
+        data: {
+          status: "pending",
+          errorMessage: uploadErr,
+          errorAttempts: { increment: 1 },
+        },
       });
       return NextResponse.json({
-        error: `Dropbox upload failed after 3 attempts: ${lastError?.message}`,
+        error: uploadErr,
         photoId: photo.id,
       }, { status: 500 });
     }
 
     await prisma.photo.update({
       where: { id: photo.id },
-      data: { editedUrl, status: "edited" },
+      data: { editedUrl, status: "edited", errorMessage: null, errorAttempts: 0 },
     });
+
+    log.info("[start-enhance] completed", { jobId, photoId: photo.id, model: (result as any).model });
 
     await logActivity({
       type: "photo_enhanced",
@@ -311,7 +347,7 @@ export async function POST(
       editedUrl,
     });
   } catch (error: any) {
-    console.error("Process-next error:", error);
+    log.error("[start-enhance] failed", { jobId, error: error.message });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

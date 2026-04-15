@@ -85,7 +85,10 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
           select: { name: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { pinnedAt: { sort: "desc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
       take: 20,
     });
 
@@ -104,6 +107,7 @@ async function getJobs(where: object, search?: string, tag?: string): Promise<Jo
       cost: j.cost,
       clientName: j.clientName,
       tags: j.tags,
+      pinnedAt: j.pinnedAt,
       createdAt: j.createdAt,
       updatedAt: j.updatedAt,
     }));

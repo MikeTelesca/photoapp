@@ -12,6 +12,7 @@ import { SaveTemplateButton } from "@/components/dashboard/save-template-button"
 import { EditTagsButton } from "@/components/dashboard/edit-tags-button";
 import { ArchiveButton } from "@/components/dashboard/archive-button";
 import { EtaBadge } from "@/components/dashboard/eta-badge";
+import { PinButton } from "@/components/dashboard/pin-button";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
 import type { Job } from "@/lib/types";
 
@@ -83,6 +84,9 @@ function JobCardInternal({ job }: JobCardProps) {
         <div className="flex items-center gap-3">
         <div className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
         <div>
+          {job.pinnedAt && (
+            <div className="text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400 font-semibold mb-0.5">📌 Pinned</div>
+          )}
           <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{job.address}</div>
           <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">
             <span>{job.photographerName}</span>
@@ -127,6 +131,7 @@ function JobCardInternal({ job }: JobCardProps) {
         {job.status === "review" && (
           <>
             <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
@@ -143,6 +148,7 @@ function JobCardInternal({ job }: JobCardProps) {
             >
               {isStarting ? "Starting..." : "Start Processing"}
             </Button>
+            <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
@@ -171,6 +177,7 @@ function JobCardInternal({ job }: JobCardProps) {
               PDF
             </a>
             <ArchiveButton jobId={job.id} archived={!!job.archivedAt} />
+            <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />

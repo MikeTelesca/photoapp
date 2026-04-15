@@ -30,6 +30,7 @@ export interface Job {
   dropboxUrl?: string | null;
   listingDescription?: string | null;
   archivedAt?: Date | string | null;
+  pinnedAt?: Date | string | null;
   createdAt: Date;
   updatedAt: Date;
 }

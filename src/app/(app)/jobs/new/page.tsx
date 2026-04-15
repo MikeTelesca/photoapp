@@ -33,6 +33,9 @@ export default function NewJobPage() {
   const [tvStyle, setTvStyle] = useState("off");
   const [skyStyle, setSkyStyle] = useState("as-is");
   const [watermarkText, setWatermarkText] = useState("");
+  const [watermarkPosition, setWatermarkPosition] = useState("bottom-right");
+  const [watermarkSize, setWatermarkSize] = useState(32);
+  const [watermarkOpacity, setWatermarkOpacity] = useState(0.7);
   const [clientName, setClientName] = useState("");
   const [tags, setTags] = useState("");
   const [presets, setPresets] = useState<Array<{slug: string; name: string; description: string}>>([
@@ -142,6 +145,9 @@ export default function NewJobPage() {
           tvStyle,
           skyStyle,
           watermarkText: watermarkText.trim() || null,
+          watermarkPosition,
+          watermarkSize,
+          watermarkOpacity,
           clientName: clientName.trim() || null,
           tags: tags.trim(),
         }),
@@ -538,8 +544,74 @@ export default function NewJobPage() {
                 placeholder="e.g. © 2026 Your Photography Co."
                 className="w-full px-4 py-2.5 rounded-lg border border-graphite-200 text-sm text-graphite-900 placeholder:text-graphite-400 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-colors"
               />
+              {watermarkText.trim() && (
+                <div className="mt-3 space-y-3">
+                  {/* Position */}
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Position</label>
+                    <select
+                      value={watermarkPosition}
+                      onChange={(e) => setWatermarkPosition(e.target.value)}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-graphite-200 text-xs text-graphite-900 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
+                    >
+                      <option value="top-left">Top Left</option>
+                      <option value="top-right">Top Right</option>
+                      <option value="bottom-left">Bottom Left</option>
+                      <option value="bottom-right">Bottom Right</option>
+                      <option value="center">Center</option>
+                    </select>
+                  </div>
+                  {/* Size */}
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Size</label>
+                    <input
+                      type="range"
+                      min={10}
+                      max={100}
+                      value={watermarkSize}
+                      onChange={(e) => setWatermarkSize(Number(e.target.value))}
+                      className="flex-1 accent-cyan"
+                    />
+                    <span className="text-xs text-graphite-500 w-10 text-right">{watermarkSize}px</span>
+                  </div>
+                  {/* Opacity */}
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Opacity</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={Math.round(watermarkOpacity * 100)}
+                      onChange={(e) => setWatermarkOpacity(Number(e.target.value) / 100)}
+                      className="flex-1 accent-cyan"
+                    />
+                    <span className="text-xs text-graphite-500 w-10 text-right">{Math.round(watermarkOpacity * 100)}%</span>
+                  </div>
+                  {/* Live preview */}
+                  <div className="relative w-full h-20 bg-graphite-200 rounded-lg overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-graphite-300 to-graphite-400 flex items-center justify-center">
+                      <span className="text-graphite-500 text-xs">Photo preview</span>
+                    </div>
+                    <span
+                      className={`absolute text-white font-semibold pointer-events-none select-none leading-none`}
+                      style={{
+                        fontSize: `${Math.max(8, Math.round(watermarkSize * 0.35))}px`,
+                        opacity: watermarkOpacity,
+                        textShadow: `0 0 2px rgba(0,0,0,${watermarkOpacity * 0.5})`,
+                        ...(watermarkPosition === "top-left" && { top: 6, left: 8 }),
+                        ...(watermarkPosition === "top-right" && { top: 6, right: 8 }),
+                        ...(watermarkPosition === "bottom-left" && { bottom: 6, left: 8 }),
+                        ...(watermarkPosition === "bottom-right" && { bottom: 6, right: 8 }),
+                        ...(watermarkPosition === "center" && { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }),
+                      }}
+                    >
+                      {watermarkText}
+                    </span>
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-graphite-400 mt-1.5">
-                Text will appear in the bottom-right corner of each downloaded photo.
+                Text will appear on each downloaded photo at the selected position.
               </p>
             </div>
 

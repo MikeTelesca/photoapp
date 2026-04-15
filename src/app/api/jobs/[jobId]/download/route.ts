@@ -72,19 +72,38 @@ export async function GET(
           const w = meta.width || 1920;
           const h = meta.height || 1080;
 
-          const fontSize = Math.round(w / 40);
-          const svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-            <text x="${w - 20}" y="${h - 20}" text-anchor="end"
+          const fontSize = (job as any).watermarkSize || 32;
+          const opacity = (job as any).watermarkOpacity ?? 0.7;
+          const position = (job as any).watermarkPosition || "bottom-right";
+
+          const gravityMap: Record<string, string> = {
+            "top-left": "northwest",
+            "top-right": "northeast",
+            "bottom-left": "southwest",
+            "bottom-right": "southeast",
+            "center": "center",
+          };
+          const gravity = gravityMap[position] || "southeast";
+
+          const textX = position.includes("right") ? "95%" : position.includes("left") ? "5%" : "50%";
+          const textAnchor = position.includes("right") ? "end" : position.includes("left") ? "start" : "middle";
+          const svgHeight = fontSize * 2 + 8;
+          const safeText = watermarkText.replace(/[<>&"']/g, '');
+
+          const svg = `<svg width="${w}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">
+            <text x="${textX}" y="${fontSize + 4}" text-anchor="${textAnchor}"
                   font-family="Helvetica, Arial, sans-serif"
                   font-size="${fontSize}"
                   font-weight="600"
-                  fill="rgba(255,255,255,0.85)"
-                  stroke="rgba(0,0,0,0.5)"
-                  stroke-width="1">${watermarkText.replace(/[<>&"']/g, '')}</text>
+                  fill="white"
+                  fill-opacity="${opacity}"
+                  stroke="black"
+                  stroke-width="1"
+                  stroke-opacity="${opacity * 0.5}">${safeText}</text>
           </svg>`;
 
           buffer = await sharpLib(buffer)
-            .composite([{ input: Buffer.from(svg), gravity: "southeast" }])
+            .composite([{ input: Buffer.from(svg), gravity }])
             .jpeg({ quality: 92 })
             .toBuffer();
         }

@@ -61,6 +61,9 @@ interface Job {
   clientName?: string | null;
   tags?: string | null;
   watermarkText?: string | null;
+  watermarkPosition?: string | null;
+  watermarkSize?: number | null;
+  watermarkOpacity?: number | null;
   dropboxUrl?: string | null;
   tvStyle?: string | null;
   skyStyle?: string | null;
@@ -120,6 +123,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [batchFilter, setBatchFilter] = useState<"rejected" | "all">("rejected");
   const [batching, setBatching] = useState(false);
 
+  // Watermark settings state
+  const [showWatermarkPanel, setShowWatermarkPanel] = useState(false);
+  const [wmText, setWmText] = useState(initialJob.watermarkText ?? "");
+  const [wmPosition, setWmPosition] = useState(initialJob.watermarkPosition ?? "bottom-right");
+  const [wmSize, setWmSize] = useState(initialJob.watermarkSize ?? 32);
+  const [wmOpacity, setWmOpacity] = useState(initialJob.watermarkOpacity ?? 0.7);
+  const [savingWatermark, setSavingWatermark] = useState(false);
+
   useEffect(() => {
     fetch("/api/presets")
       .then(r => r.json())
@@ -159,6 +170,32 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       setShowPromptEditor(false);
     } finally {
       setSavingPreset(false);
+    }
+  }
+
+  async function saveWatermarkSettings() {
+    setSavingWatermark(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          watermarkText: wmText.trim() || null,
+          watermarkPosition: wmPosition,
+          watermarkSize: wmSize,
+          watermarkOpacity: wmOpacity,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setJob(updated);
+        addToast("success", "Watermark settings saved");
+        setShowWatermarkPanel(false);
+      } else {
+        addToast("error", "Failed to save watermark settings");
+      }
+    } finally {
+      setSavingWatermark(false);
     }
   }
 
@@ -749,6 +786,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </button>
           </div>
           <NotesPopover jobId={job.id} initialNotes={job.notes ?? null} />
+          <button
+            onClick={() => setShowWatermarkPanel(p => !p)}
+            className={`text-xs px-2 py-1.5 rounded-md border transition-colors ${showWatermarkPanel ? "border-cyan bg-cyan-50 text-cyan" : "border-graphite-200 bg-white text-graphite-700 hover:bg-graphite-50"}`}
+            title="Watermark settings"
+          >
+            {job.watermarkText ? "Watermark ✓" : "Watermark"}
+          </button>
           <ReingestButton jobId={job.id} />
           <button
             onClick={async () => {
@@ -993,6 +1037,113 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               className="px-3 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 text-xs hover:bg-graphite-50"
             >
               Reset
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Watermark Settings Panel */}
+      {showWatermarkPanel && (
+        <div className="bg-graphite-50 border-b border-graphite-200 px-7 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold text-graphite-800">Watermark Settings</span>
+            <span className="text-[11px] text-graphite-500">Applied when downloading ZIP</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              {/* Text */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Text</label>
+                <input
+                  type="text"
+                  value={wmText}
+                  onChange={(e) => setWmText(e.target.value)}
+                  placeholder="e.g. © 2026 Your Photography Co."
+                  className="flex-1 px-3 py-1.5 rounded-lg border border-graphite-200 text-xs text-graphite-900 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
+                />
+              </div>
+              {/* Position */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Position</label>
+                <select
+                  value={wmPosition}
+                  onChange={(e) => setWmPosition(e.target.value)}
+                  className="flex-1 px-3 py-1.5 rounded-lg border border-graphite-200 text-xs text-graphite-900 focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan"
+                >
+                  <option value="top-left">Top Left</option>
+                  <option value="top-right">Top Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="bottom-right">Bottom Right</option>
+                  <option value="center">Center</option>
+                </select>
+              </div>
+              {/* Size */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Size</label>
+                <input
+                  type="range"
+                  min={10}
+                  max={100}
+                  value={wmSize}
+                  onChange={(e) => setWmSize(Number(e.target.value))}
+                  className="flex-1 accent-cyan"
+                />
+                <span className="text-xs text-graphite-500 w-10 text-right">{wmSize}px</span>
+              </div>
+              {/* Opacity */}
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-semibold text-graphite-700 w-20 flex-shrink-0">Opacity</label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={Math.round(wmOpacity * 100)}
+                  onChange={(e) => setWmOpacity(Number(e.target.value) / 100)}
+                  className="flex-1 accent-cyan"
+                />
+                <span className="text-xs text-graphite-500 w-10 text-right">{Math.round(wmOpacity * 100)}%</span>
+              </div>
+            </div>
+            {/* Live preview */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs text-graphite-500">Preview</span>
+              <div className="relative w-full h-28 bg-graphite-300 rounded-lg overflow-hidden flex-shrink-0">
+                <div className="absolute inset-0 bg-gradient-to-br from-graphite-400 to-graphite-500 flex items-center justify-center">
+                  <span className="text-graphite-600 text-xs">Sample photo</span>
+                </div>
+                {wmText.trim() && (
+                  <span
+                    className="absolute text-white font-semibold pointer-events-none select-none leading-none"
+                    style={{
+                      fontSize: `${Math.max(8, Math.round(wmSize * 0.4))}px`,
+                      opacity: wmOpacity,
+                      textShadow: `0 0 3px rgba(0,0,0,${wmOpacity * 0.5})`,
+                      ...(wmPosition === "top-left" && { top: 8, left: 10 }),
+                      ...(wmPosition === "top-right" && { top: 8, right: 10 }),
+                      ...(wmPosition === "bottom-left" && { bottom: 8, left: 10 }),
+                      ...(wmPosition === "bottom-right" && { bottom: 8, right: 10 }),
+                      ...(wmPosition === "center" && { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }),
+                    }}
+                  >
+                    {wmText}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={saveWatermarkSettings}
+              disabled={savingWatermark}
+              className="px-3 py-1.5 rounded-md bg-cyan text-white text-xs font-semibold hover:bg-cyan-600 disabled:opacity-50"
+            >
+              {savingWatermark ? "Saving..." : "Save Watermark"}
+            </button>
+            <button
+              onClick={() => setShowWatermarkPanel(false)}
+              className="px-3 py-1.5 rounded-md border border-graphite-200 bg-white text-graphite-700 text-xs hover:bg-graphite-50"
+            >
+              Cancel
             </button>
           </div>
         </div>

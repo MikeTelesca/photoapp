@@ -24,6 +24,9 @@ export interface Job {
   clientName?: string | null;
   tags?: string;
   watermarkText?: string | null;
+  watermarkPosition?: string;
+  watermarkSize?: number;
+  watermarkOpacity?: number;
   dropboxUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;

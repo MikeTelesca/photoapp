@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { notifyJobWatchers } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,16 @@ export async function POST(
         status: newJobStatus,
       },
     });
+
+    if (newJobStatus === "approved" && access.job.status !== "approved") {
+      await notifyJobWatchers({
+        jobId,
+        newStatus: "approved",
+        jobAddress: access.job.address,
+        photographerId: access.job.photographerId,
+        excludeUserId: access.userId,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,

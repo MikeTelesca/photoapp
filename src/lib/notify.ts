@@ -43,3 +43,54 @@ export async function notify(opts: {
     console.error("[notify] failed:", err);
   }
 }
+
+/**
+ * Notify every user watching this job about a status change.
+ * Skips the job's own photographer (they already get direct notifications)
+ * and any explicitly excluded userId (e.g. the actor who triggered the change).
+ */
+export async function notifyJobWatchers(opts: {
+  jobId: string;
+  newStatus: "review" | "approved";
+  jobAddress: string;
+  photographerId: string;
+  excludeUserId?: string;
+}): Promise<void> {
+  try {
+    const watches = await prisma.jobWatch.findMany({
+      where: { jobId: opts.jobId },
+      select: { userId: true },
+    });
+    if (watches.length === 0) return;
+
+    const title =
+      opts.newStatus === "review"
+        ? `Watched job ready for review`
+        : `Watched job approved`;
+    const body = `${opts.jobAddress} — status: ${opts.newStatus}`;
+    const href =
+      opts.newStatus === "review"
+        ? `/review/${opts.jobId}`
+        : `/review/${opts.jobId}`;
+
+    await Promise.all(
+      watches
+        .filter(
+          (w) =>
+            w.userId !== opts.photographerId &&
+            w.userId !== opts.excludeUserId
+        )
+        .map((w) =>
+          notify({
+            userId: w.userId,
+            type: "job-watch",
+            title,
+            body,
+            href,
+          })
+        )
+    );
+  } catch (err) {
+    console.error("[notifyJobWatchers] failed:", err);
+  }
+}

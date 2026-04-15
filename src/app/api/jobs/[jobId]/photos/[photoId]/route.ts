@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import { logActivity } from "@/lib/activity";
+import { notifyJobWatchers } from "@/lib/notify";
 
 // PATCH /api/jobs/:jobId/photos/:photoId - update a photo (approve, reject, etc)
 export async function PATCH(
@@ -79,6 +80,13 @@ export async function PATCH(
         jobId: job.id,
         userId: access.userId,
       });
+      await notifyJobWatchers({
+        jobId: job.id,
+        newStatus: "approved",
+        jobAddress: job.address,
+        photographerId: job.photographerId,
+        excludeUserId: access.userId,
+      }).catch(() => {});
     }
   }
 

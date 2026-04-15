@@ -439,3 +439,28 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   ALTER TABLE "Job" ADD COLUMN "internalNotes" TEXT;
 EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+
+-- ---------------------------------------------------------------------------
+-- JobWatch: per-user subscription to job status changes
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "JobWatch" (
+    "id"        TEXT NOT NULL,
+    "userId"    TEXT NOT NULL,
+    "jobId"     TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "JobWatch_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "JobWatch_userId_jobId_key" ON "JobWatch"("userId", "jobId");
+CREATE INDEX IF NOT EXISTS "JobWatch_userId_idx" ON "JobWatch"("userId");
+CREATE INDEX IF NOT EXISTS "JobWatch_jobId_idx" ON "JobWatch"("jobId");
+
+DO $$ BEGIN
+  ALTER TABLE "JobWatch" ADD CONSTRAINT "JobWatch_userId_fkey"
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "JobWatch" ADD CONSTRAINT "JobWatch_jobId_fkey"
+    FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;

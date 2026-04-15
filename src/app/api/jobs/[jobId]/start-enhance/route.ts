@@ -13,7 +13,7 @@ import { analyzeImage } from "@/lib/image-quality";
 import { detectPhotoTags } from "@/lib/photo-tags";
 import { sendEmail, jobCompleteTemplate } from "@/lib/email";
 import { sendSlackNotification } from "@/lib/slack";
-import { notify, shouldNotify } from "@/lib/notify";
+import { notify, shouldNotify, notifyJobWatchers } from "@/lib/notify";
 import { sendPushNotification } from "@/lib/push";
 import { applySubject } from "@/lib/email-subject";
 
@@ -179,6 +179,14 @@ export async function POST(
           url: `/review/${updatedJob.id}`,
         }).catch(err => console.error("push err:", err));
         }
+
+        // Notify anyone watching this job (admins, teammates)
+        await notifyJobWatchers({
+          jobId: updatedJob.id,
+          newStatus: "review",
+          jobAddress: updatedJob.address,
+          photographerId: updatedJob.photographerId,
+        }).catch(() => {});
 
         return NextResponse.json({ done: true, processed: totalEdited });
       }

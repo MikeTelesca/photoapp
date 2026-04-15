@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, memo } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -22,6 +23,7 @@ import { ColorLabelPicker } from "@/components/dashboard/color-label-picker";
 import { JobHoverPreview } from "@/components/dashboard/job-hover-preview";
 import { StatusHoverCard } from "@/components/dashboard/status-hover-card";
 import { LockButton } from "@/components/dashboard/lock-button";
+import { WatchButton } from "@/components/dashboard/watch-button";
 import { formatJobNumber } from "@/lib/job-number";
 import { tagColor } from "@/lib/tag-color";
 import { checkStale } from "@/lib/job-stale";
@@ -67,6 +69,8 @@ function renderNotePreview(notes: string) {
 }
 
 function JobCardInternal({ job, density = "normal" }: JobCardProps) {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
   const [isStarting, setIsStarting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
@@ -375,6 +379,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             <CopyJobLinkButton jobId={job.id} />
             <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
+            {isAdmin && <WatchButton jobId={job.id} />}
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
@@ -394,6 +399,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
             <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
+            {isAdmin && <WatchButton jobId={job.id} />}
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />
@@ -432,6 +438,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             <ArchiveButton jobId={job.id} archived={!!job.archivedAt} />
             <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
+            {isAdmin && <WatchButton jobId={job.id} />}
             <SaveTemplateButton jobId={job.id} />
             <DuplicateJobButton jobId={job.id} />
             <DeleteJobButton jobId={job.id} />

@@ -19,6 +19,7 @@ import { TwoFactorForm } from "@/components/settings/two-factor-form";
 import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload";
 import { InvoiceLogoUpload } from "@/components/settings/invoice-logo-upload";
 import { AccentPicker } from "@/components/settings/accent-picker";
+import { BackgroundPicker } from "@/components/settings/background-picker";
 import { NotificationPrefs } from "@/components/settings/notification-prefs";
 import { TimezonePicker } from "@/components/settings/timezone-picker";
 import { DateFormatPicker } from "@/components/settings/date-format-picker";
@@ -185,9 +186,15 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
           </CardHeader>
-          <div className="p-4">
-            <h2 className="text-sm font-semibold mb-3 dark:text-white">Accent color</h2>
-            <AccentPicker />
+          <div className="p-4 space-y-6">
+            <div>
+              <h2 className="text-sm font-semibold mb-3 dark:text-white">Accent color</h2>
+              <AccentPicker />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold mb-3 dark:text-white">Dashboard background</h2>
+              <BackgroundPicker />
+            </div>
           </div>
         </Card>
         {/* Two-Factor Authentication */}

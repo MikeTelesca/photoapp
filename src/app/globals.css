@@ -48,3 +48,63 @@ a:focus-visible,
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Dashboard background preferences (see components/layout/dashboard-background.tsx) */
+body.ath-bg-default {
+  background: var(--background);
+}
+body.ath-bg-gradient-cyan {
+  background-image: linear-gradient(to bottom right, #ecfeff, #dbeafe);
+  background-attachment: fixed;
+}
+.dark body.ath-bg-gradient-cyan {
+  background-image: linear-gradient(to bottom right, #083344, #172554);
+}
+body.ath-bg-gradient-purple {
+  background-image: linear-gradient(to bottom right, #faf5ff, #fae8ff);
+  background-attachment: fixed;
+}
+.dark body.ath-bg-gradient-purple {
+  background-image: linear-gradient(to bottom right, #3b0764, #4a044e);
+}
+body.ath-bg-gradient-sunset {
+  background-image: linear-gradient(to bottom right, #fff7ed, #fce7f3 50%, #ffe4e6);
+  background-attachment: fixed;
+}
+.dark body.ath-bg-gradient-sunset {
+  background-image: linear-gradient(to bottom right, #431407, #500724 50%, #4c0519);
+}
+body.ath-bg-dots {
+  background-color: var(--background);
+  background-image: radial-gradient(rgba(100, 116, 139, 0.28) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.dark body.ath-bg-dots {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+}
+body.ath-bg-grid {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(to right, rgba(100, 116, 139, 0.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(100, 116, 139, 0.18) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.dark body.ath-bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+}
+body.ath-bg-subtle-noise {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 1px;
+}
+.dark body.ath-bg-subtle-noise {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+

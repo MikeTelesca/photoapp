@@ -233,6 +233,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [bulkNote, setBulkNote] = useState("");
   const [bulkRotating, setBulkRotating] = useState(false);
 
+  // Batch metadata edit modal state
+  const [showMetadataModal, setShowMetadataModal] = useState(false);
+  const [metaCaption, setMetaCaption] = useState("");
+  const [metaNote, setMetaNote] = useState("");
+  const [metaFlagged, setMetaFlagged] = useState<"unchanged" | "flag" | "unflag">("unchanged");
+  const [metaCaptionAppend, setMetaCaptionAppend] = useState(false);
+  const [metaSaving, setMetaSaving] = useState(false);
+
   // Deep-link state
   const searchParams = useSearchParams();
   const [linkCopied, setLinkCopied] = useState(false);
@@ -1145,6 +1153,74 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       window.location.reload();
     } catch (err: any) {
       addToast("error", err.message || "Failed to add note");
+    }
+  }
+
+  async function applyBatchMetadata() {
+    const selectedIds = Array.from(selectedPhotoIds);
+    if (selectedIds.length === 0) {
+      addToast("error", "No photos selected");
+      return;
+    }
+    const payload: {
+      photoIds: string[];
+      caption?: string;
+      note?: string;
+      flagged?: boolean;
+      appendCaption?: boolean;
+    } = { photoIds: selectedIds };
+
+    const captionTouched = metaCaption.length > 0 || !metaCaptionAppend;
+    // When appending, only send caption if user typed something; when replacing, allow empty string to clear.
+    if (metaCaptionAppend) {
+      if (metaCaption.length > 0) {
+        payload.caption = metaCaption;
+        payload.appendCaption = true;
+      }
+    } else if (captionTouched && metaCaption !== "") {
+      payload.caption = metaCaption;
+    }
+
+    if (metaNote.length > 0) {
+      payload.note = metaNote;
+    }
+
+    if (metaFlagged === "flag") payload.flagged = true;
+    else if (metaFlagged === "unflag") payload.flagged = false;
+
+    if (
+      payload.caption === undefined &&
+      payload.note === undefined &&
+      payload.flagged === undefined
+    ) {
+      addToast("error", "Nothing to update");
+      return;
+    }
+
+    setMetaSaving(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/batch-metadata`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Failed to update metadata");
+        return;
+      }
+      addToast("success", `Updated metadata on ${data.count} photo${data.count === 1 ? "" : "s"}`);
+      setShowMetadataModal(false);
+      setMetaCaption("");
+      setMetaNote("");
+      setMetaFlagged("unchanged");
+      setMetaCaptionAppend(false);
+      setSelectedPhotoIds(new Set());
+      window.location.reload();
+    } catch (err: any) {
+      addToast("error", err.message || "Failed to update metadata");
+    } finally {
+      setMetaSaving(false);
     }
   }
 
@@ -2135,6 +2211,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   📝 Add note
                 </button>
               </div>
+
+              <button
+                onClick={() => setShowMetadataModal(true)}
+                disabled={batching}
+                className="text-xs px-2 py-1 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 disabled:opacity-60 whitespace-nowrap"
+                title="Edit caption / note / flag on selected photos"
+              >
+                ✏ Edit Metadata
+              </button>
 
               <button
                 onClick={() => { setSelectedPhotoIds(new Set()); setSelectMode(false); }}
@@ -3527,6 +3612,128 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           x={hoverPreview.x}
           y={hoverPreview.y}
         />
+      )}
+
+      {showMetadataModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => !metaSaving && setShowMetadataModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg bg-white dark:bg-graphite-900 shadow-xl border border-graphite-200 dark:border-graphite-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-graphite-200 dark:border-graphite-700 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-graphite-900 dark:text-white">
+                Edit metadata · {selectedPhotoIds.size} photo{selectedPhotoIds.size === 1 ? "" : "s"}
+              </h3>
+              <button
+                onClick={() => setShowMetadataModal(false)}
+                disabled={metaSaving}
+                className="text-graphite-500 hover:text-graphite-900 dark:hover:text-white disabled:opacity-60"
+                title="Close"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-4 py-3 space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-graphite-700 dark:text-graphite-200">
+                    Caption
+                  </label>
+                  <label className="flex items-center gap-1 text-[11px] text-graphite-600 dark:text-graphite-300">
+                    <input
+                      type="checkbox"
+                      checked={metaCaptionAppend}
+                      onChange={(e) => setMetaCaptionAppend(e.target.checked)}
+                      disabled={metaSaving}
+                    />
+                    Append (don&apos;t replace)
+                  </label>
+                </div>
+                <textarea
+                  value={metaCaption}
+                  onChange={(e) => setMetaCaption(e.target.value)}
+                  disabled={metaSaving}
+                  rows={2}
+                  placeholder={metaCaptionAppend ? "Text to append to existing caption…" : "Replace caption with this text (blank = skip)"}
+                  className="w-full text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-graphite-700 dark:text-graphite-200 mb-1">
+                  Note
+                </label>
+                <textarea
+                  value={metaNote}
+                  onChange={(e) => setMetaNote(e.target.value)}
+                  disabled={metaSaving}
+                  rows={2}
+                  placeholder="Replace note (blank = skip)"
+                  className="w-full text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-graphite-700 dark:text-graphite-200 mb-1">
+                  Flag
+                </label>
+                <div className="flex gap-2 text-xs text-graphite-700 dark:text-graphite-200">
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="meta-flag"
+                      checked={metaFlagged === "unchanged"}
+                      onChange={() => setMetaFlagged("unchanged")}
+                      disabled={metaSaving}
+                    />
+                    Leave unchanged
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="meta-flag"
+                      checked={metaFlagged === "flag"}
+                      onChange={() => setMetaFlagged("flag")}
+                      disabled={metaSaving}
+                    />
+                    Flag
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="radio"
+                      name="meta-flag"
+                      checked={metaFlagged === "unflag"}
+                      onChange={() => setMetaFlagged("unflag")}
+                      disabled={metaSaving}
+                    />
+                    Unflag
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-4 py-3 border-t border-graphite-200 dark:border-graphite-700 flex justify-end gap-2">
+              <button
+                onClick={() => setShowMetadataModal(false)}
+                disabled={metaSaving}
+                className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-100 dark:hover:bg-graphite-800 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={applyBatchMetadata}
+                disabled={metaSaving}
+                className="text-xs px-3 py-1.5 rounded bg-indigo-500 text-white font-semibold hover:bg-indigo-600 disabled:opacity-60"
+              >
+                {metaSaving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

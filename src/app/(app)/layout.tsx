@@ -11,10 +11,12 @@ import { LiveProgressIndicator } from "@/components/dashboard/live-progress-indi
 import { GlobalShortcuts } from "@/components/layout/global-shortcuts";
 import { QuickAddFab } from "@/components/layout/quick-add-fab";
 import { FeedbackWidget } from "@/components/feedback/feedback-widget";
+import { DashboardBackground } from "@/components/layout/dashboard-background";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
+      <DashboardBackground />
       <ImpersonationBanner />
       <DropboxAlertBanner />
       <AnnouncementsBanner />

@@ -211,6 +211,23 @@ export default async function SettingsPage() {
           </Card>
         )}
 
+        {/* Data Export */}
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 dark:text-white">Export your data</h2>
+            <p className="text-xs text-graphite-500 dark:text-graphite-400 mb-3">
+              Download all your jobs, photos, clients, presets and templates as a JSON file. Image files are stored in your Dropbox and not included.
+            </p>
+            <a
+              href="/api/user/export-data"
+              download
+              className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold inline-block hover:opacity-90 transition"
+            >
+              Download JSON
+            </a>
+          </div>
+        </Card>
+
         {/* Keyboard Shortcuts */}
         <Card>
           <CardHeader>

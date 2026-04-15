@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/recover-stuck",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/cron/fire-reminders",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/cron/weekly-digest",
@@ -21,24 +21,8 @@
       "schedule": "0 14 * * *"
     },
     {
-      "path": "/api/cron/pre-archive-warn",
-      "schedule": "0 13 * * *"
-    },
-    {
-      "path": "/api/cron/purge-logs",
-      "schedule": "0 5 * * 0"
-    },
-    {
-      "path": "/api/cron/admin-backup-reminder",
-      "schedule": "0 7 * * 1"
-    },
-    {
-      "path": "/api/cron/recurring-templates",
-      "schedule": "0 8 * * *"
-    },
-    {
       "path": "/api/cron/purge-trash",
-      "schedule": "0 3 * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }

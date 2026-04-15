@@ -59,6 +59,23 @@ export function useGlobalShortcuts() {
         e.preventDefault();
         router.push("/settings");
       }
+
+      // [ / ] → cycle dashboard density (compact ↔ normal ↔ comfortable)
+      if ((e.key === "[" || e.key === "]") && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const order: Array<"compact" | "normal" | "comfortable"> = ["compact", "normal", "comfortable"];
+        const stored = (typeof window !== "undefined" && localStorage.getItem("dashboard-density")) || "normal";
+        const current = (order.includes(stored as typeof order[number]) ? stored : "normal") as typeof order[number];
+        const idx = order.indexOf(current);
+        let nextIdx = idx;
+        if (e.key === "]" && idx < order.length - 1) nextIdx = idx + 1;
+        else if (e.key === "[" && idx > 0) nextIdx = idx - 1;
+        if (nextIdx !== idx) {
+          e.preventDefault();
+          const next = order[nextIdx];
+          localStorage.setItem("dashboard-density", next);
+          window.dispatchEvent(new CustomEvent("ath-density-change", { detail: next }));
+        }
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

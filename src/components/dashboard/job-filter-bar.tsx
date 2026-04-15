@@ -79,6 +79,19 @@ export function JobFilterBar({ jobs }: Props) {
     }
   }, []);
 
+  // Listen for density changes triggered from global shortcuts ([ and ])
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    function handler(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      if (detail === "compact" || detail === "normal" || detail === "comfortable") {
+        setDensity(detail);
+      }
+    }
+    window.addEventListener("ath-density-change", handler);
+    return () => window.removeEventListener("ath-density-change", handler);
+  }, []);
+
   // Load saved filters from localStorage
   useEffect(() => {
     setSavedFilters(loadFilters());

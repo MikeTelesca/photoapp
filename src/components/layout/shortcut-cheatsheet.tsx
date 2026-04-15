@@ -19,6 +19,8 @@ const SECTIONS: Section[] = [
       { keys: ["⌘", ","], action: "Settings" },
       { keys: ["⌘", "S"], action: "Save current form" },
       { keys: ["⌘", "K"], action: "Open command palette" },
+      { keys: ["["], action: "Decrease dashboard density" },
+      { keys: ["]"], action: "Increase dashboard density" },
       { keys: ["?"], action: "Show this cheatsheet" },
       { keys: ["Esc"], action: "Close modal / overlay" },
     ],

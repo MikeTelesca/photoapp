@@ -12,8 +12,17 @@ export async function POST(
   if ("error" in access) return access.error;
 
   const { to, password, personalMessage } = await request.json();
-  if (!to || !to.includes("@")) {
-    return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+
+  // Parse recipients - accept either a single string or an array of strings
+  const recipients: string[] = Array.isArray(to)
+    ? to.map(s => String(s).trim()).filter(s => s.includes("@"))
+    : [String(to || "").trim()].filter(s => s.includes("@"));
+
+  if (recipients.length === 0) {
+    return NextResponse.json({ error: "Valid email(s) required" }, { status: 400 });
+  }
+  if (recipients.length > 20) {
+    return NextResponse.json({ error: "Max 20 recipients per send" }, { status: 400 });
   }
 
   const job = await prisma.job.findUnique({
@@ -37,30 +46,38 @@ export async function POST(
     where: { jobId, status: "approved" },
   });
 
-  const ok = await sendEmail({
-    to,
-    subject: `Photos ready: ${job.address}`,
-    html: shareLinkTemplate({
-      photographerName,
-      address: job.address,
-      photoCount: approvedCount,
-      shareUrl,
-      password: password?.trim() || undefined,
-      personalMessage: personalMessage?.trim() || undefined,
-      signature: user?.emailSignature || undefined,
-    }),
-  });
+  // Send to each recipient and track successes
+  let sent = 0;
+  let failed = 0;
+  for (const recipient of recipients) {
+    const ok = await sendEmail({
+      to: recipient,
+      subject: `Photos ready: ${job.address}`,
+      html: shareLinkTemplate({
+        photographerName,
+        address: job.address,
+        photoCount: approvedCount,
+        shareUrl,
+        password: password?.trim() || undefined,
+        personalMessage: personalMessage?.trim() || undefined,
+        signature: user?.emailSignature || undefined,
+      }),
+    });
 
-  // Log the share email after sending
-  if (ok) {
-    await prisma.shareEmailLog.create({
-      data: {
-        jobId,
-        toEmail: to,
-        sentBy: access.userId,
-      },
-    }).catch(err => console.error("share log err:", err));
+    if (ok) {
+      sent++;
+      // Log each recipient (Wave 48)
+      await prisma.shareEmailLog.create({
+        data: {
+          jobId,
+          toEmail: recipient,
+          sentBy: access.userId,
+        },
+      }).catch(err => console.error("share log err:", err));
+    } else {
+      failed++;
+    }
   }
 
-  return NextResponse.json({ ok });
+  return NextResponse.json({ ok: true, sent, failed });
 }

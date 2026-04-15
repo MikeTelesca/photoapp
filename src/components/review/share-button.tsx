@@ -90,14 +90,25 @@ export function ShareButton({
     if (!emailTo) return;
     setSending(true);
     try {
+      // Parse multiple emails from textarea
+      const emails = emailTo
+        .split(/[,\n]/)
+        .map(e => e.trim())
+        .filter(e => e.includes("@"));
+
+      if (emails.length === 0) {
+        alert("No valid email addresses found");
+        return;
+      }
+
       const res = await fetch(`/api/jobs/${jobId}/share/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: emailTo, password: emailPw, personalMessage: emailMsg }),
+        body: JSON.stringify({ to: emails, password: emailPw, personalMessage: emailMsg }),
       });
       const data = await res.json();
       if (data.ok) {
-        setSentTo(emailTo);
+        setSentTo(`${data.sent} recipient${data.sent === 1 ? "" : "s"}`);
         setEmailOpen(false);
         setEmailTo("");
         setEmailPw("");
@@ -108,7 +119,7 @@ export function ShareButton({
           .then(data => setRecipients(data.recipients || []))
           .catch(() => {});
       } else {
-        alert("Failed to send");
+        alert(data.error || "Failed to send");
       }
     } finally {
       setSending(false);
@@ -185,24 +196,29 @@ export function ShareButton({
                     <button
                       key={r.id}
                       type="button"
-                      onClick={() => quickResend(r.toEmail)}
+                      onClick={() => {
+                        if (!emailTo.includes(r.toEmail)) {
+                          setEmailTo(prev => prev ? `${prev}\n${r.toEmail}` : r.toEmail);
+                        }
+                      }}
                       className="text-xs px-2 py-1 rounded bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-300 hover:bg-graphite-200 dark:hover:bg-graphite-700"
                       title={`Last sent ${new Date(r.sentAt).toLocaleString()}`}
                     >
-                      ↺ {r.toEmail}
+                      + {r.toEmail}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <input
-              type="email"
+            <textarea
               value={emailTo}
               onChange={e => setEmailTo(e.target.value)}
-              placeholder="client@example.com"
+              placeholder="client@example.com&#10;another@example.com"
+              rows={3}
               className="w-full text-sm px-3 py-2 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white"
             />
+            <div className="text-[10px] text-graphite-400 dark:text-graphite-500">One per line, or comma-separated. Max 20 at once.</div>
             <input
               type="text"
               value={emailPw}
@@ -226,7 +242,7 @@ export function ShareButton({
               </button>
               <button
                 onClick={sendShareEmail}
-                disabled={!emailTo || sending}
+                disabled={!emailTo.trim() || sending}
                 className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold disabled:opacity-50"
               >
                 {sending ? "Sending..." : "Send"}

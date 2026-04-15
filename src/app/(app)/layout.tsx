@@ -4,6 +4,7 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { WelcomeModal } from "@/components/onboarding/welcome-modal";
 import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
 import { AnnouncementsBanner } from "@/components/announcements/banner";
+import { CommandPalette } from "@/components/layout/command-palette";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <WelcomeModal />
       <MobileBottomNav />
+      <CommandPalette />
     </div>
   );
 }

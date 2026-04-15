@@ -24,14 +24,21 @@ export const authConfig = {
       }
       return session;
     },
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request }) {
+      const nextUrl = request.nextUrl;
       const isLoggedIn = !!auth?.user;
       const isAuthPage = nextUrl.pathname.startsWith("/login");
       // NextAuth's own endpoints handle their own auth flow
       const isNextAuthRoute = nextUrl.pathname.startsWith("/api/auth/") &&
-        !nextUrl.pathname.startsWith("/api/auth/dropbox");
+        !nextUrl.pathname.startsWith("/api/auth/dropbox") &&
+        nextUrl.pathname !== "/api/auth/signup";
 
       if (isNextAuthRoute) return true;
+
+      // Public signup routes
+      if (nextUrl.pathname.startsWith("/signup/")) return true;
+      if (nextUrl.pathname === "/api/auth/signup") return true;
+      if (nextUrl.pathname.match(/^\/api\/invites\/[^/]+$/) && request.method === "GET") return true;
 
       if (isAuthPage) {
         if (isLoggedIn) {

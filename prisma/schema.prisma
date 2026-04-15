@@ -84,3 +84,30 @@ model Preset {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model Invite {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  email       String?
+  role        String   @default("photographer")
+  createdById String
+  usedAt      DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([token])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  type      String   // "job_created", "job_approved", "job_deleted", "photo_enhanced", "photo_approved", "photo_rejected", "photo_regenerated"
+  message   String
+  jobId     String?
+  photoId   String?
+  userId    String?
+  metadata  String?  // JSON string for extra data
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([jobId])
+}

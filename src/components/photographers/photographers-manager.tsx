@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserPlusIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -23,6 +23,34 @@ export function PhotographersManager({ initialUsers }: { initialUsers: User[] })
   const [role, setRole] = useState("photographer");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Invite state
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("photographer");
+  const [generating, setGenerating] = useState(false);
+  const [activeInvites, setActiveInvites] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/invites").then(r => r.json()).then(setActiveInvites).catch(() => {});
+  }, []);
+
+  async function generateInvite() {
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail || null, role: inviteRole }),
+      });
+      if (res.ok) {
+        setInviteEmail("");
+        const list = await fetch("/api/invites").then(r => r.json());
+        setActiveInvites(list);
+      }
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   async function handleCreate() {
     if (!name.trim() || !email.trim() || !password.trim()) return;
@@ -177,6 +205,68 @@ export function PhotographersManager({ initialUsers }: { initialUsers: User[] })
           Add Photographer
         </Button>
       )}
+
+      {/* Invite section */}
+      <Card>
+        <div className="p-5 space-y-4">
+          <h3 className="text-sm font-bold text-graphite-900">Invite New Photographer</h3>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="email@example.com (optional)"
+              className="flex-1 px-3 py-2 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan"
+            />
+            <select
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-graphite-200 text-sm focus:outline-none focus:border-cyan"
+            >
+              <option value="photographer">Photographer</option>
+              <option value="admin">Admin</option>
+            </select>
+            <Button onClick={generateInvite} disabled={generating}>
+              {generating ? "Generating..." : "Create Invite"}
+            </Button>
+          </div>
+
+          {activeInvites.length > 0 && (
+            <div className="space-y-2 mt-4">
+              <h4 className="text-xs font-semibold text-graphite-500 uppercase">Active Invites</h4>
+              {activeInvites.map((inv) => {
+                const url = `${typeof window !== "undefined" ? window.location.origin : ""}/signup/${inv.token}`;
+                return (
+                  <div key={inv.id} className="flex items-center gap-2 px-3 py-2 bg-graphite-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-mono text-graphite-700 truncate">{url}</div>
+                      <div className="text-[10px] text-graphite-400">
+                        {inv.email || "any email"} · {inv.role} · expires {new Date(inv.expiresAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(url); }}
+                      className="px-2 py-1 text-xs bg-cyan-50 text-cyan rounded font-semibold hover:bg-cyan-100"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!confirm("Revoke this invite?")) return;
+                        await fetch(`/api/invites/${inv.token}`, { method: "DELETE" });
+                        setActiveInvites(activeInvites.filter((i) => i.id !== inv.id));
+                      }}
+                      className="px-2 py-1 text-xs text-red-600 rounded hover:bg-red-50"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

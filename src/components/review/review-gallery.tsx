@@ -331,6 +331,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [renamingPhotoId, setRenamingPhotoId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState<string>("");
   const [renameSaving, setRenameSaving] = useState(false);
+  // Replace photo source
+  const [replacing, setReplacing] = useState(false);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEnhancingAll, setIsEnhancingAll] = useState(false);
   const [enhanceProgress, setEnhanceProgress] = useState(0);
@@ -814,6 +817,65 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       setRenameSaving(false);
     }
   }, [currentPhoto, renamingPhotoId, renameValue, addToast]);
+
+  // ------------------ Replace photo source ------------------
+  const canReplace = job.status === "review" || job.status === "approved";
+
+  const triggerReplace = useCallback(() => {
+    if (!currentPhoto || replacing) return;
+    const ok = window.confirm(
+      "This will replace the source and require reprocessing. Continue?"
+    );
+    if (!ok) return;
+    replaceInputRef.current?.click();
+  }, [currentPhoto, replacing]);
+
+  const handleReplaceFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const input = e.target;
+      const file = input.files?.[0];
+      // Reset input so same file can be picked again later
+      input.value = "";
+      if (!file || !currentPhoto) return;
+      setReplacing(true);
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch(`/api/photos/${currentPhoto.id}/replace`, {
+          method: "POST",
+          body: fd,
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          addToast("error", data?.error || "Replace failed");
+          return;
+        }
+        const data = await res.json();
+        const nextPhoto = data?.photo;
+        if (nextPhoto) {
+          setJob((prev) => ({
+            ...prev,
+            photos: prev.photos.map((p) =>
+              p.id === currentPhoto.id
+                ? {
+                    ...p,
+                    originalUrl: nextPhoto.originalUrl ?? null,
+                    editedUrl: null,
+                    status: nextPhoto.status || "pending",
+                  }
+                : p
+            ),
+          }));
+        }
+        addToast("success", "Source image replaced — re-enhance to regenerate");
+      } catch (err) {
+        addToast("error", (err as Error).message || "Replace failed");
+      } finally {
+        setReplacing(false);
+      }
+    },
+    [currentPhoto, addToast]
+  );
 
   // Pre-populate custom instruction and photo override from saved photo value when navigating
   useEffect(() => {
@@ -2213,6 +2275,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       >
                         ✏ Rename
                       </button>
+                      {canReplace && (
+                        <>
+                          <input
+                            ref={replaceInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                            className="hidden"
+                            onChange={handleReplaceFile}
+                          />
+                          <button
+                            type="button"
+                            onClick={triggerReplace}
+                            disabled={replacing}
+                            className="text-[11px] px-1.5 py-0.5 rounded border border-graphite-200 dark:border-graphite-700 hover:bg-graphite-100 dark:hover:bg-graphite-800 disabled:opacity-50"
+                            title="Replace this photo's source image (resets to pending for re-enhance)"
+                          >
+                            {replacing ? "Uploading…" : "🔄 Replace"}
+                          </button>
+                        </>
+                      )}
                     </>
                   )}
                 </span>

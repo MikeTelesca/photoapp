@@ -48,6 +48,7 @@ export interface Photo {
   customInstructions: string | null;
   detections: string[];
   qualityFlags?: string | null;
+  autoTags?: string | null;
   rejectionReason?: string | null;
   createdAt: Date;
 }

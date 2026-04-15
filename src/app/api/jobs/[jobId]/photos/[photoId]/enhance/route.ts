@@ -14,6 +14,7 @@ import { logActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-log";
 import { log } from "@/lib/logger";
 import { analyzeImage } from "@/lib/image-quality";
+import { detectPhotoTags } from "@/lib/photo-tags";
 
 // Download a file from Dropbox shared link using raw API
 async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
@@ -285,6 +286,18 @@ export async function POST(
         qualityFlags,
       },
     });
+
+    // Fire-and-forget auto-tagging — does not block enhance completion
+    if (editedUrl) {
+      detectPhotoTags(editedUrl).then(async (tags) => {
+        if (tags.length > 0) {
+          await prisma.photo.update({
+            where: { id: photoId },
+            data: { autoTags: JSON.stringify(tags) },
+          }).catch(err => console.error("autoTags save err:", err));
+        }
+      }).catch(() => {});
+    }
 
     await logActivity({
       type: "photo_regenerated",

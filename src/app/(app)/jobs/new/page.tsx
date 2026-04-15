@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,8 +27,10 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
-export default function NewJobPage() {
+function NewJobPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isWelcome = searchParams?.get("welcome") === "1";
   const [address, setAddress] = useState("");
   const [dropboxUrl, setDropboxUrl] = useState("");
   const [preset, setPreset] = useState("standard");
@@ -215,6 +217,19 @@ export default function NewJobPage() {
     <>
       <Topbar title="New Job" subtitle="Create a new photo editing job" />
       <div className="p-6 max-w-2xl">
+        {isWelcome && (
+          <div className="mb-4 p-4 rounded-lg bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl">👋</div>
+              <div className="flex-1">
+                <div className="font-semibold text-cyan-800 dark:text-cyan-200 text-sm">Welcome! Let's create your first job.</div>
+                <div className="text-xs text-cyan-700 dark:text-cyan-300 mt-1">
+                  Paste a Dropbox shared folder link below OR switch to upload files directly. You can also click "Try Demo Job" on the dashboard if you just want to see how it works.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <Card>
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Template picker */}
@@ -646,5 +661,13 @@ export default function NewJobPage() {
         </Card>
       </div>
     </>
+  );
+}
+
+export default function NewJobPage() {
+  return (
+    <Suspense>
+      <NewJobPageInner />
+    </Suspense>
   );
 }

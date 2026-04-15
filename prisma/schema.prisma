@@ -112,6 +112,7 @@ model Photo {
   errorMessage         String?
   errorAttempts        Int      @default(0)
   qualityFlags         String?  // JSON: { blurry, underexposed, overexposed, lowContrast }
+  autoTags             String?  // JSON array of detected tags: ["kitchen", "interior", "bright"]
   rejectionReason      String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

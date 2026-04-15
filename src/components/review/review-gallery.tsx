@@ -47,6 +47,7 @@ interface Photo {
   errorMessage: string | null;
   errorAttempts: number;
   qualityFlags?: string | null;
+  autoTags?: string | null;
   rejectionReason?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -119,6 +120,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const twilightMenuRef = useRef<HTMLDivElement>(null);
   const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
   const [sortBy, setSortBy] = useState<"order" | "name" | "date" | "flagged" | "rejected">("order");
+  const [tagFilter, setTagFilter] = useState<string>("");
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
   const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
   const [mlsPreset, setMlsPreset] = useState("mls-hi");
@@ -180,6 +182,20 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     // "order" — keep original orderIndex order
     return arr;
   }, [job.photos, sortBy]);
+
+  // Collect unique auto-tags across all photos for the filter dropdown
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    job.photos.forEach(p => {
+      if (p.autoTags) {
+        try {
+          const tags = JSON.parse(p.autoTags);
+          if (Array.isArray(tags)) tags.forEach((t: string) => set.add(t));
+        } catch {}
+      }
+    });
+    return Array.from(set).sort();
+  }, [job.photos]);
 
   // When sort changes, keep current photo visible
   useEffect(() => {
@@ -1370,6 +1386,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               <option value="flagged">Quality flagged first</option>
               <option value="rejected">Rejected first</option>
             </select>
+            {/* Room type filter */}
+            {allTags.length > 0 && (
+              <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}
+                className="text-[9px] px-1.5 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:bg-graphite-800 dark:text-white bg-white text-graphite-700 w-full"
+              >
+                <option value="">All rooms</option>
+                {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            )}
           </div>
           {/* Scrollable thumbnail list */}
           <div className="overflow-y-auto flex-1 p-2 flex flex-col gap-1">
@@ -1378,6 +1403,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 {sortedPhotos.map((photo, idx) => {
                   if (thumbFilter === "favorites" && !photo.isFavorite) return null;
                   if (thumbFilter !== "all" && thumbFilter !== "favorites" && photo.status !== thumbFilter) return null;
+                  if (tagFilter) {
+                    try {
+                      const tags = photo.autoTags ? JSON.parse(photo.autoTags) : [];
+                      if (!Array.isArray(tags) || !tags.includes(tagFilter)) return null;
+                    } catch { return null; }
+                  }
                   return (
                     <SortableThumb key={photo.id} id={photo.id}>
                       <button
@@ -1453,6 +1484,21 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                               <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-amber-700 bg-amber-100/90 rounded px-0.5">⚠</span>
                             ) : null;
                           } catch { return null; }
+                        })()}
+                        {photo.autoTags && (() => {
+                          try {
+                            const tags = JSON.parse(photo.autoTags);
+                            if (!Array.isArray(tags) || tags.length === 0) return null;
+                            return (
+                              <div className="absolute bottom-0 left-0 right-0 flex flex-wrap gap-0.5 p-0.5 bg-black/40 pointer-events-none">
+                                {tags.slice(0, 2).map((t: string) => (
+                                  <span key={t} className="text-[8px] text-white bg-graphite-900/70 px-1 rounded">{t}</span>
+                                ))}
+                              </div>
+                            );
+                          } catch {
+                            return null;
+                          }
                         })()}
                         <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500 dark:text-graphite-400">
                           {idx + 1}

@@ -10,6 +10,7 @@ import { logError } from "@/lib/error-log";
 import { log } from "@/lib/logger";
 import { readExif } from "@/lib/exif";
 import { analyzeImage } from "@/lib/image-quality";
+import { detectPhotoTags } from "@/lib/photo-tags";
 import { sendEmail, jobCompleteTemplate } from "@/lib/email";
 import { sendWebhook } from "@/lib/webhook";
 
@@ -403,6 +404,18 @@ export async function POST(
       where: { id: photo.id },
       data: { editedUrl, status: "edited", errorMessage: null, errorAttempts: 0, qualityFlags },
     });
+
+    // Fire-and-forget auto-tagging — does not block enhance completion
+    if (editedUrl) {
+      detectPhotoTags(editedUrl).then(async (tags) => {
+        if (tags.length > 0) {
+          await prisma.photo.update({
+            where: { id: photo.id },
+            data: { autoTags: JSON.stringify(tags) },
+          }).catch(err => console.error("autoTags save err:", err));
+        }
+      }).catch(() => {});
+    }
 
     log.info("[start-enhance] completed", { jobId, photoId: photo.id });
 

@@ -191,6 +191,10 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [description, setDescription] = useState(initialJob.listingDescription || "");
   const [showDescModal, setShowDescModal] = useState(false);
 
+  // Crop suggestion state
+  const [cropSuggestion, setCropSuggestion] = useState<{ x: number; y: number; width: number; height: number; reasoning: string } | null>(null);
+  const [cropping, setCropping] = useState(false);
+
   // Preset A/B compare state
   const [compareOpen, setCompareOpen] = useState(false);
   const [compareTarget, setCompareTarget] = useState("luxury");
@@ -770,6 +774,34 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }
 
+  async function suggestCrop() {
+    if (!currentPhoto) return;
+    setCropping(true);
+    setCropSuggestion(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/suggest-crop`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) setCropSuggestion(data);
+      else alert(data.error || "Crop suggestion failed");
+    } finally {
+      setCropping(false);
+    }
+  }
+
+  async function applyCrop() {
+    if (!cropSuggestion || !currentPhoto) return;
+    if (!confirm(`Apply this crop?\n\n${cropSuggestion.reasoning}`)) return;
+    const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/apply-crop`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cropSuggestion),
+    });
+    if (res.ok) {
+      setCropSuggestion(null);
+      window.location.reload();
+    }
+  }
+
   const handleApproveAll = useCallback(async () => {
     setIsUpdating(true);
     try {
@@ -994,6 +1026,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               title="AI analyzes sample photos and suggests the best preset"
             >
               {suggesting ? "Analyzing..." : "✨ Suggest preset"}
+            </button>
+            <button
+              onClick={suggestCrop}
+              disabled={cropping || !currentPhoto}
+              className="text-xs px-2 py-1 rounded border border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50"
+              title="AI suggests an ideal crop for the current photo"
+            >
+              {cropping ? "Analyzing..." : "✂ Suggest crop"}
             </button>
             <button
               onClick={() => setShowPromptEditor(!showPromptEditor)}
@@ -1647,6 +1687,39 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10 pointer-events-none">
                     After
                   </div>
+                  {/* Crop suggestion overlay */}
+                  {cropSuggestion && currentPhoto && (
+                    <div className="absolute inset-0 pointer-events-none z-20">
+                      <div
+                        className="absolute border-4 border-purple-500 bg-purple-500/10 pointer-events-auto"
+                        style={{
+                          left: `${cropSuggestion.x}%`,
+                          top: `${cropSuggestion.y}%`,
+                          width: `${cropSuggestion.width}%`,
+                          height: `${cropSuggestion.height}%`,
+                        }}
+                      >
+                        <div className="absolute -top-8 left-0 flex gap-1">
+                          <button
+                            onClick={applyCrop}
+                            className="text-xs px-2 py-1 bg-purple-500 text-white rounded font-semibold"
+                          >
+                            Apply
+                          </button>
+                          <button
+                            onClick={() => setCropSuggestion(null)}
+                            className="text-xs px-2 py-1 bg-graphite-200 rounded"
+                          >
+                            Dismiss
+                          </button>
+                        </div>
+                        <div className="absolute -bottom-6 left-0 right-0 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded truncate">
+                          {cropSuggestion.reasoning}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {currentPhoto?.editedUrl ? (
                     <ZoomableImage
                       src={currentPhoto.editedUrl}

@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const session = await auth();
-  const userRole = (session?.user as any)?.role;
+  const userRole = session?.user?.role;
 
   const dropboxRefreshToken = !!process.env.DROPBOX_REFRESH_TOKEN;
   const dropboxConnected = dropboxRefreshToken || !!process.env.DROPBOX_ACCESS_TOKEN;
@@ -32,7 +32,7 @@ export default async function SettingsPage() {
             <AccountForm
               initialName={session?.user?.name || ""}
               email={session?.user?.email || ""}
-              role={(session?.user as any)?.role || ""}
+              role={session?.user?.role || ""}
             />
           </div>
         </Card>

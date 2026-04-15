@@ -100,7 +100,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      {(session?.user as any)?.role === "admin" && (
+      {session?.user?.role === "admin" && (
         <nav className="mb-7">
           <div className="px-6 mb-2 text-[10px] font-bold text-graphite-400 uppercase tracking-widest">Settings</div>
           {settingsItems.map((item) => {

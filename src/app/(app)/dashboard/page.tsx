@@ -118,8 +118,8 @@ export default async function DashboardPage({
   const tag = params.tag;
 
   const session = await auth();
-  const userId = (session?.user as any)?.id;
-  const userRole = (session?.user as any)?.role;
+  const userId = session?.user?.id;
+  const userRole = session?.user?.role;
   const where = userRole === "admin" ? {} : { photographerId: userId };
 
   const [stats, jobs] = await Promise.all([

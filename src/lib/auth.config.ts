@@ -12,15 +12,15 @@ export const authConfig = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role;
+        token.role = user.role;
         token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).role = token.role;
-        (session.user as any).id = token.id;
+        session.user.role = token.role ?? "photographer";
+        session.user.id = token.id ?? "";
       }
       return session;
     },
@@ -34,6 +34,9 @@ export const authConfig = {
         nextUrl.pathname !== "/api/auth/signup";
 
       if (isNextAuthRoute) return true;
+
+      // Public health check
+      if (nextUrl.pathname === "/api/health") return true;
 
       // Public signup routes
       if (nextUrl.pathname.startsWith("/signup/")) return true;

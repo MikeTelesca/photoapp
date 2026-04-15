@@ -30,7 +30,7 @@ export async function POST(
   if ("error" in access) return access.error;
 
   const job = access.job;
-  if (!job || !(job as any).dropboxUrl) {
+  if (!job || !job.dropboxUrl) {
     return NextResponse.json({ error: "Job has no Dropbox URL" }, { status: 400 });
   }
 
@@ -57,7 +57,7 @@ export async function POST(
   const exifResults = [];
   for (const fileName of fileList) {
     try {
-      const buf = await downloadFromDropbox((job as any).dropboxUrl, fileName);
+      const buf = await downloadFromDropbox(job.dropboxUrl!, fileName);
       const exif = await readExif(buf, fileName);
       exifResults.push(exif);
     } catch (err) {

@@ -2,6 +2,8 @@ export type JobStatus = "pending" | "processing" | "review" | "approved" | "reje
 export type PhotoStatus = "pending" | "processing" | "edited" | "approved" | "rejected" | "regenerating";
 export type UserRole = "admin" | "photographer";
 export type PresetName = "standard" | "bright-airy" | "luxury" | "custom";
+export type TvStyle = "netflix" | "black" | "beach" | "mountains" | "fireplace" | "art" | "off";
+export type SkyStyle = "blue-clouds" | "clear-blue" | "golden-hour" | "dramatic" | "overcast-soft" | "as-is";
 
 export interface Job {
   id: string;
@@ -9,6 +11,8 @@ export interface Job {
   photographerId: string;
   photographerName: string;
   preset: PresetName;
+  tvStyle?: TvStyle;
+  skyStyle?: SkyStyle;
   status: JobStatus;
   totalPhotos: number;
   processedPhotos: number;
@@ -19,6 +23,8 @@ export interface Job {
   notes?: string | null;
   clientName?: string | null;
   tags?: string;
+  watermarkText?: string | null;
+  dropboxUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PresetsPage() {
   const session = await auth();
-  if ((session?.user as any)?.role !== "admin") {
+  if (session?.user?.role !== "admin") {
     redirect("/dashboard");
   }
   let presets: any[] = [];

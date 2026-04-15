@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PhotographersPage() {
   const session = await auth();
-  if ((session?.user as any)?.role !== "admin") {
+  if (session?.user?.role !== "admin") {
     redirect("/dashboard");
   }
   let users: any[] = [];
@@ -35,7 +35,7 @@ export default async function PhotographersPage() {
     email: u.email,
     role: u.role,
     jobCount: u._count?.jobs || 0,
-    monthlyAiCostLimit: (u as any).monthlyAiCostLimit ?? 50,
+    monthlyAiCostLimit: u.monthlyAiCostLimit ?? 50,
     monthlyUsage: usageMap.get(u.id) || 0,
     createdAt: u.createdAt?.toISOString?.() || new Date().toISOString(),
   }));

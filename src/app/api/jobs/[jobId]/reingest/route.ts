@@ -16,7 +16,7 @@ export async function POST(
   if ("error" in access) return access.error;
 
   const job = access.job;
-  if (!job || !(job as any).dropboxUrl) {
+  if (!job || !job.dropboxUrl) {
     return NextResponse.json({ error: "Job has no Dropbox URL" }, { status: 400 });
   }
 
@@ -27,7 +27,7 @@ export async function POST(
   const listResponse = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
     method: "POST",
     headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ path: "", shared_link: { url: (job as any).dropboxUrl }, limit: 2000 }),
+    body: JSON.stringify({ path: "", shared_link: { url: job.dropboxUrl! }, limit: 2000 }),
   });
 
   if (!listResponse.ok) {
@@ -43,7 +43,7 @@ export async function POST(
       const subRes = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ path: folder.path_lower || folder.path_display, shared_link: { url: (job as any).dropboxUrl }, limit: 2000 }),
+        body: JSON.stringify({ path: folder.path_lower || folder.path_display, shared_link: { url: job.dropboxUrl! }, limit: 2000 }),
       });
       if (subRes.ok) {
         const sub = await subRes.json();

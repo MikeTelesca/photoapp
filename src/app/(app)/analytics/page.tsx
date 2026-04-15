@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
   const session = await auth();
-  if ((session?.user as any)?.role !== "admin") redirect("/dashboard");
+  if (session?.user?.role !== "admin") redirect("/dashboard");
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

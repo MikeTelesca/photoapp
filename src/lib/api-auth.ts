@@ -7,8 +7,8 @@ export async function requireUser() {
   if (!session?.user) {
     return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
-  const userId = (session.user as any).id as string;
-  const role = (session.user as any).role as "admin" | "photographer";
+  const userId = session.user.id;
+  const role = session.user.role as "admin" | "photographer";
   return { userId, role, session };
 }
 

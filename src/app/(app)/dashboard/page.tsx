@@ -17,6 +17,7 @@ import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { PhotoStatsWidget } from "@/components/dashboard/photo-stats-widget";
 import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
+import { WeeklyActivity } from "@/components/dashboard/weekly-activity";
 import {
   FolderIcon,
   ArrowPathIcon,
@@ -193,26 +194,55 @@ export default async function DashboardPage({
       }))} />
       <OnboardingTour hasJobs={jobs.length > 0} />
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <div className="flex items-end justify-between mb-8 gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-graphite-900 dark:text-white">
-              {session?.user?.name ? `Hey, ${session.user.name.split(" ")[0]}.` : "Dashboard"}
-            </h1>
-            <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-1">
-              {stats.reviewJobs > 0
-                ? `${stats.reviewJobs} job${stats.reviewJobs === 1 ? "" : "s"} waiting on your review.`
-                : stats.processingJobs > 0
-                ? `${stats.processingJobs} job${stats.processingJobs === 1 ? "" : "s"} processing.`
-                : "No jobs in flight."}
-            </p>
-          </div>
+        <div className="mb-10">
+          <p className="text-xs uppercase tracking-wider text-graphite-500 dark:text-graphite-400 mb-1">
+            Dashboard
+          </p>
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-graphite-900 dark:text-white">
+            {session?.user?.name
+              ? `Have a good one, ${session.user.name.split(" ")[0]}.`
+              : "Welcome back."}
+          </h1>
+          <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-2">
+            {stats.reviewJobs > 0
+              ? `${stats.reviewJobs} job${stats.reviewJobs === 1 ? "" : "s"} waiting on your review.`
+              : stats.processingJobs > 0
+              ? `${stats.processingJobs} job${stats.processingJobs === 1 ? "" : "s"} processing.`
+              : "No jobs in flight."}
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
-          <StatCard label="Total jobs" value={stats.totalJobs} subtext="This week" icon={<FolderIcon className="w-[18px] h-[18px]" />} />
-          <StatCard label="Processing" value={stats.processingJobs} subtext={stats.processingJobs > 0 ? "In progress" : "None"} icon={<ArrowPathIcon className="w-[18px] h-[18px]" />} />
-          <StatCard label="Needs review" value={stats.reviewJobs} subtext={`${stats.reviewJobs} propert${stats.reviewJobs === 1 ? "y" : "ies"}`} icon={<EyeIcon className="w-[18px] h-[18px]" />} />
-          <StatCard label="Approved today" value={stats.approvedToday} subtext="Today" icon={<CheckCircleIcon className="w-[18px] h-[18px]" />} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <StatCard
+            label="Total jobs"
+            value={stats.totalJobs}
+            subtext="This week"
+            icon={<FolderIcon className="w-4 h-4" />}
+          />
+          <StatCard
+            label="Processing"
+            value={stats.processingJobs}
+            subtext={stats.processingJobs > 0 ? "In progress" : "Idle"}
+            icon={<ArrowPathIcon className="w-4 h-4" />}
+            progress={stats.totalJobs ? (stats.processingJobs / stats.totalJobs) * 100 : 0}
+          />
+          <StatCard
+            label="Needs review"
+            value={stats.reviewJobs}
+            subtext={`${stats.reviewJobs} propert${stats.reviewJobs === 1 ? "y" : "ies"}`}
+            icon={<EyeIcon className="w-4 h-4" />}
+            progress={stats.totalJobs ? (stats.reviewJobs / stats.totalJobs) * 100 : 0}
+          />
+          <StatCard
+            label="Approved today"
+            value={stats.approvedToday}
+            subtext="Today"
+            icon={<CheckCircleIcon className="w-4 h-4" />}
+          />
+        </div>
+
+        <div className="mb-10">
+          <WeeklyActivity />
         </div>
 
         <JobList jobs={jobs} />

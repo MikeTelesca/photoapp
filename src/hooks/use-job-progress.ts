@@ -42,7 +42,22 @@ export function useJobProgress(): { jobs: JobProgress[]; connected: boolean } {
         try {
           const data = JSON.parse(event.data);
           if (data.type === "init" || data.type === "update") {
-            setJobs(data.jobs || []);
+            const newJobs = data.jobs || [];
+            const reviewIds = new Set(newJobs.filter((j: any) => j.status === "review").map((j: any) => j.id) as string[]);
+
+            // Check for new transitions to review
+            if (data.type === "update" && prevJobIds.size > 0) {
+              for (const id of reviewIds) {
+                if (!prevJobIds.has(id)) {
+                  // New review job!
+                  playInboxSound();
+                  break; // only play once per batch
+                }
+              }
+            }
+
+            setPrevJobIds(reviewIds);
+            setJobs(newJobs);
           }
         } catch {}
       };

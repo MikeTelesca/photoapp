@@ -28,7 +28,7 @@ export function SoundToggle() {
           <InfoTooltip text="Plays a brief audio confirmation when you approve, reject, or favorite a photo." position="bottom" />
         </div>
         <div className="text-xs text-graphite-500 dark:text-graphite-400">
-          Subtle audio feedback on approve, reject, and favorite
+          Plays subtle audio for: photo approve/reject/favorite, and when a new job arrives in your inbox
         </div>
       </div>
       <button onClick={toggle}

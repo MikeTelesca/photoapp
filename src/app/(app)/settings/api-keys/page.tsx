@@ -76,7 +76,12 @@ export default function ApiKeysPage() {
 
         <Card>
           <div className="p-4">
-            <h2 className="text-sm font-semibold mb-2 dark:text-white">Create a new key</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold dark:text-white">Create a new key</h2>
+              <a href="/settings/api-keys/docs" className="text-xs text-cyan hover:underline">
+                View API documentation →
+              </a>
+            </div>
             <p className="text-xs text-graphite-500 dark:text-graphite-400 mb-3">
               API keys allow external apps (Zapier, scripts, etc.) to access your account. Include in the Authorization header as &quot;Bearer ath_...&quot;.
             </p>

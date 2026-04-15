@@ -26,7 +26,9 @@ const SECTIONS: Section[] = [
     title: "Review gallery",
     shortcuts: [
       { keys: ["A"], action: "Approve photo" },
+      { keys: ["Y"], action: "Approve & advance to next" },
       { keys: ["R"], action: "Reject photo" },
+      { keys: ["N"], action: "Reject & advance to next" },
       { keys: ["E"], action: "Re-enhance photo" },
       { keys: ["F"], action: "Favorite photo" },
       { keys: ["T"], action: "Flag photo for review" },

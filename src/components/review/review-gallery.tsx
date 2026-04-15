@@ -34,6 +34,7 @@ import { useSwipe } from "@/hooks/use-swipe";
 import { getActionForKey } from "@/lib/keyboard-shortcuts";
 import { LazyThumb } from "./lazy-thumb";
 import { Slideshow } from "./slideshow";
+import { PromptLinter } from "@/components/presets/prompt-linter";
 
 interface Photo {
   id: string;
@@ -1561,6 +1562,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             className="w-full px-3 py-2 rounded-lg border border-amber-300 text-xs font-mono bg-white dark:bg-graphite-900 text-graphite-900 dark:text-white focus:outline-none focus:border-amber-500"
             placeholder="AI prompt instructions..."
           />
+          <PromptLinter text={editedPrompt} />
           <div className="flex gap-2 mt-2">
             <button
               onClick={savePromptChanges}

@@ -292,6 +292,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   // Rotation state
   const [rotating, setRotating] = useState(false);
+  const [detectingOrientation, setDetectingOrientation] = useState(false);
+  const [orientationSuggestion, setOrientationSuggestion] = useState<
+    | { photoId: string; suggestedRotation: 0 | 90 | 180 | 270; currentOrientation: string; confidence: number }
+    | null
+  >(null);
 
   // Caption state
   const [generatingCaption, setGeneratingCaption] = useState(false);
@@ -752,6 +757,36 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       setRotating(false);
     }
   }, [currentPhoto, job.id]);
+
+  const detectOrientation = useCallback(async () => {
+    if (!currentPhoto) return;
+    setDetectingOrientation(true);
+    setOrientationSuggestion(null);
+    try {
+      const res = await fetch(`/api/photos/${currentPhoto.id}/detect-orientation`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Detect failed");
+        return;
+      }
+      if (!data.suggestedRotation) {
+        addToast("success", `Orientation looks correct (${data.currentOrientation})`);
+        return;
+      }
+      setOrientationSuggestion({
+        photoId: currentPhoto.id,
+        suggestedRotation: data.suggestedRotation,
+        currentOrientation: data.currentOrientation,
+        confidence: data.confidence,
+      });
+    } catch (e: any) {
+      addToast("error", e?.message || "Detect failed");
+    } finally {
+      setDetectingOrientation(false);
+    }
+  }, [currentPhoto, addToast]);
 
   const flip = useCallback(async (axis: "horizontal" | "vertical") => {
     if (!currentPhoto) return;
@@ -3059,6 +3094,36 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   title="Flip 180°">
                   ↻↻
                 </button>
+                <button onClick={detectOrientation} disabled={detectingOrientation || rotating || isUpdating || enhanceLoading}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
+                  title="Detect orientation and suggest a rotation">
+                  {detectingOrientation ? "…" : "🔍 Detect"}
+                </button>
+                {orientationSuggestion && currentPhoto && orientationSuggestion.photoId === currentPhoto.id && (
+                  <span className="flex items-center gap-1 ml-1 px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-[11px] text-amber-900 dark:text-amber-200">
+                    <span>
+                      Suggest rotate {orientationSuggestion.suggestedRotation}° ({Math.round(orientationSuggestion.confidence * 100)}%)
+                    </span>
+                    <button
+                      onClick={() => {
+                        const deg = orientationSuggestion.suggestedRotation;
+                        setOrientationSuggestion(null);
+                        rotate(deg === 270 ? -90 : deg);
+                      }}
+                      disabled={rotating || isUpdating || enhanceLoading}
+                      className="px-1.5 py-0.5 rounded bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      Apply
+                    </button>
+                    <button
+                      onClick={() => setOrientationSuggestion(null)}
+                      className="px-1 text-amber-700 dark:text-amber-300 hover:text-amber-900"
+                      title="Dismiss"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
                 <button onClick={() => flip("horizontal")} disabled={rotating || isUpdating || enhanceLoading}
                   className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
                   title="Mirror horizontal (left-right)">

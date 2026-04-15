@@ -298,6 +298,14 @@ CREATE TABLE IF NOT EXISTS "ErrorLog" (
 CREATE INDEX IF NOT EXISTS "ErrorLog_source_createdAt_idx" ON "ErrorLog"("source", "createdAt" DESC);
 CREATE INDEX IF NOT EXISTS "ErrorLog_jobId_idx"            ON "ErrorLog"("jobId");
 
+-- ---------------------------------------------------------------------------
+-- Portfolio: public photographer portfolio page fields on User
+-- ---------------------------------------------------------------------------
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "portfolioSlug"    TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "portfolioEnabled" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "portfolioBio"     TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS "User_portfolioSlug_key" ON "User"("portfolioSlug");
+
 -- =============================================================================
 -- END OF MANUAL CATCH-UP MIGRATION
 -- =============================================================================

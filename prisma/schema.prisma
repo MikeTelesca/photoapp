@@ -44,6 +44,9 @@ model User {
   filenamePattern   String   @default("{address}-{seq}") // Download filename pattern
   shareEmailSubject String?   // override for share link emails
   jobReadyEmailSubject String? // override for job-complete emails
+  portfolioSlug     String?  @unique
+  portfolioEnabled  Boolean  @default(false)
+  portfolioBio      String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]

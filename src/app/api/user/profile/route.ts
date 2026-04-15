@@ -35,6 +35,9 @@ export async function PATCH(request: NextRequest) {
     filenamePattern,
     shareEmailSubject,
     jobReadyEmailSubject,
+    portfolioSlug,
+    portfolioEnabled,
+    portfolioBio,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -106,6 +109,31 @@ export async function PATCH(request: NextRequest) {
 
   if (jobReadyEmailSubject !== undefined) {
     updateData.jobReadyEmailSubject = jobReadyEmailSubject?.trim() || null;
+  }
+
+  if (portfolioSlug !== undefined) {
+    const raw = (portfolioSlug ?? "").toString().trim().toLowerCase();
+    if (raw) {
+      const normalized = raw.replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      if (!normalized) {
+        return NextResponse.json({ error: "Invalid portfolio slug" }, { status: 400 });
+      }
+      const existing = await prisma.user.findUnique({ where: { portfolioSlug: normalized } });
+      if (existing && existing.id !== auth.userId) {
+        return NextResponse.json({ error: "That slug is already taken" }, { status: 409 });
+      }
+      updateData.portfolioSlug = normalized;
+    } else {
+      updateData.portfolioSlug = null;
+    }
+  }
+
+  if (portfolioEnabled !== undefined) {
+    updateData.portfolioEnabled = Boolean(portfolioEnabled);
+  }
+
+  if (portfolioBio !== undefined) {
+    updateData.portfolioBio = portfolioBio?.toString().trim() || null;
   }
 
   if (Object.keys(updateData).length === 0) {

@@ -11,9 +11,10 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 interface TopbarProps {
   title: string;
   subtitle?: string;
+  actions?: React.ReactNode;
 }
 
-export function Topbar({ title, subtitle }: TopbarProps) {
+export function Topbar({ title, subtitle, actions }: TopbarProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [aiStatus, setAiStatus] = useState<{ processing: number; queue: number }>({ processing: 0, queue: 0 });
@@ -72,6 +73,7 @@ export function Topbar({ title, subtitle }: TopbarProps) {
             />
           </div>
         </form>
+        {actions}
         <a href="/api/jobs/export" download>
           <Button variant="outline">Export CSV</Button>
         </a>

@@ -3,6 +3,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { DailyChart } from "@/components/analytics/daily-chart";
 import { PhotographerCostChart } from "@/components/analytics/photographer-cost-chart";
 import { forecastCost } from "@/lib/forecast";
@@ -32,6 +33,7 @@ export default async function AnalyticsPage() {
     topPhotographers,
     jobs30d,
     photographerStats,
+    topClients,
   ] = await Promise.all([
     prisma.job.count({ where: { status: { not: "deleted" } } }),
     prisma.job.count({
@@ -70,6 +72,14 @@ export default async function AnalyticsPage() {
         },
       },
     }),
+    prisma.client.findMany({
+      where: { ownerId: session?.user?.id || "" },
+      include: {
+        jobs: {
+          select: { cost: true, totalPhotos: true, createdAt: true },
+        },
+      },
+    }).catch(() => []),
   ]);
 
   const photographerNames = await prisma.user.findMany({
@@ -127,6 +137,25 @@ export default async function AnalyticsPage() {
   ];
 
   const projectedTotal = forecast.reduce((s, f) => s + f.cost, 0);
+
+  // Compute client stats
+  const clientStats = topClients
+    .map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      company: c.company,
+      jobCount: c.jobs.length,
+      totalPhotos: c.jobs.reduce((s: number, j: any) => s + (j.totalPhotos || 0), 0),
+      totalSpend: c.jobs.reduce((s: number, j: any) => s + (j.cost || 0), 0),
+      lastJob: c.jobs.length > 0 ? c.jobs.reduce((latest: Date, j: any) =>
+        new Date(j.createdAt) > latest ? new Date(j.createdAt) : latest,
+        new Date(0)
+      ) : null,
+    }))
+    .filter(c => c.jobCount > 0)
+    .sort((a, b) => b.totalSpend - a.totalSpend)
+    .slice(0, 5);
 
   // Compute photographer leaderboard
   const leaderboard = photographerStats
@@ -301,6 +330,48 @@ export default async function AnalyticsPage() {
                       <td className="text-right">{row.photoCount}</td>
                       <td className="text-right text-emerald-600 dark:text-emerald-400">{row.approvedCount}</td>
                       <td className="text-right font-semibold">${row.totalCost.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold dark:text-white">Top clients</h2>
+              <Link href="/clients" className="text-xs text-cyan hover:underline">Manage →</Link>
+            </div>
+            {clientStats.length === 0 ? (
+              <div className="text-center py-8 text-xs text-graphite-400">
+                No client data yet. <Link href="/clients" className="text-cyan hover:underline">Add clients</Link>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="text-xs text-graphite-400 border-b border-graphite-100 dark:border-graphite-800">
+                  <tr>
+                    <th className="text-left py-2">Client</th>
+                    <th className="text-right">Jobs</th>
+                    <th className="text-right">Photos</th>
+                    <th className="text-right">Spend</th>
+                    <th className="text-right">Last job</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clientStats.map((c: any) => (
+                    <tr key={c.id} className="border-b border-graphite-50 dark:border-graphite-800 last:border-b-0">
+                      <td className="py-2">
+                        <Link href={`/clients/${c.id}`} className="font-medium text-cyan hover:underline">{c.name}</Link>
+                        {c.company && <div className="text-[11px] text-graphite-400">{c.company}</div>}
+                      </td>
+                      <td className="text-right">{c.jobCount}</td>
+                      <td className="text-right">{c.totalPhotos}</td>
+                      <td className="text-right font-semibold dark:text-white">${c.totalSpend.toFixed(2)}</td>
+                      <td className="text-right text-xs text-graphite-400">
+                        {c.lastJob ? c.lastJob.toLocaleDateString() : "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

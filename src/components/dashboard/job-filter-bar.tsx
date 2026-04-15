@@ -478,6 +478,19 @@ export function JobFilterBar({ jobs }: Props) {
           className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700">
           {groupByDate ? "📅 Grouped" : "📋 Flat"}
         </button>
+        <a
+          href={(() => {
+            const params = new URLSearchParams();
+            if (status && status !== "all") params.set("status", status);
+            if (activeTag) params.set("tag", activeTag);
+            const qs = params.toString();
+            return qs ? `/api/jobs/export-csv?${qs}` : `/api/jobs/export-csv`;
+          })()}
+          className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700"
+          title="Export filtered jobs as CSV"
+        >
+          ⬇ Export CSV
+        </a>
         <div className="flex gap-0.5 ml-auto">
           {(["compact", "normal", "comfortable"] as Density[]).map(d => (
             <button key={d} onClick={() => setDensity(d)}

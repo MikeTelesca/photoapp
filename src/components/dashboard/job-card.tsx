@@ -77,6 +77,18 @@ function JobCardInternal({ job }: JobCardProps) {
 
   const isLinkable = job.status === "review" || job.status === "approved" || job.status === "processing";
 
+  const borderColor = (() => {
+    switch (job.colorLabel) {
+      case "red": return "border-l-4 border-l-red-500";
+      case "amber": return "border-l-4 border-l-amber-500";
+      case "emerald": return "border-l-4 border-l-emerald-500";
+      case "blue": return "border-l-4 border-l-blue-500";
+      case "purple": return "border-l-4 border-l-purple-500";
+      case "pink": return "border-l-4 border-l-pink-500";
+      default: return "";
+    }
+  })();
+
   const Wrapper = isLinkable
     ? ({ children, className }: { children: React.ReactNode; className: string }) => (
         <Link href={`/review/${job.id}`} className={className}>{children}</Link>
@@ -87,7 +99,7 @@ function JobCardInternal({ job }: JobCardProps) {
 
   return (
     <>
-      <Wrapper className="flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0">
+      <Wrapper className={`flex items-center justify-between px-5 py-3.5 cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0 ${borderColor}`}>
         <div className="flex items-center gap-3">
         {job.coverPhotoUrl ? (
           <img src={job.coverPhotoUrl} alt=""
@@ -184,6 +196,7 @@ function JobCardInternal({ job }: JobCardProps) {
         {job.status === "review" && (
           <>
             <span className="text-xs font-semibold text-cyan">Ready for Review</span>
+            <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
             <CopyJobLinkButton jobId={job.id} />
             <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
@@ -203,6 +216,7 @@ function JobCardInternal({ job }: JobCardProps) {
             >
               {isStarting ? "Starting..." : "Start Processing"}
             </Button>
+            <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
             <SnoozeButton jobId={job.id} snoozedUntil={job.snoozedUntil} />
             <PinButton jobId={job.id} pinned={!!job.pinnedAt} />
             <SaveTemplateButton jobId={job.id} />
@@ -213,6 +227,7 @@ function JobCardInternal({ job }: JobCardProps) {
         {job.status === "approved" && (
           <>
             <span className="text-xs font-semibold text-emerald-600">Approved</span>
+            <ColorLabelPicker jobId={job.id} current={job.colorLabel} />
             <CopyJobLinkButton jobId={job.id} />
             <DownloadButton jobId={job.id} />
             <button

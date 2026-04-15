@@ -42,6 +42,7 @@ export interface Job {
   reminderNote?: string | null;
   coverPhotoId?: string | null;
   coverPhotoUrl?: string | null;
+  colorLabel?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

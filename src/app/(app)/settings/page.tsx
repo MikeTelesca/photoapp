@@ -22,6 +22,7 @@ import { TimezonePicker } from "@/components/settings/timezone-picker";
 import { SoundToggle } from "@/components/settings/sound-toggle";
 import { BudgetInput } from "@/components/settings/budget-input";
 import { EmailSignatureForm } from "@/components/settings/email-signature-form";
+import { AutoArchiveSelect } from "@/components/settings/auto-archive-select";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,7 @@ export default async function SettingsPage() {
   let userTimezone: string | null = null;
   let budgetPerJob = 20;
   let emailSignature: string | null = null;
+  let autoArchiveDays: number | null = null;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -71,6 +73,7 @@ export default async function SettingsPage() {
         timezone: true,
         budgetPerJob: true,
         emailSignature: true,
+        autoArchiveDays: true,
       },
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
@@ -84,6 +87,7 @@ export default async function SettingsPage() {
     userTimezone = user?.timezone ?? null;
     budgetPerJob = user?.budgetPerJob ?? 20;
     emailSignature = user?.emailSignature ?? null;
+    autoArchiveDays = user?.autoArchiveDays ?? null;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -180,6 +184,18 @@ export default async function SettingsPage() {
             <BudgetInput initial={budgetPerJob} />
           </div>
         </Card>
+
+        {/* Auto-archive */}
+        <Card>
+          <div className="p-4">
+            <h2 className="text-sm font-semibold mb-2 dark:text-white">Auto-archive</h2>
+            <p className="text-xs text-graphite-500 dark:text-graphite-400 mb-2">
+              Automatically archive approved jobs older than this. Archived jobs remain in search but are hidden from the dashboard.
+            </p>
+            <AutoArchiveSelect initial={autoArchiveDays} />
+          </div>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Two-Factor Authentication</CardTitle>

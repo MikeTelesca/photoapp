@@ -34,6 +34,7 @@ model User {
   notifyPhotoFailed Boolean  @default(true)
   timezone          String?   // IANA format, e.g. "America/Toronto"
   emailSignature    String?
+  autoArchiveDays   Int?      // null = disabled; otherwise days
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]
@@ -44,6 +45,7 @@ model User {
   notifications      Notification[]
   apiKeys            ApiKey[]
   noteTemplates      NoteTemplate[]
+  jobComments        JobComment[] @relation("JobCommentAuthor")
 }
 
 model LoginRecord {
@@ -112,6 +114,7 @@ model Job {
   photographerId   String
   photos           Photo[]
   shareEmailLogs   ShareEmailLog[]
+  jobComments      JobComment[]
 
   @@index([photographerId, createdAt(sort: Desc)])
   @@index([status])
@@ -332,4 +335,16 @@ model NoteTemplate {
   updatedAt DateTime @updatedAt
 
   @@index([userId, category])
+}
+
+model JobComment {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation("JobCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([jobId, createdAt])
 }

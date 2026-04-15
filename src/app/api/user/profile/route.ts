@@ -26,6 +26,7 @@ export async function PATCH(request: NextRequest) {
     timezone,
     budgetPerJob,
     emailSignature,
+    autoArchiveDays,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -70,6 +71,9 @@ export async function PATCH(request: NextRequest) {
   if (timezone !== undefined) updateData.timezone = timezone?.trim() || null;
   if (budgetPerJob !== undefined) updateData.budgetPerJob = parseFloat(budgetPerJob) || 20;
   if (emailSignature !== undefined) updateData.emailSignature = emailSignature?.trim() || null;
+  if (autoArchiveDays !== undefined) {
+    updateData.autoArchiveDays = autoArchiveDays === null ? null : (parseInt(autoArchiveDays) || null);
+  }
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });

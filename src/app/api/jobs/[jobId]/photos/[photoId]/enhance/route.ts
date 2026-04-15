@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { enhancePhoto, convertToTwilight, analyzePhoto } from "@/lib/ai-enhance";
 import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
+import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 
 // Download a file from Dropbox shared link using raw API
 async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
@@ -234,7 +235,6 @@ export async function POST(
     });
 
     // Track cost
-    const AI_COST_PER_IMAGE = 0.04;
     await prisma.job.update({
       where: { id: jobId },
       data: { cost: { increment: AI_COST_PER_IMAGE } },

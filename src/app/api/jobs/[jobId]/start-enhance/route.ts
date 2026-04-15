@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { enhancePhoto, analyzePhoto } from "@/lib/ai-enhance";
 import { uploadToDropbox } from "@/lib/dropbox";
 import { requireJobAccess } from "@/lib/api-auth";
+import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -265,7 +266,7 @@ export async function POST(
     await prisma.job.update({
       where: { id: jobId },
       data: {
-        cost: { increment: 0.04 },
+        cost: { increment: AI_COST_PER_IMAGE },
         processedPhotos: { increment: 1 },
         status: "processing",
       },

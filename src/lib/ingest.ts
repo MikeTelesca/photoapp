@@ -108,7 +108,12 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
       return { jobId, totalFiles: 0, bracketGroups: 0, bracketCount: 0, photosCreated: 0 };
     }
 
-    // Detect bracket count (3 or 5) from total file count
+    // Detect bracket count (3 or 5) from total file count.
+    // TODO: Use EXIF-based grouping from src/lib/exif.ts + src/lib/bracket-grouping.ts for accuracy.
+    // Downloading EXIF during ingest is expensive on Vercel (64KB per file × hundreds of files).
+    // The right place to wire this in is start-enhance/route.ts, which already downloads all
+    // brackets anyway — use readExif() on the downloaded buffers and groupBrackets() to verify
+    // or correct the grouping before sending to Gemini.
     const bracketCount = imageFiles.length % 5 === 0 ? 5 : 3;
     const groupCount = Math.ceil(imageFiles.length / bracketCount);
 

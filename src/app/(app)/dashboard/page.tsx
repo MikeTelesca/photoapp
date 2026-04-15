@@ -6,6 +6,7 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { CostTracker } from "@/components/dashboard/cost-tracker";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { RecentActivityWidget } from "@/components/dashboard/recent-activity-widget";
+import { InboxWidget } from "@/components/dashboard/inbox-widget";
 import { NotificationHandler } from "@/components/notifications/notification-handler";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { WidgetWrapper } from "@/components/dashboard/widget-wrapper";
@@ -178,7 +179,12 @@ export default async function DashboardPage({
 
         {/* Grid: Jobs + Right Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4">
-          <JobList jobs={jobs} />
+          <div>
+            <WidgetWrapper widgetKey="inbox">
+              <InboxWidget userId={userId || ""} />
+            </WidgetWrapper>
+            <JobList jobs={jobs} />
+          </div>
           <div className="flex flex-col gap-4">
             <WidgetWrapper widgetKey="quick-actions">
               <QuickActions />

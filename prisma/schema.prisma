@@ -168,6 +168,7 @@ model Photo {
   isExterior           Boolean  @default(false)
   isTwilight           Boolean  @default(false)
   isFavorite           Boolean  @default(false)
+  favorited            Boolean  @default(false)
   flagged              Boolean  @default(false)
   twilightInstructions String?
   twilightStyle        String?  // "warm-dusk", "blue-hour", "deep-night"

@@ -59,6 +59,7 @@ interface Photo {
   isExterior: boolean;
   isTwilight: boolean;
   isFavorite?: boolean;
+  favorited?: boolean;
   flagged?: boolean;
   twilightInstructions: string | null;
   twilightStyle?: string | null;
@@ -165,7 +166,7 @@ function GridView({ photos, cols, onPhotoClick, jobId }: {
             {p.status === "failed" && (
               <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-bold" title="Failed after retries">!</div>
             )}
-            {p.isFavorite && (
+            {p.favorited && (
               <div className="absolute top-1 left-1 text-amber-400 text-sm drop-shadow">★</div>
             )}
           </div>
@@ -692,13 +693,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const handleFavorite = useCallback(async () => {
     if (!currentPhoto) return;
     try {
-      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/favorite`, { method: "POST" });
+      const res = await fetch(`/api/photos/${currentPhoto.id}/favorite`, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
         setJob((prev) => ({
           ...prev,
           photos: prev.photos.map((p) =>
-            p.id === currentPhoto.id ? { ...p, isFavorite: data.isFavorite } : p
+            p.id === currentPhoto.id ? { ...p, favorited: data.favorited } : p
           ),
         }));
         playFavoriteSound();
@@ -706,7 +707,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
     }
-  }, [currentPhoto, job.id]);
+  }, [currentPhoto]);
 
   const handleToggleFlag = useCallback(async () => {
     if (!currentPhoto) return;
@@ -2527,6 +2528,18 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         <div className="hidden md:flex w-[100px] bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-700 flex-col flex-shrink-0">
           {/* Filter pills */}
           <div className="flex flex-col gap-0.5 p-1 border-b border-graphite-200 dark:border-graphite-700 flex-shrink-0">
+            {/* Only favorites toggle */}
+            <button
+              onClick={() => setThumbFilter(thumbFilter === "favorites" ? "all" : "favorites")}
+              className={`w-full text-[9px] font-semibold py-1 rounded border transition-colors ${
+                thumbFilter === "favorites"
+                  ? "bg-amber-100 text-amber-700 border-amber-300"
+                  : "bg-white dark:bg-graphite-800 text-graphite-500 border-graphite-200 dark:border-graphite-700 hover:bg-amber-50"
+              }`}
+              title="Show only favorited photos"
+            >
+              ⭐ Only favorites
+            </button>
             <div className="flex gap-0.5">
               {[
                 { v: "all" as const, l: "All" },
@@ -2608,7 +2621,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={photos.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                 {sortedPhotos.map((photo, idx) => {
-                  if (thumbFilter === "favorites" && !photo.isFavorite) return null;
+                  if (thumbFilter === "favorites" && !photo.favorited) return null;
                   if (thumbFilter !== "all" && thumbFilter !== "favorites" && photo.status !== thumbFilter) return null;
                   if (tagFilter) {
                     try {
@@ -2690,7 +2703,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                         {photo.isTwilight && (
                           <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
                         )}
-                        {photo.isFavorite && (
+                        {photo.favorited && (
                           <div className="absolute top-1 right-1 text-amber-400 text-sm drop-shadow">★</div>
                         )}
                         {photo.flagged && (
@@ -3268,7 +3281,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 onClick={handleFavorite}
                 disabled={isUpdating || enhanceLoading}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
-                  currentPhoto?.isFavorite
+                  currentPhoto?.favorited
                     ? "bg-amber-100 text-amber-600 hover:bg-amber-200"
                     : "bg-graphite-100 text-graphite-400 hover:bg-amber-100 hover:text-amber-600"
                 }`}

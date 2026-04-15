@@ -187,6 +187,9 @@ ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "rejectionReason"      TEXT;
 -- Wave 15+: isFavorite
 ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "isFavorite"           BOOLEAN NOT NULL DEFAULT false;
 
+-- Wave 20+: favorited (star feature)
+ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "favorited"            BOOLEAN NOT NULL DEFAULT false;
+
 CREATE INDEX IF NOT EXISTS "Photo_jobId_status_idx"     ON "Photo"("jobId", "status");
 CREATE INDEX IF NOT EXISTS "Photo_jobId_orderIndex_idx" ON "Photo"("jobId", "orderIndex");
 

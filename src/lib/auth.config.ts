@@ -38,6 +38,9 @@ export const authConfig = {
       // Public health check
       if (nextUrl.pathname === "/api/health") return true;
 
+      // Public share routes (tokenized client gallery)
+      if (nextUrl.pathname.startsWith("/share/")) return true;
+
       // Public signup routes
       if (nextUrl.pathname.startsWith("/signup/")) return true;
       if (nextUrl.pathname === "/api/auth/signup") return true;

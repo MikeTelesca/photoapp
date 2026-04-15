@@ -27,6 +27,8 @@ export default async function ReviewPage({
     createdAt: job.createdAt.toISOString(),
     updatedAt: job.updatedAt.toISOString(),
     photographer: job.photographer,
+    shareToken: job.shareToken ?? null,
+    shareEnabled: job.shareEnabled,
     photos: job.photos.map((p) => ({
       ...p,
       createdAt: p.createdAt.toISOString(),

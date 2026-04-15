@@ -21,6 +21,7 @@ import { KeyboardHint } from "./keyboard-hint";
 import { NotesPopover } from "./notes-popover";
 import { BeforeAfterSlider } from "./before-after-slider";
 import { ReingestButton } from "./reingest-button";
+import { ShareButton } from "./share-button";
 
 interface Photo {
   id: string;
@@ -57,6 +58,8 @@ interface Job {
   dropboxUrl?: string | null;
   tvStyle?: string | null;
   skyStyle?: string | null;
+  shareToken?: string | null;
+  shareEnabled?: boolean;
   photographer: { name: string };
   photos: Photo[];
 }
@@ -716,6 +719,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               {isEnhancingAll ? `Enhancing ${enhanceProgress}%` : `Enhance All (${photos.filter(p => p.status === "pending").length})`}
             </Button>
           )}
+          <ShareButton
+            jobId={job.id}
+            initialToken={job.shareToken ?? null}
+            initialEnabled={job.shareEnabled ?? false}
+          />
           <Button variant="approve" onClick={handleApproveAll} disabled={isUpdating}>
             <CheckCircleIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Approve All</span>

@@ -29,6 +29,7 @@ import { KeyboardHint } from "./keyboard-hint";
 import { NotesPopover } from "./notes-popover";
 import { PhotoNote } from "./photo-note";
 import { BeforeAfterSlider } from "./before-after-slider";
+import { CompareSlider } from "./compare-slider";
 import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
 import { SaveTemplateButton } from "@/components/dashboard/save-template-button";
@@ -191,6 +192,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [showPromptEditor, setShowPromptEditor] = useState(false);
   const [savingPreset, setSavingPreset] = useState(false);
   const [compareMode, setCompareMode] = useState<"split" | "slider">("split");
+  const [compareSliderOn, setCompareSliderOn] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [zoom, setZoom] = useState<number>(() => {
     if (typeof window === "undefined") return 1;
@@ -294,6 +296,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
   // Pin annotation mode
   const [pinMode, setPinMode] = useState(false);
+  const [exifPanelOpen, setExifPanelOpen] = useState(false);
 
   // Slideshow state
   const [slideshowOpen, setSlideshowOpen] = useState(false);
@@ -1815,6 +1818,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             >
               {compareMode === "split" ? "Slider View" : "Split View"}
             </button>
+            {currentPhoto?.originalUrl && currentPhoto?.editedUrl && (
+              <button
+                onClick={() => setCompareSliderOn(v => !v)}
+                className={`text-xs px-2 py-1.5 rounded-md border ${compareSliderOn ? "bg-cyan-500 text-white border-cyan-500" : "border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"}`}
+                title="Before/after split slider"
+              >
+                {compareSliderOn ? "↔ Compare on" : "↔ Compare"}
+              </button>
+            )}
             <button
               onClick={() => { setCompareResult(null); setCompareOpen(true); }}
               className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 bg-white dark:bg-graphite-900 hover:bg-graphite-50 dark:hover:bg-graphite-800"
@@ -2762,7 +2774,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <>
               {/* Before / After Compare */}
               <div className="flex-1 bg-graphite-900 min-h-0 p-2 md:p-4">
-            {compareMode === "slider" && currentPhoto ? (
+            {compareSliderOn && currentPhoto?.originalUrl && currentPhoto?.editedUrl ? (
+              <div className="w-full h-full rounded-lg overflow-hidden">
+                <CompareSlider
+                  beforeUrl={currentPhoto.originalUrl}
+                  afterUrl={currentPhoto.editedUrl}
+                  alt={`Photo ${currentIndex + 1}`}
+                />
+              </div>
+            ) : compareMode === "slider" && currentPhoto ? (
               <div className="w-full h-full rounded-lg overflow-hidden">
                 <BeforeAfterSlider
                   beforeUrl={currentPhoto.originalUrl || `/api/jobs/${job.id}/photos/${currentPhoto.id}/original`}
@@ -2936,11 +2956,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </>
           )}
 
-          {/* EXIF Info Panel */}
+          {/* EXIF metadata popover */}
           {currentPhoto && (
-            <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-3">
-              <ExifPanel exifData={currentPhoto.exifData} imageUrl={currentPhoto.editedUrl || currentPhoto.originalUrl} widthPx={(currentPhoto as any).widthPx} heightPx={(currentPhoto as any).heightPx} />
-            </div>
+            <ExifPanel
+              photoId={currentPhoto.id}
+              open={exifPanelOpen}
+              onClose={() => setExifPanelOpen(false)}
+            />
           )}
 
           {/* Enhancement Version History */}
@@ -3062,6 +3084,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 title={pinMode ? "Click on the photo to drop a pin" : "Annotate photo with pins"}
               >
                 {pinMode ? "📍 Pin mode (click to add)" : "📍 Annotate"}
+              </button>
+              {/* EXIF metadata toggle */}
+              <button
+                onClick={() => setExifPanelOpen((v) => !v)}
+                className={`text-xs px-3 py-1.5 rounded ${exifPanelOpen ? "bg-cyan text-white" : "border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300"}`}
+                title="View detailed EXIF metadata"
+              >
+                🔬 EXIF
               </button>
               {/* View Mode Toggle */}
               <div className="flex gap-1 items-center">

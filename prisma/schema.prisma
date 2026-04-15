@@ -28,6 +28,7 @@ model User {
   twoFactorSecret   String?
   watermarkLogoPath String?  // internal Dropbox path to logo PNG
   weeklyDigest      Boolean  @default(true)
+  timezone          String?   // IANA format, e.g. "America/Toronto"
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   jobs               Job[]
@@ -36,6 +37,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   loginRecords       LoginRecord[]
   notifications      Notification[]
+  apiKeys            ApiKey[]
 }
 
 model LoginRecord {
@@ -266,4 +268,19 @@ model FeatureFlag {
   enabled     Boolean  @default(false)
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  keyHash    String    @unique
+  keyPrefix  String
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([userId])
+  @@index([keyHash])
 }

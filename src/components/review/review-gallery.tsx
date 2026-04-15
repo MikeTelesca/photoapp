@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   ChevronLeftIcon,
@@ -70,6 +70,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [savingPreset, setSavingPreset] = useState(false);
   const [compareMode, setCompareMode] = useState<"split" | "slider">("split");
   const [showMobileNav, setShowMobileNav] = useState(false);
+  const [twilightMenuOpen, setTwilightMenuOpen] = useState(false);
+  const twilightMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -455,6 +457,19 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleApprove, handleReject, goNext, goPrev]);
+
+  // Close twilight menu when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (twilightMenuRef.current && !twilightMenuRef.current.contains(e.target as Node)) {
+        setTwilightMenuOpen(false);
+      }
+    }
+    if (twilightMenuOpen) {
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }
+  }, [twilightMenuOpen]);
 
   // Poll for photo updates when job is processing or enhancing.
   // This lets the UI recover state after a page refresh or navigation.

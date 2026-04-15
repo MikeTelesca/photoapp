@@ -59,6 +59,24 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    // Check monthly cost limit
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const monthlyCostResult = await prisma.job.aggregate({
+      where: { photographerId: job.photographerId, createdAt: { gte: startOfMonth } },
+      _sum: { cost: true },
+    });
+    const monthlyCost = monthlyCostResult._sum.cost || 0;
+
+    const userRecord = await prisma.user.findUnique({ where: { id: job.photographerId } });
+    const limit = (userRecord as any)?.monthlyAiCostLimit ?? 50;
+
+    if (monthlyCost + AI_COST_PER_IMAGE > limit) {
+      return NextResponse.json({
+        error: `Monthly AI cost limit exceeded ($${monthlyCost.toFixed(2)} / $${limit.toFixed(2)}). Contact admin to increase limit.`,
+        limitExceeded: true,
+      }, { status: 402 });
+    }
+
     // Always check database for preset prompt - this lets users edit prompts in the UI
     let customPresetPrompt: string | null = null;
     const dbPreset = await prisma.preset.findFirst({ where: { slug: job.preset } });
@@ -115,7 +133,8 @@ export async function POST(
     let result;
 
     if (makeTwilight) {
-      result = await convertToTwilight(imageBuffer, mimeType, photo.isExterior, customInstructions);
+      const twilightStyle = (photo as any).twilightStyle || "warm-dusk";
+      result = await convertToTwilight(bracketBuffers, mimeType, photo.isExterior, customInstructions, twilightStyle);
     } else {
       // Analyze photo for detections
       if (!photo.detections || photo.detections === "[]") {

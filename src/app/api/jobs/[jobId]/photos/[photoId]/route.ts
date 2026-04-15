@@ -21,6 +21,7 @@ export async function PATCH(
     "customInstructions",
     "isTwilight",
     "twilightInstructions",
+    "twilightStyle",
     "editedUrl",
   ] as const;
   for (const field of allowedFields) {

@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/api-auth";
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  const { userId } = await params;
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth.error;
+
+  const body = await request.json();
+  const { name, role, monthlyAiCostLimit } = body;
+
+  const data: any = {};
+  if (name !== undefined) data.name = name;
+  if (role !== undefined) data.role = role;
+  if (monthlyAiCostLimit !== undefined) data.monthlyAiCostLimit = parseFloat(monthlyAiCostLimit);
+
+  await prisma.user.update({ where: { id: userId }, data });
+  return NextResponse.json({ success: true });
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }

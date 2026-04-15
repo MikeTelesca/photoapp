@@ -15,6 +15,7 @@ import {
   CameraIcon,
   Bars3Icon,
   XMarkIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 
 const menuItems = [
@@ -25,6 +26,7 @@ const menuItems = [
 ];
 
 const settingsItems = [
+  { label: "Analytics", href: "/analytics", icon: ChartBarIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },

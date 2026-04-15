@@ -13,10 +13,11 @@ model User {
   email     String   @unique
   password  String
   role      String   @default("photographer") // "admin" or "photographer"
-  avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  jobs      Job[]
+  avatarUrl          String?
+  monthlyAiCostLimit Float   @default(50)  // Default $50/month per user
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  jobs               Job[]
 }
 
 model Job {
@@ -59,6 +60,7 @@ model Photo {
   isExterior           Boolean  @default(false)
   isTwilight           Boolean  @default(false)
   twilightInstructions String?
+  twilightStyle        String?  // "warm-dusk", "blue-hour", "deep-night"
   customInstructions   String?
   detections           String   @default("[]") // JSON array stored as string
   bracketGroup         Int?     // which bracket group this belongs to

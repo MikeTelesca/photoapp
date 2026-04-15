@@ -11,6 +11,8 @@ interface User {
   email: string;
   role: string;
   jobCount: number;
+  monthlyAiCostLimit?: number;
+  monthlyUsage?: number;
   createdAt: string;
 }
 
@@ -124,6 +126,31 @@ export function PhotographersManager({ initialUsers }: { initialUsers: User[] })
                   {user.role}
                 </span>
                 <span className="text-xs text-graphite-400">{user.jobCount} jobs</span>
+                {user.role !== "admin" && (
+                  <div className="flex flex-col items-end gap-0.5">
+                    <input
+                      type="number"
+                      defaultValue={user.monthlyAiCostLimit ?? 50}
+                      step="10"
+                      min="0"
+                      className="w-20 px-2 py-1 text-xs border border-graphite-200 rounded"
+                      onBlur={async (e) => {
+                        const newLimit = parseFloat(e.target.value);
+                        if (!isNaN(newLimit)) {
+                          await fetch(`/api/users/${user.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ monthlyAiCostLimit: newLimit }),
+                          });
+                        }
+                      }}
+                      title="Monthly AI cost limit ($)"
+                    />
+                    <div className="text-[10px] text-graphite-400">
+                      ${(user.monthlyUsage?.toFixed(2) || "0.00")} / ${user.monthlyAiCostLimit ?? 50}
+                    </div>
+                  </div>
+                )}
                 {user.role !== "admin" && (
                   <button
                     onClick={() => handleDelete(user.id)}

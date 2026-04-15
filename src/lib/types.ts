@@ -33,6 +33,7 @@ export interface Photo {
   isExterior: boolean;
   isTwilight: boolean;
   twilightInstructions: string | null;
+  twilightStyle?: string | null;
   customInstructions: string | null;
   detections: string[];
   createdAt: Date;

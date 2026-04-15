@@ -79,28 +79,64 @@ The output must be THE EXACT SAME SCENE — same sky, same grass, same view thro
 Output the corrected image.`,
 };
 
-const twilightExteriorPrompt = `Convert this daytime EXTERIOR photo into a stunning twilight/dusk shot:
-
-- SKY: Beautiful twilight sky — deep blue to warm orange/pink gradient near the horizon.
-- INTERIOR LIGHTS: All windows should glow with warm golden/amber light from inside.
-- EXTERIOR LIGHTS: Turn on ALL exterior lighting — landscape lights, path lights, porch lights, sconces, pot lights.
-- WARM ATMOSPHERE: Overall warm, inviting evening mood.
+const twilightExteriorPrompts: Record<string, string> = {
+  "warm-dusk": `Convert this daytime EXTERIOR photo into a stunning warm dusk shot:
+- SKY: Beautiful warm dusk sky — orange/pink/coral gradient near the horizon transitioning to deep blue above. Think golden hour just after sunset.
+- INTERIOR LIGHTS: All windows glow with WARM golden/amber light from inside.
+- EXTERIOR LIGHTS: Turn on ALL exterior lighting — landscape lights, path lights, porch lights, sconces, pot lights — warm tone.
+- WARM ATMOSPHERE: Inviting, golden-hour evening mood.
 - Keep all architectural details sharp and clear.
-- The image should look like it was photographed at dusk by a professional.
-- CRITICAL: Do NOT change the house or property. Keep the EXACT same building, architecture, and composition.
+- CRITICAL: Do NOT change the house, property, landscaping. Same building, same composition.
 
-Output the edited image.`;
+Output the edited image.`,
 
-const twilightInteriorPrompt = `Convert this daytime INTERIOR photo into an evening/night ambiance shot:
+  "blue-hour": `Convert this daytime EXTERIOR photo into a stunning BLUE HOUR twilight shot:
+- SKY: Deep cobalt blue sky — that magical 20-minute window after sunset where everything glows blue. Stars optional.
+- INTERIOR LIGHTS: Windows glow with warm WHITE light, contrasting beautifully against the cool blue sky.
+- EXTERIOR LIGHTS: All landscape, path, porch lights ON in warm white.
+- COOL/WARM CONTRAST: The classic blue hour real estate look — cool sky, warm interior glow.
+- Keep all architectural details sharp and clear.
+- CRITICAL: Do NOT change the house, property, landscaping. Same building, same composition.
 
-- LIGHTING: Create warm, cozy evening lighting — table lamps glowing, pendant lights on, warm ambient light throughout.
-- WINDOWS: Through any windows, show a dark blue twilight/evening sky. The exterior should look like dusk or nighttime.
-- MOOD: Warm, inviting, cozy evening atmosphere. Like the lights are on in the evening.
-- KEEP the exact same room, furniture, layout, and composition. Do NOT change the interior design.
-- Do NOT turn this into an exterior shot. This is an INTERIOR photo — keep it as an interior.
-- Keep the image photorealistic.
+Output the edited image.`,
 
-Output the edited image.`;
+  "deep-night": `Convert this daytime EXTERIOR photo into a deep night shot:
+- SKY: Dark navy/black night sky with subtle star detail.
+- INTERIOR LIGHTS: All windows brightly lit with warm interior light.
+- EXTERIOR LIGHTS: All landscape lighting, path lights, porch lights, sconces clearly visible. The lighting should be the focal point.
+- DRAMATIC: Show off the property's exterior lighting design at full effect.
+- Keep all architectural details sharp and clear.
+- CRITICAL: Do NOT change the house, property, landscaping. Same building, same composition.
+
+Output the edited image.`,
+};
+
+const twilightInteriorPrompts: Record<string, string> = {
+  "warm-dusk": `Convert this daytime INTERIOR photo into a warm evening ambiance:
+- LIGHTING: Warm, cozy evening light — table lamps glowing, pendant lights on, warm ambient throughout.
+- WINDOWS: Through any windows, show a dusky orange/pink sky.
+- MOOD: Warm, inviting, cozy evening atmosphere.
+- KEEP the exact same room, furniture, layout. Do NOT change the interior design.
+- Do NOT turn this into an exterior shot.
+
+Output the edited image.`,
+
+  "blue-hour": `Convert this daytime INTERIOR photo into a blue hour interior:
+- LIGHTING: Warm interior lights ON (lamps, pendants), creating warm glow against cool window light.
+- WINDOWS: Show deep blue twilight sky outside.
+- MOOD: Magical blue hour with warm interior contrast.
+- KEEP same room, furniture, layout. INTERIOR shot.
+
+Output the edited image.`,
+
+  "deep-night": `Convert this daytime INTERIOR photo into a night interior:
+- LIGHTING: All interior lights ON, warm and inviting.
+- WINDOWS: Show dark night sky outside.
+- MOOD: Cozy nighttime room with all lights on.
+- KEEP same room, furniture, layout. INTERIOR shot.
+
+Output the edited image.`,
+};
 
 export interface EnhanceResult {
   success: boolean;
@@ -247,75 +283,109 @@ export async function enhancePhoto(
 }
 
 /**
- * Convert a daytime exterior to twilight.
+ * Convert a daytime exterior/interior to twilight with style variants.
+ * Uses the same model cascade as enhancePhoto for reliability.
  */
 export async function convertToTwilight(
-  imageBuffer: Buffer,
+  imageInput: Buffer | Buffer[],
   mimeType: string,
   isExterior: boolean,
-  customInstructions?: string | null
+  customInstructions?: string | null,
+  style: string = "warm-dusk"
 ): Promise<EnhanceResult> {
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3-pro-image-preview",
-      generationConfig: {
-        responseModalities: ["IMAGE", "TEXT"],
-        imageConfig: {
-          imageSize: "4K",
-        },
-      } as Record<string, unknown>,
-    });
-
-    const basePrompt = isExterior ? twilightExteriorPrompt : twilightInteriorPrompt;
+    const prompts = isExterior ? twilightExteriorPrompts : twilightInteriorPrompts;
+    const basePrompt = prompts[style] || prompts["warm-dusk"];
     const prompt = customInstructions
       ? `${basePrompt}\n\nAdditional details: ${customInstructions}`
       : basePrompt;
 
-    const imageBase64 = imageBuffer.toString("base64");
+    const imageBuffers = Array.isArray(imageInput) ? imageInput : [imageInput];
+    const imageParts = imageBuffers.map((buf) => ({
+      inlineData: { mimeType, data: buf.toString("base64") },
+    }));
 
-    // Retry on 503/overload errors with exponential backoff
-    let result;
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
+    if (!apiKey) throw new Error("GOOGLE_AI_API_KEY not set");
+
+    const contents = [{
+      parts: [
+        ...imageParts,
+        { text: prompt },
+      ],
+    }];
+
+    // Same model cascade as enhancePhoto — fail-fast, prefer 4K
+    const models = [
+      { name: "gemini-3-pro-image-preview", config: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { imageSize: "4K" } } },
+      { name: "gemini-3.1-flash-image-preview", config: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { imageSize: "4K" } } },
+      { name: "gemini-3.1-flash-image-preview", config: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { imageSize: "2K" } } },
+      { name: "gemini-2.5-flash-image", config: { responseModalities: ["IMAGE", "TEXT"] } },
+    ];
+
+    let responseData: any = null;
     let lastErr: any;
-    for (let attempt = 0; attempt < 4; attempt++) {
+
+    for (const m of models) {
       try {
-        result = await model.generateContent([
-          { inlineData: { mimeType, data: imageBase64 } },
-          prompt,
-        ]);
+        const apiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${m.name}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents, generationConfig: m.config }),
+          }
+        );
+
+        if (!apiResponse.ok) {
+          const errText = await apiResponse.text();
+          lastErr = new Error(`${m.name} ${apiResponse.status}: ${errText.substring(0, 200)}`);
+          console.log(`[gemini/twilight] ${m.name} ${apiResponse.status}, trying next model`);
+          continue;
+        }
+
+        responseData = await apiResponse.json();
+        const hasImage = responseData?.candidates?.[0]?.content?.parts?.some((p: any) => p.inlineData);
+        if (!hasImage) {
+          lastErr = new Error(`${m.name} returned no image`);
+          console.log(`[gemini/twilight] ${m.name} returned no image, trying next`);
+          responseData = null;
+          continue;
+        }
+
+        console.log(`[gemini/twilight] Success with ${m.name} (style: ${style})`);
         break;
       } catch (err: any) {
         lastErr = err;
-        const msg = err?.message || "";
-        const isRetryable = msg.includes("503") || msg.includes("overload") || msg.includes("UNAVAILABLE") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("429");
-        if (!isRetryable || attempt === 3) throw err;
-        const waitMs = 2000 * Math.pow(2, attempt);
-        console.log(`[gemini] Retryable error (attempt ${attempt + 1}/4), waiting ${waitMs}ms: ${msg.substring(0, 100)}`);
-        await new Promise(r => setTimeout(r, waitMs));
+        console.log(`[gemini/twilight] ${m.name} threw error, trying next: ${err?.message?.substring(0, 100)}`);
       }
     }
-    if (!result) throw lastErr;
 
-    const response = result.response;
-    const candidates = response.candidates;
+    if (!responseData) throw lastErr || new Error("No response from any model");
 
+    const candidates = responseData.candidates;
     if (!candidates || candidates.length === 0) {
-      return { success: false, imageBase64: null, mimeType: "", error: "No response" };
+      return { success: false, imageBase64: null, mimeType: "", error: "No response from Gemini" };
     }
 
     for (const part of candidates[0].content.parts) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const partAny = part as any;
-      if (partAny.inlineData) {
+      if (part.inlineData) {
         return {
           success: true,
-          imageBase64: partAny.inlineData.data as string,
-          mimeType: (partAny.inlineData.mimeType as string) || "image/png",
+          imageBase64: part.inlineData.data,
+          mimeType: part.inlineData.mimeType || "image/png",
           error: null,
         };
       }
     }
 
-    return { success: false, imageBase64: null, mimeType: "", error: "No image in response" };
+    const textPart = candidates[0].content.parts.find((p: any) => p.text);
+    return {
+      success: false,
+      imageBase64: null,
+      mimeType: "",
+      error: `Gemini returned text instead of image: ${textPart?.text?.substring(0, 200) || "unknown"}`,
+    };
   } catch (error: unknown) {
     const err = error as Error;
     return { success: false, imageBase64: null, mimeType: "", error: err.message };

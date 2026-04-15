@@ -54,6 +54,24 @@ export async function POST(
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
+    // Check monthly cost limit
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const monthlyCostResult = await prisma.job.aggregate({
+      where: { photographerId: job.photographerId, createdAt: { gte: startOfMonth } },
+      _sum: { cost: true },
+    });
+    const monthlyCost = monthlyCostResult._sum.cost || 0;
+
+    const user = await prisma.user.findUnique({ where: { id: job.photographerId } });
+    const limit = (user as any)?.monthlyAiCostLimit ?? 50;
+
+    if (monthlyCost + AI_COST_PER_IMAGE > limit) {
+      return NextResponse.json({
+        error: `Monthly AI cost limit exceeded ($${monthlyCost.toFixed(2)} / $${limit.toFixed(2)}). Contact admin to increase limit.`,
+        limitExceeded: true,
+      }, { status: 402 });
+    }
+
     // Atomic claim - race-safe
     const claimed = await prisma.$transaction(async (tx) => {
       const candidate = await tx.photo.findFirst({

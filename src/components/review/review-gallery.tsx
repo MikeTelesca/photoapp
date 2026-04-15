@@ -2150,7 +2150,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {/* EXIF Info Panel */}
           {currentPhoto && (
             <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-3">
-              <ExifPanel exifData={currentPhoto.exifData} />
+              <ExifPanel exifData={currentPhoto.exifData} imageUrl={currentPhoto.editedUrl || currentPhoto.originalUrl} widthPx={(currentPhoto as any).widthPx} heightPx={(currentPhoto as any).heightPx} />
             </div>
           )}
 

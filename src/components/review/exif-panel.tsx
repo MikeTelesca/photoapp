@@ -1,22 +1,51 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Props {
   exifData: string | null | undefined;
+  imageUrl?: string | null;
+  widthPx?: number | null;
+  heightPx?: number | null;
 }
 
-export function ExifPanel({ exifData }: Props) {
+export function ExifPanel({ exifData, imageUrl, widthPx, heightPx }: Props) {
   const [open, setOpen] = useState(false);
+  const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
 
-  if (!exifData) return null;
+  // Load dimensions from image or use provided values
+  useEffect(() => {
+    if (!open || !imageUrl) return;
+
+    // If we have database values, use them immediately
+    if (widthPx && heightPx) {
+      setDims({ w: widthPx, h: heightPx });
+      return;
+    }
+
+    // Otherwise fetch from image
+    const img = new Image();
+    img.onload = () => {
+      setDims({ w: img.naturalWidth, h: img.naturalHeight });
+    };
+    img.onerror = () => {
+      // Silent fail - just won't display dimensions
+    };
+    img.src = imageUrl;
+  }, [open, imageUrl, widthPx, heightPx]);
+
+  if (!exifData && !imageUrl) return null;
 
   let data: any = null;
-  try { data = JSON.parse(exifData); } catch { return null; }
-  if (!data) return null;
+  if (exifData) {
+    try { data = JSON.parse(exifData); } catch { data = null; }
+  }
+  if (!data && !imageUrl) return null;
 
   // Flatten commonly-useful fields
-  const primary = data.photos?.[0] || data;
+  const primary = data?.photos?.[0] || data || {};
   const rows: [string, string | number | undefined][] = [
+    ["Dimensions", dims ? `${dims.w} × ${dims.h}` : undefined],
+    ["Resolution", dims ? `${(dims.w * dims.h / 1_000_000).toFixed(1)} MP` : undefined],
     ["Camera", [primary.make, primary.model].filter(Boolean).join(" ")],
     ["Lens", primary.lens || primary.lensModel],
     ["Focal length", primary.focalLength ? `${primary.focalLength}mm` : undefined],
@@ -25,7 +54,7 @@ export function ExifPanel({ exifData }: Props) {
     ["ISO", primary.iso || primary.isoSpeedRatings],
     ["Exposure bias", primary.exposureBias],
     ["Date taken", primary.dateTaken || primary.dateTimeOriginal],
-    ["Brackets", data.photos?.length],
+    ["Brackets", data?.photos?.length],
   ];
 
   const visible = rows.filter(r => r[1] !== undefined && r[1] !== null && r[1] !== "");

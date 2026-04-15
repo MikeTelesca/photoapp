@@ -112,6 +112,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const [thumbFilter, setThumbFilter] = useState<"all" | "favorites" | "pending" | "edited" | "approved" | "rejected">("all");
   const [showHelpOverlay, setShowHelpOverlay] = useState(false);
   const [rejectionReasonDefault, setRejectionReasonDefault] = useState<string>("");
+  const [mlsPreset, setMlsPreset] = useState("mls-hi");
 
   useEffect(() => {
     fetch("/api/presets")
@@ -827,6 +828,27 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <ArrowDownTrayIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Download ZIP</span>
           </a>
+          <div className="flex gap-1">
+            <select
+              value={mlsPreset}
+              onChange={(e) => setMlsPreset(e.target.value)}
+              className="text-xs px-2 py-1.5 rounded border border-graphite-200"
+            >
+              <option value="mls-standard">MLS Standard (1024)</option>
+              <option value="mls-hi">MLS Hi-Res (1920)</option>
+              <option value="mls-4k">MLS 4K (3840)</option>
+              <option value="web">Web (1600)</option>
+              <option value="social">Social Square (1080)</option>
+            </select>
+            <a
+              href={`/api/jobs/${job.id}/download-mls?preset=${mlsPreset}`}
+              className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold hover:bg-cyan-600"
+              onClick={(e) => e.stopPropagation()}
+              download
+            >
+              Download MLS
+            </a>
+          </div>
           <Button variant="outline" onClick={handleDropboxFolder} title="Open Dropbox folder">
             <FolderOpenIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Dropbox</span>

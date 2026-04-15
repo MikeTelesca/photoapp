@@ -156,9 +156,21 @@ model Photo {
   updatedAt            DateTime @updatedAt
   comments             PhotoComment[]
   ratings              PhotoRating[]
+  versions             PhotoVersion[]
 
   @@index([jobId, status])
   @@index([jobId, orderIndex])
+}
+
+model PhotoVersion {
+  id        String   @id @default(cuid())
+  photoId   String
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  url       String
+  preset    String?
+  createdAt DateTime @default(now())
+
+  @@index([photoId, createdAt])
 }
 
 model PhotoComment {

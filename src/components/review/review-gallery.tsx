@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { ZoomableImage } from "./zoomable-image";
 import Link from "next/link";
 import {
@@ -623,6 +626,20 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         }
       })()
     : [];
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = photos.findIndex((p) => p.id === active.id);
+    const newIdx = photos.findIndex((p) => p.id === over.id);
+    const newPhotos = arrayMove(photos, oldIdx, newIdx);
+    setJob((prev) => ({ ...prev, photos: newPhotos }));
+    fetch(`/api/jobs/${job.id}/reorder`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ photoIds: newPhotos.map((p) => p.id) }),
+    });
+  }
 
   return (
     <div className="flex flex-col h-screen">

@@ -38,6 +38,7 @@ const menuItems = [
 const settingsItems = [
   { label: "Analytics", href: "/analytics", icon: ChartBarIcon },
   { label: "Billing", href: "/billing", icon: CreditCardIcon },
+  { label: "Users", href: "/admin/users", icon: UsersIcon },
   { label: "Presets", href: "/presets", icon: PaintBrushIcon },
   { label: "Photographers", href: "/photographers", icon: UsersIcon },
   { label: "Settings", href: "/settings", icon: Cog6ToothIcon },

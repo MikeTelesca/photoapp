@@ -419,6 +419,17 @@ export async function POST(
       console.warn("[start-enhance] quality analysis failed (non-fatal):", qErr);
     }
 
+    // Save old edited URL as a version before overwriting
+    if (photo.editedUrl) {
+      await prisma.photoVersion.create({
+        data: {
+          photoId: photo.id,
+          url: photo.editedUrl,
+          preset: job.preset,
+        },
+      }).catch(err => console.error("version save err:", err));
+    }
+
     await prisma.photo.update({
       where: { id: photo.id },
       data: { editedUrl, status: "edited", errorMessage: null, errorAttempts: 0, qualityFlags },

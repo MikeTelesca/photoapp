@@ -27,6 +27,7 @@ import { BeforeAfterSlider } from "./before-after-slider";
 import { ReingestButton } from "./reingest-button";
 import { ShareButton } from "./share-button";
 import { ExifPanel } from "./exif-panel";
+import { PhotoVersions } from "./photo-versions";
 import { JobTimeline } from "./job-timeline";
 import { JobComments } from "./job-comments";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
@@ -2113,6 +2114,13 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {currentPhoto && (
             <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-3">
               <ExifPanel exifData={currentPhoto.exifData} />
+            </div>
+          )}
+
+          {/* Enhancement Version History */}
+          {currentPhoto && (
+            <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
+              <PhotoVersions jobId={job.id} photoId={currentPhoto.id} />
             </div>
           )}
 

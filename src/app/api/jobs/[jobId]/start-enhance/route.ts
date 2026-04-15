@@ -203,11 +203,8 @@ export async function POST(
       return NextResponse.json({ error: result.error, photoId: photo.id });
     }
 
-    // Upload edited image to Dropbox
+    // Upload edited image to Dropbox - upscale to 4K if AI returned smaller (sharp already imported above)
     const aiOutputBuffer = Buffer.from(result.imageBase64!, "base64");
-
-    // Upscale to 4K if AI returned smaller (e.g. fallback to 2.5 Flash)
-    const sharp = (await import("sharp")).default;
     const aiMeta = await sharp(aiOutputBuffer).metadata();
     const aiWidth = aiMeta.width || 1024;
     const TARGET_WIDTH = 3840; // 4K width

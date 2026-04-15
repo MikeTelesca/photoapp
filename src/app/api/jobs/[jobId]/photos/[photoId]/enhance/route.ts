@@ -173,10 +173,8 @@ export async function POST(
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
-    // Store edited image - upscale to 4K if AI returned smaller
+    // Store edited image - upscale to 4K if AI returned smaller (sharp already imported above)
     const aiOutputBuffer = Buffer.from(result.imageBase64!, "base64");
-
-    const sharp = (await import("sharp")).default;
     const aiMeta = await sharp(aiOutputBuffer).metadata();
     const aiWidth = aiMeta.width || 1024;
     const TARGET_WIDTH = 3840;

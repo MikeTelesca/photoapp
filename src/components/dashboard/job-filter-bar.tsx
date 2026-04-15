@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import type { Job } from "@/lib/types";
 import { tagColor } from "@/lib/tag-color";
 import { loadFilters, saveFilter, deleteFilter, type SavedFilter } from "@/lib/dashboard-filters";
@@ -30,6 +31,9 @@ const BUCKET_ORDER = ["Pinned", "Today", "Yesterday", "This week", "This month",
 type Density = "compact" | "normal" | "comfortable";
 
 export function JobFilterBar({ jobs }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [preset, setPreset] = useState<string>("all");
@@ -44,6 +48,20 @@ export function JobFilterBar({ jobs }: Props) {
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [density, setDensity] = useState<Density>("normal");
+
+  // On mount, hydrate filter state from URL params
+  useEffect(() => {
+    const q = searchParams.get("q");
+    const st = searchParams.get("status");
+    const pr = searchParams.get("preset");
+    const tg = searchParams.get("tag");
+
+    if (q) setSearch(q);
+    if (st) setStatus(st);
+    if (pr) setPreset(pr);
+    if (tg) setActiveTag(tg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load groupByDate preference from localStorage
   useEffect(() => {
@@ -65,6 +83,23 @@ export function JobFilterBar({ jobs }: Props) {
   useEffect(() => {
     setSavedFilters(loadFilters());
   }, []);
+
+  // On filter state change, update URL (debounced)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (search) params.set("q", search);
+      if (status && status !== "all") params.set("status", status);
+      if (preset && preset !== "all") params.set("preset", preset);
+      if (activeTag) params.set("tag", activeTag);
+
+      const queryString = params.toString();
+      const newUrl = queryString ? `?${queryString}` : window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, status, preset, activeTag]);
 
   // Save groupByDate preference to localStorage
   useEffect(() => {

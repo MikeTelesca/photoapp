@@ -23,6 +23,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if ("active" in body) allowed.active = !!body.active;
   if ("message" in body) allowed.message = String(body.message).trim();
   if ("type" in body) allowed.type = String(body.type);
+  if ("level" in body) allowed.level = String(body.level);
+  if ("expiresAt" in body) allowed.expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;
 
   try {
     const updated = await prisma.announcement.update({ where: { id }, data: allowed });

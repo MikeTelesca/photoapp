@@ -6,7 +6,7 @@ import { WelcomeModal } from "@/components/onboarding/welcome-modal";
 import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
 import { ImpersonateBanner } from "@/components/layout/impersonate-banner";
 import { DropboxAlertBanner } from "@/components/layout/dropbox-alert-banner";
-import { AnnouncementsBanner } from "@/components/announcements/banner";
+import { AnnouncementBanner } from "@/components/layout/announcement-banner";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { ShortcutCheatsheet } from "@/components/layout/shortcut-cheatsheet";
 import { LiveProgressIndicator } from "@/components/dashboard/live-progress-indicator";
@@ -34,7 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <ImpersonationBanner />
       <ImpersonateBanner />
       <DropboxAlertBanner />
-      <AnnouncementsBanner />
+      <AnnouncementBanner />
       <div className="flex flex-1">
         <Sidebar />
         <MainContent>{children}</MainContent>

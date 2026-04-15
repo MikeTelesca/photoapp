@@ -147,6 +147,9 @@ model Job {
   coverPhotoId        String?
   colorLabel          String?  // null | "red" | "amber" | "emerald" | "blue" | "purple" | "pink"
   deletedAt           DateTime?  // soft-delete timestamp; null = not trashed
+  clientApprovalStatus String?  // null | "pending" | "approved" | "changes_requested"
+  clientApprovedAt    DateTime?
+  clientApprovalNote  String?
   createdAt           DateTime @default(now())
   updatedAt        DateTime @updatedAt
   photographer     User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)
@@ -195,6 +198,7 @@ model Photo {
   rejectionReason      String?
   note                 String?
   caption              String?
+  customFilename       String?  // user-chosen base filename; extension preserved from original on export
   colorLabel           String?  // null | "red" | "amber" | "emerald" | "blue" | "purple" | "pink"
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -354,14 +358,17 @@ model Notification {
 }
 
 model Announcement {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   message   String
-  type      String   @default("info") // "info", "warning", "success"
-  active    Boolean  @default(true)
+  type      String    @default("info") // legacy: "info", "warning", "success"
+  level     String    @default("info") // "info" | "warning" | "critical"
+  active    Boolean   @default(true)
   createdBy String?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
 
   @@index([active, createdAt])
+  @@index([active, expiresAt])
 }
 
 model FeatureFlag {

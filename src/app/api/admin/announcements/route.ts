@@ -17,7 +17,12 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 
-  const { message, type = "info" } = await request.json();
+  const body = await request.json();
+  const message: string = body.message;
+  // Support both `level` (new) and `type` (legacy). Default info.
+  const level: string = body.level || body.type || "info";
+  const type: string = body.type || body.level || "info";
+  const expiresAt: Date | null = body.expiresAt ? new Date(body.expiresAt) : null;
   if (!message || !message.trim()) return NextResponse.json({ error: "message required" }, { status: 400 });
 
   try {
@@ -25,6 +30,8 @@ export async function POST(request: NextRequest) {
       data: {
         message: message.trim(),
         type,
+        level,
+        expiresAt,
         createdBy: auth.userId,
       },
     });

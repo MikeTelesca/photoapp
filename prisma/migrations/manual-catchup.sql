@@ -344,3 +344,22 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "tagsInheritFromJob" BOOLEAN NOT NUL
 -- Per-photo retouch request note (free-text like "remove car from driveway")
 -- ---------------------------------------------------------------------------
 ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "retouchRequest" TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Announcement: add level + expiresAt for broadcast banner system
+-- ---------------------------------------------------------------------------
+ALTER TABLE "Announcement" ADD COLUMN IF NOT EXISTS "level" TEXT NOT NULL DEFAULT 'info';
+ALTER TABLE "Announcement" ADD COLUMN IF NOT EXISTS "expiresAt" TIMESTAMP(3);
+CREATE INDEX IF NOT EXISTS "Announcement_active_expiresAt_idx" ON "Announcement"("active", "expiresAt");
+
+-- ---------------------------------------------------------------------------
+-- Per-photo custom filename (user-chosen base name for ZIP export)
+-- ---------------------------------------------------------------------------
+ALTER TABLE "Photo" ADD COLUMN IF NOT EXISTS "customFilename" TEXT;
+
+-- ---------------------------------------------------------------------------
+-- Client-approval workflow on share link
+-- ---------------------------------------------------------------------------
+ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "clientApprovalStatus" TEXT;
+ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "clientApprovedAt" TIMESTAMP(3);
+ALTER TABLE "Job" ADD COLUMN IF NOT EXISTS "clientApprovalNote" TEXT;

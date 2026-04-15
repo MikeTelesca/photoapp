@@ -218,8 +218,7 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             })()}
           </div>
           <div
-            onMouseEnter={(e) => canPreview && setHover({ x: e.clientX, y: e.clientY })}
-            onMouseMove={(e) => canPreview && hover && setHover({ x: e.clientX, y: e.clientY })}
+            /* hover preview disabled — was getting stuck open + causing freezes */
             onMouseLeave={() => setHover(null)}
           >
             <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white inline-flex items-center">

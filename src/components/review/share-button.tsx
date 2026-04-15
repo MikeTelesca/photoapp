@@ -55,6 +55,20 @@ export function ShareButton({
     alert(password ? "Password set" : "Password removed");
   }
 
+  async function setExpiry() {
+    const days = window.prompt("Expire in how many days? (leave blank for no expiry)");
+    if (days === null) return;
+    const expiresAt = days && parseInt(days) > 0
+      ? new Date(Date.now() + parseInt(days) * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+    await fetch(`/api/jobs/${jobId}/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresAt }),
+    });
+    alert(expiresAt ? `Link will expire on ${new Date(expiresAt).toLocaleDateString()}` : "Expiry removed");
+  }
+
   async function disable() {
     await fetch(`/api/jobs/${jobId}/share`, { method: "DELETE" });
     setEnabled(false);
@@ -132,6 +146,12 @@ export function ShareButton({
           className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
         >
           🔒 Set password
+        </button>
+        <button
+          onClick={setExpiry}
+          className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+        >
+          ⏰ Set expiry
         </button>
         <button
           onClick={disable}

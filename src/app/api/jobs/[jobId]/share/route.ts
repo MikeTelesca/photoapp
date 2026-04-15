@@ -14,19 +14,27 @@ export async function POST(
 
   const body = await req.json().catch(() => ({}));
   const password = body?.password;
+  const expiresAt = body?.expiresAt;
 
   let hash: string | null = null;
   if (password && typeof password === "string" && password.length > 0) {
     hash = await bcrypt.hash(password, 10);
   }
 
+  let expiry: Date | null = null;
+  if (expiresAt) {
+    const d = new Date(expiresAt);
+    if (!isNaN(d.getTime())) expiry = d;
+  }
+
   const token = crypto.randomBytes(16).toString("hex");
   const job = await prisma.job.update({
     where: { id: jobId },
-    data: { 
-      shareToken: token, 
+    data: {
+      shareToken: token,
       shareEnabled: true,
       sharePassword: hash,
+      shareExpiresAt: expiry,
     },
   });
 

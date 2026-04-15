@@ -97,6 +97,7 @@ model Job {
   shareToken          String?  @unique
   shareEnabled        Boolean  @default(false)
   sharePassword       String?  // bcrypt hash when set
+  shareExpiresAt      DateTime?
   listingDescription  String?
   archivedAt          DateTime?
   dropboxSyncPath     String?

@@ -31,6 +31,22 @@ export default async function SharePage({
 
   if (!job) notFound();
 
+  // Check if share link has expired
+  if (job.shareExpiresAt && new Date(job.shareExpiresAt) < new Date()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-graphite-50">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
+          <div className="text-4xl mb-3">⏰</div>
+          <h1 className="text-xl font-bold text-graphite-900 mb-2">Link expired</h1>
+          <p className="text-sm text-graphite-600">
+            This share link expired on {new Date(job.shareExpiresAt).toLocaleDateString()}.
+            Please contact the photographer for a new link.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // If password required, check unlock cookie
   if (job.sharePassword) {
     const cookieStore = await cookies();

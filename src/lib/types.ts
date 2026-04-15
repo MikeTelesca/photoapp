@@ -38,6 +38,7 @@ export interface Photo {
   editedUrl: string | null;
   isExterior: boolean;
   isTwilight: boolean;
+  isFavorite?: boolean;
   twilightInstructions: string | null;
   twilightStyle?: string | null;
   customInstructions: string | null;

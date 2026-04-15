@@ -63,6 +63,7 @@ model Photo {
   thumbnailUrl         String?
   isExterior           Boolean  @default(false)
   isTwilight           Boolean  @default(false)
+  isFavorite           Boolean  @default(false)
   twilightInstructions String?
   twilightStyle        String?  // "warm-dusk", "blue-hour", "deep-night"
   customInstructions   String?

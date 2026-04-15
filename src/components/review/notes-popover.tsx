@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
+import { Markdown } from "@/components/ui/markdown";
 
 export function NotesPopover({ jobId, initialNotes }: { jobId: string; initialNotes: string | null }) {
   const [open, setOpen] = useState(false);
@@ -73,6 +74,13 @@ export function NotesPopover({ jobId, initialNotes }: { jobId: string; initialNo
             placeholder="Add notes about this job - special instructions, client preferences, etc."
             className="w-full px-3 py-2 rounded-lg border border-graphite-200 text-xs focus:outline-none focus:border-cyan resize-none"
           />
+          <div className="text-[10px] text-graphite-400 mt-1">Markdown supported — **bold**, lists, [links](url)</div>
+          {hasNotes && (
+            <div className="mt-3 pt-3 border-t border-graphite-200">
+              <span className="text-[10px] font-semibold text-graphite-600 block mb-2">Preview:</span>
+              <Markdown>{notes}</Markdown>
+            </div>
+          )}
         </div>
       )}
     </div>

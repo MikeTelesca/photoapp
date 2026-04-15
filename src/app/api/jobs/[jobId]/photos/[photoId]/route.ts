@@ -20,6 +20,7 @@ export async function PATCH(
     "status",
     "customInstructions",
     "isTwilight",
+    "isFavorite",
     "twilightInstructions",
     "twilightStyle",
     "editedUrl",

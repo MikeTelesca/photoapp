@@ -40,6 +40,7 @@ export function BudgetInput({ initial }: { initial: number }) {
       <button
         onClick={save}
         disabled={saving}
+        data-save
         className="text-xs px-3 py-1 rounded bg-cyan text-white font-semibold disabled:opacity-50"
       >
         {saved ? "Saved ✓" : saving ? "Saving..." : "Save"}

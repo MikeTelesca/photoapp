@@ -411,6 +411,9 @@ model JobComment {
   authorId  String
   author    User     @relation("JobCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   body      String
+  parentId  String?
+  parent    JobComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies   JobComment[] @relation("CommentReplies")
   createdAt DateTime @default(now())
 
   @@index([jobId, createdAt])

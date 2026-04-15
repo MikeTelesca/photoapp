@@ -17,6 +17,7 @@ const SECTIONS: Section[] = [
     shortcuts: [
       { keys: ["⌘", "N"], action: "New job" },
       { keys: ["⌘", ","], action: "Settings" },
+      { keys: ["⌘", "S"], action: "Save current form" },
       { keys: ["⌘", "K"], action: "Open command palette" },
       { keys: ["?"], action: "Show this cheatsheet" },
       { keys: ["Esc"], action: "Close modal / overlay" },

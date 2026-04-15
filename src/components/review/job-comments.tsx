@@ -6,6 +6,7 @@ interface Comment {
   id: string;
   body: string;
   createdAt: string;
+  parentId?: string | null;
   author?: { name?: string | null; email?: string | null } | null;
   reactions?: Record<string, number>;
 }
@@ -17,6 +18,8 @@ export function JobComments({ jobId }: { jobId: string }) {
   const [posting, setPosting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyBody, setReplyBody] = useState("");
 
   async function load() {
     try {
@@ -46,6 +49,20 @@ export function JobComments({ jobId }: { jobId: string }) {
     } finally {
       setPosting(false);
     }
+  }
+
+  async function postReply() {
+    if (!replyingTo || !replyBody.trim()) return;
+    try {
+      await fetch(`/api/jobs/${jobId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: replyBody, parentId: replyingTo }),
+      });
+      setReplyingTo(null);
+      setReplyBody("");
+      load();
+    } catch {}
   }
 
   async function del(id: string) {

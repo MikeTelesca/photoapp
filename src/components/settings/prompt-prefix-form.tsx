@@ -51,6 +51,7 @@ export function PromptPrefixForm({ initial }: Props) {
         <button
           onClick={save}
           disabled={saving}
+          data-save
           className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold"
         >
           {saving ? "Saving..." : "Save"}

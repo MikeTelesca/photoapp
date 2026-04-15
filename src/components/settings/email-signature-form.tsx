@@ -72,6 +72,7 @@ export function EmailSignatureForm({ initial, initialShare }: Props) {
         <button
           onClick={save}
           disabled={saving}
+          data-save
           className="text-xs px-3 py-1 rounded bg-cyan text-white font-semibold"
         >
           {saving ? "Saving..." : "Save"}

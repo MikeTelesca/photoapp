@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { ShareAnalyticsModal } from "./share-analytics-modal";
 
 function formatTimeAgo(date: Date): string {
   const diff = Date.now() - date.getTime();
@@ -28,6 +29,7 @@ export function ShareButton({
   const [enabled, setEnabled] = useState(initialEnabled);
   const [copied, setCopied] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [emailTo, setEmailTo] = useState("");
   const [emailPw, setEmailPw] = useState("");
   const [emailMsg, setEmailMsg] = useState("");
@@ -187,6 +189,12 @@ export function ShareButton({
           ⏰ Set expiry
         </button>
         <button
+          onClick={() => setAnalyticsOpen(true)}
+          className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
+        >
+          📊 Analytics
+        </button>
+        <button
           onClick={disable}
           className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-900 text-graphite-700 dark:text-graphite-200 hover:bg-graphite-50 dark:hover:bg-graphite-800"
         >
@@ -281,6 +289,8 @@ export function ShareButton({
           </div>
         </div>
       )}
+
+      <ShareAnalyticsModal jobId={jobId} open={analyticsOpen} onClose={() => setAnalyticsOpen(false)} />
     </div>
   );
 }

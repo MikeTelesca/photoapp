@@ -36,7 +36,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
 
-  const { body } = await request.json();
+  const { body, parentId } = await request.json();
   if (!body || !body.trim()) {
     return NextResponse.json({ error: "body required" }, { status: 400 });
   }
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       jobId,
       authorId: access.userId,
       body: body.trim().slice(0, 2000),
+      parentId: parentId || null,
     },
     include: { author: { select: { name: true, email: true } } },
   });

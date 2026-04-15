@@ -14,6 +14,7 @@ import { EmailNotificationToggle } from "@/components/settings/email-notificatio
 import { InvoiceSettingsForm } from "@/components/settings/invoice-settings-form";
 import { WebhookForm } from "@/components/settings/webhook-form";
 import { TwoFactorForm } from "@/components/settings/two-factor-form";
+import { WatermarkLogoUpload } from "@/components/settings/watermark-logo-upload";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function SettingsPage() {
   let emailNotificationsEnabled = true;
   let slackWebhookUrl: string | null = null;
   let twoFactorEnabled = false;
+  let watermarkLogoPath: string | null = null;
   let invoiceSettings = {
     businessName: "",
     businessEmail: "",
@@ -47,11 +49,13 @@ export default async function SettingsPage() {
         businessAddress: true,
         invoiceRate: true,
         invoicePrefix: true,
+        watermarkLogoPath: true,
       },
     });
     slackWebhookUrl = user?.slackWebhookUrl ?? null;
     emailNotificationsEnabled = user?.emailNotifications ?? true;
     twoFactorEnabled = user?.twoFactorEnabled ?? false;
+    watermarkLogoPath = user?.watermarkLogoPath ?? null;
     if (user) {
       invoiceSettings = {
         businessName: user.businessName ?? "",
@@ -204,6 +208,16 @@ export default async function SettingsPage() {
               initialInvoiceRate={invoiceSettings.invoiceRate}
               initialInvoicePrefix={invoiceSettings.invoicePrefix}
             />
+          </div>
+        </Card>
+
+        {/* Watermark Logo */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Watermark Logo</CardTitle>
+          </CardHeader>
+          <div className="p-4">
+            <WatermarkLogoUpload initial={watermarkLogoPath} />
           </div>
         </Card>
 

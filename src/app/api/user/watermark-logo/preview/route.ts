@@ -10,22 +10,25 @@ export async function GET() {
   const user = await prisma.user.findUnique({ where: { id: auth.userId } });
   if (!user?.watermarkLogoPath) return NextResponse.json({ error: "No logo" }, { status: 404 });
 
-  const token = process.env.DROPBOX_REFRESH_TOKEN ? null : process.env.DROPBOX_ACCESS_TOKEN;
-  if (!token && !process.env.DROPBOX_REFRESH_TOKEN) {
+  const hasRefreshToken = !!process.env.DROPBOX_REFRESH_TOKEN;
+  const hasAccessToken = !!process.env.DROPBOX_ACCESS_TOKEN;
+
+  if (!hasRefreshToken && !hasAccessToken) {
     return NextResponse.json({ error: "No dropbox configured" }, { status: 500 });
   }
 
   try {
-    const dbx = new Dropbox({
-      ...(process.env.DROPBOX_REFRESH_TOKEN
-        ? {
-            clientId: process.env.DROPBOX_APP_KEY,
-            clientSecret: process.env.DROPBOX_APP_SECRET,
-            refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
-          }
-        : { accessToken: token }),
-      fetch: globalThis.fetch,
-    });
+    let dbxConfig: any = { fetch: globalThis.fetch };
+
+    if (hasRefreshToken) {
+      dbxConfig.clientId = process.env.DROPBOX_APP_KEY;
+      dbxConfig.clientSecret = process.env.DROPBOX_APP_SECRET;
+      dbxConfig.refreshToken = process.env.DROPBOX_REFRESH_TOKEN;
+    } else {
+      dbxConfig.accessToken = process.env.DROPBOX_ACCESS_TOKEN;
+    }
+
+    const dbx = new Dropbox(dbxConfig);
 
     const dl = await dbx.filesDownload({ path: user.watermarkLogoPath });
     const buf = (dl.result as any).fileBinary;

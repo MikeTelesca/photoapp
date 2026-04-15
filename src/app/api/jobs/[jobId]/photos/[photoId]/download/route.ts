@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { applyWatermark } from "@/lib/watermark";
 
 // GET /api/jobs/:jobId/photos/:photoId/download
 export async function GET(
@@ -14,7 +15,15 @@ export async function GET(
   try {
     const photo = await prisma.photo.findUnique({
       where: { id: photoId },
-      include: { job: true },
+      include: {
+        job: {
+          include: {
+            photographer: {
+              select: { watermarkLogoPath: true },
+            },
+          },
+        },
+      },
     });
 
     if (!photo || photo.jobId !== jobId) {
@@ -46,27 +55,21 @@ export async function GET(
 
     // Apply watermark if configured
     const watermarkText = photo.job.watermarkText;
-    if (watermarkText && watermarkText.trim().length > 0) {
+    const watermarkLogoPath = photo.job.photographer?.watermarkLogoPath || null;
+    const hasWatermark = watermarkText?.trim().length || watermarkLogoPath;
+
+    if (hasWatermark) {
+      buffer = await applyWatermark(buffer, {
+        watermarkText: watermarkText,
+        watermarkPosition: (photo.job as any).watermarkPosition || "bottom-right",
+        watermarkSize: (photo.job as any).watermarkSize || 32,
+        watermarkOpacity: (photo.job as any).watermarkOpacity ?? 0.7,
+        watermarkLogoPath: watermarkLogoPath,
+      });
+
+      // Convert to JPEG
       const sharp = (await import("sharp")).default;
-      const meta = await sharp(buffer).metadata();
-      const w = meta.width || 1920;
-      const h = meta.height || 1080;
-
-      const fontSize = Math.round(w / 40);
-      const svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-        <text x="${w - 20}" y="${h - 20}" text-anchor="end"
-              font-family="Helvetica, Arial, sans-serif"
-              font-size="${fontSize}"
-              font-weight="600"
-              fill="rgba(255,255,255,0.85)"
-              stroke="rgba(0,0,0,0.5)"
-              stroke-width="1">${watermarkText.replace(/[<>&"']/g, '')}</text>
-      </svg>`;
-
-      buffer = await sharp(buffer)
-        .composite([{ input: Buffer.from(svg), gravity: "southeast" }])
-        .jpeg({ quality: 92 })
-        .toBuffer();
+      buffer = await sharp(buffer).jpeg({ quality: 92 }).toBuffer();
     }
 
     const sanitizedAddress = photo.job.address

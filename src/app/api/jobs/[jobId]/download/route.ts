@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
+import { applyWatermark } from "@/lib/watermark";
 
 export const maxDuration = 300;
 
@@ -21,6 +22,9 @@ export async function GET(
         photos: {
           where: { status: "approved", editedUrl: { not: null } },
           orderBy: { orderIndex: "asc" },
+        },
+        photographer: {
+          select: { watermarkLogoPath: true },
         },
       },
     });
@@ -45,10 +49,8 @@ export async function GET(
         .substring(0, 40);
 
       const watermarkText = job.watermarkText as string | null;
-      let sharpLib: any = null;
-      if (watermarkText && watermarkText.trim().length > 0) {
-        sharpLib = (await import("sharp")).default;
-      }
+      const watermarkLogoPath = job.photographer?.watermarkLogoPath || null;
+      const hasWatermark = watermarkText?.trim().length || watermarkLogoPath;
 
       for (const photo of job.photos) {
         if (!photo.editedUrl) continue;
@@ -67,45 +69,18 @@ export async function GET(
         }
 
         // Apply watermark if configured
-        if (sharpLib && watermarkText && watermarkText.trim().length > 0) {
-          const meta = await sharpLib(buffer).metadata();
-          const w = meta.width || 1920;
-          const h = meta.height || 1080;
+        if (hasWatermark) {
+          buffer = await applyWatermark(buffer, {
+            watermarkText: watermarkText,
+            watermarkPosition: (job as any).watermarkPosition || "bottom-right",
+            watermarkSize: (job as any).watermarkSize || 32,
+            watermarkOpacity: (job as any).watermarkOpacity ?? 0.7,
+            watermarkLogoPath: watermarkLogoPath,
+          });
 
-          const fontSize = (job as any).watermarkSize || 32;
-          const opacity = (job as any).watermarkOpacity ?? 0.7;
-          const position = (job as any).watermarkPosition || "bottom-right";
-
-          const gravityMap: Record<string, string> = {
-            "top-left": "northwest",
-            "top-right": "northeast",
-            "bottom-left": "southwest",
-            "bottom-right": "southeast",
-            "center": "center",
-          };
-          const gravity = gravityMap[position] || "southeast";
-
-          const textX = position.includes("right") ? "95%" : position.includes("left") ? "5%" : "50%";
-          const textAnchor = position.includes("right") ? "end" : position.includes("left") ? "start" : "middle";
-          const svgHeight = fontSize * 2 + 8;
-          const safeText = watermarkText.replace(/[<>&"']/g, '');
-
-          const svg = `<svg width="${w}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">
-            <text x="${textX}" y="${fontSize + 4}" text-anchor="${textAnchor}"
-                  font-family="Helvetica, Arial, sans-serif"
-                  font-size="${fontSize}"
-                  font-weight="600"
-                  fill="white"
-                  fill-opacity="${opacity}"
-                  stroke="black"
-                  stroke-width="1"
-                  stroke-opacity="${opacity * 0.5}">${safeText}</text>
-          </svg>`;
-
-          buffer = await sharpLib(buffer)
-            .composite([{ input: Buffer.from(svg), gravity }])
-            .jpeg({ quality: 92 })
-            .toBuffer();
+          // Convert to JPEG
+          const sharp = (await import("sharp")).default;
+          buffer = await sharp(buffer).jpeg({ quality: 92 }).toBuffer();
         }
 
         const fileName = `${sanitizedAddress}_${String(photo.orderIndex + 1).padStart(3, "0")}.jpg`;

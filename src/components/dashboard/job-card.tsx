@@ -9,6 +9,7 @@ import { DownloadButton } from "@/components/dashboard/download-button";
 import { DeleteJobButton } from "@/components/dashboard/delete-job-button";
 import { DuplicateJobButton } from "@/components/dashboard/duplicate-job-button";
 import { SaveTemplateButton } from "@/components/dashboard/save-template-button";
+import { EditTagsButton } from "@/components/dashboard/edit-tags-button";
 import type { Job } from "@/lib/types";
 
 interface JobCardProps {
@@ -82,12 +83,13 @@ function JobCardInternal({ job }: JobCardProps) {
             <div className="text-[11px] text-graphite-500 mt-0.5">{job.clientName}</div>
           )}
           {job.tags && (
-            <div className="flex gap-1 mt-1">
+            <div className="flex gap-1 mt-1 items-center">
               {job.tags.split(",").map((t: string) => t.trim()).filter(Boolean).map((tag: string) => (
                 <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan font-semibold uppercase tracking-wide">
                   {tag}
                 </span>
               ))}
+              <EditTagsButton jobId={job.id} initial={job.tags || ""} />
             </div>
           )}
         </div>

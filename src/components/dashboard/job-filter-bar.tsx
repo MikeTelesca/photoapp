@@ -11,8 +11,19 @@ export function JobFilterBar({ jobs }: Props) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [preset, setPreset] = useState<string>("all");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    jobs.forEach(j => {
+      if (j.tags) {
+        j.tags.split(",").map(t => t.trim()).filter(Boolean).forEach(t => set.add(t));
+      }
+    });
+    return Array.from(set).sort();
+  }, [jobs]);
 
   const filtered = useMemo(() => {
     return jobs.filter(j => {
@@ -23,9 +34,13 @@ export function JobFilterBar({ jobs }: Props) {
         const hay = `${j.address} ${j.clientName || ""} ${j.photographerName || ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
+      if (activeTag) {
+        const jobTags = (j.tags || "").split(",").map(t => t.trim());
+        if (!jobTags.includes(activeTag)) return false;
+      }
       return true;
     });
-  }, [jobs, search, status, preset]);
+  }, [jobs, search, status, preset, activeTag]);
 
   const statuses = ["all", "pending", "processing", "review", "approved", "rejected"];
   const presets = ["all", ...Array.from(new Set(jobs.map(j => j.preset)))];
@@ -139,6 +154,29 @@ export function JobFilterBar({ jobs }: Props) {
           {presets.map(p => <option key={p} value={p}>{p === "all" ? "All presets" : p}</option>)}
         </select>
       </div>
+      {allTags.length > 0 && (
+        <div className="flex gap-1 flex-wrap px-5 py-2 border-b border-graphite-50">
+          <button
+            onClick={() => setActiveTag(null)}
+            className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-wide font-semibold ${
+              activeTag === null ? "bg-cyan text-white" : "bg-graphite-100 text-graphite-600 hover:bg-graphite-200"
+            }`}
+          >
+            All
+          </button>
+          {allTags.map(tag => (
+            <button
+              key={tag}
+              onClick={() => setActiveTag(tag === activeTag ? null : tag)}
+              className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-wide font-semibold ${
+                activeTag === tag ? "bg-cyan text-white" : "bg-cyan-50 text-cyan hover:bg-cyan-100"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
       {filtered.length === 0 ? (
         <div className="px-5 py-8 text-center text-sm text-graphite-400">
           No jobs match your filters

@@ -55,6 +55,9 @@ export const authConfig = {
       // Public health check
       if (nextUrl.pathname === "/api/health") return true;
 
+      // Public marketing landing page (no auth required)
+      if (nextUrl.pathname === "/") return true;
+
       // Public status endpoint and page (no auth required)
       if (nextUrl.pathname === "/api/public/status") return true;
       if (nextUrl.pathname === "/status") return true;

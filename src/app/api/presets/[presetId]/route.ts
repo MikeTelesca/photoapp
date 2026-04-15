@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/api-auth";
+import { checkPromptSafety } from "@/lib/prompt-safety";
 
 export async function PATCH(
   request: NextRequest,
@@ -12,6 +13,14 @@ export async function PATCH(
   const { presetId } = await params;
   try {
     const body = await request.json();
+
+    // Check promptModifiers safety
+    if (body.promptModifiers !== undefined) {
+      const safety = checkPromptSafety(body.promptModifiers);
+      if (!safety.safe) {
+        return NextResponse.json({ error: safety.reason }, { status: 400 });
+      }
+    }
 
     // Mass assignment defense: whitelist allowed fields
     const allowed: Record<string, any> = {};

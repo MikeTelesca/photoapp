@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
+import { applyPattern } from "@/lib/filename-pattern";
 
 export const maxDuration = 300;
 
@@ -13,7 +14,14 @@ export async function GET(
   const access = await requireJobAccess(jobId);
   if ("error" in access) return access.error;
 
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await prisma.job.findUnique({
+    where: { id: jobId },
+    include: {
+      photographer: {
+        select: { filenamePattern: true, name: true },
+      },
+    },
+  });
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const photos = await prisma.photo.findMany({
@@ -29,9 +37,8 @@ export async function GET(
   }
 
   const zip = new JSZip();
-  const addr = job.address
-    .replace(/[^a-zA-Z0-9]/g, "_")
-    .substring(0, 40);
+  const user = job.photographer;
+  const pattern = user?.filenamePattern || "{address}-{seq}";
 
   let idx = 0;
   for (const photo of photos) {
@@ -42,7 +49,15 @@ export async function GET(
       if (!res.ok) continue;
       const buf = Buffer.from(await res.arrayBuffer());
       idx++;
-      const filename = `${addr}-${String(idx).padStart(3, "0")}.jpg`;
+      const filename = applyPattern({
+        pattern,
+        address: job.address,
+        client: job.clientName || "",
+        preset: job.preset || "",
+        photographer: user?.name || "",
+        index: idx,
+        total: photos.length,
+      });
       zip.file(filename, buf);
     } catch (err) {
       console.error("zip fetch error:", err);
@@ -65,7 +80,7 @@ export async function GET(
   return new NextResponse(new Uint8Array(zipBuffer), {
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${addr}-photos.zip"`,
+      "Content-Disposition": `attachment; filename="${job.address}-photos.zip"`,
     },
   });
 }

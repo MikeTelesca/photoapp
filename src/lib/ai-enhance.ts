@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { checkPromptSafety } from "./prompt-safety";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
@@ -157,6 +158,32 @@ export async function enhancePhoto(
   userPromptPrefix?: string | null
 ): Promise<EnhanceResult> {
   try {
+    // Check custom instructions safety
+    if (customInstructions) {
+      const customSafety = checkPromptSafety(customInstructions);
+      if (!customSafety.safe) {
+        return {
+          success: false,
+          error: `Custom instructions blocked: ${customSafety.reason}`,
+          imageBase64: "",
+          mimeType: "",
+        };
+      }
+    }
+
+    // Check user prompt prefix safety
+    if (userPromptPrefix) {
+      const prefixSafety = checkPromptSafety(userPromptPrefix);
+      if (!prefixSafety.safe) {
+        return {
+          success: false,
+          error: `Prompt prefix blocked: ${prefixSafety.reason}`,
+          imageBase64: "",
+          mimeType: "",
+        };
+      }
+    }
+
     // Use preset prompt, or fall back to standard
     let basePrompt = presetPrompts[preset] || presetPrompts.standard;
     let extraInstructions = customInstructions;
@@ -180,6 +207,18 @@ export async function enhancePhoto(
     const seasonalText = getSeasonalModifier(seasonalStyle);
     if (seasonalText) {
       prompt = `${prompt}\n\nSEASONAL STYLE: ${seasonalText}`;
+    }
+
+    // Final safety check on the complete prompt
+    const fullSafety = checkPromptSafety(prompt);
+    if (!fullSafety.safe) {
+      console.warn("[ai-enhance] blocked unsafe prompt:", fullSafety.reason);
+      return {
+        success: false,
+        error: `Prompt blocked: ${fullSafety.reason}`,
+        imageBase64: "",
+        mimeType: "",
+      };
     }
 
     // Support single image or array of brackets (for HDR merge)
@@ -308,11 +347,36 @@ export async function convertToTwilight(
   style: string = "warm-dusk"
 ): Promise<EnhanceResult> {
   try {
+    // Check custom instructions safety
+    if (customInstructions) {
+      const customSafety = checkPromptSafety(customInstructions);
+      if (!customSafety.safe) {
+        return {
+          success: false,
+          error: `Custom instructions blocked: ${customSafety.reason}`,
+          imageBase64: "",
+          mimeType: "",
+        };
+      }
+    }
+
     const prompts = isExterior ? twilightExteriorPrompts : twilightInteriorPrompts;
     const basePrompt = prompts[style] || prompts["warm-dusk"];
     const prompt = customInstructions
       ? `${basePrompt}\n\nAdditional details: ${customInstructions}`
       : basePrompt;
+
+    // Final safety check on the complete prompt
+    const fullSafety = checkPromptSafety(prompt);
+    if (!fullSafety.safe) {
+      console.warn("[convertToTwilight] blocked unsafe prompt:", fullSafety.reason);
+      return {
+        success: false,
+        error: `Prompt blocked: ${fullSafety.reason}`,
+        imageBase64: "",
+        mimeType: "",
+      };
+    }
 
     const imageBuffers = Array.isArray(imageInput) ? imageInput : [imageInput];
     const imageParts = imageBuffers.map((buf) => ({

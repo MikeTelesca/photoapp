@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/api-auth";
+import { checkPromptSafety } from "@/lib/prompt-safety";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export async function PATCH(request: NextRequest) {
     emailSignature,
     autoArchiveDays,
     promptPrefix,
+    filenamePattern,
   } = body;
 
   const updateData: Record<string, any> = {};
@@ -80,7 +82,17 @@ export async function PATCH(request: NextRequest) {
   if (autoArchiveDays !== undefined) {
     updateData.autoArchiveDays = autoArchiveDays === null ? null : (parseInt(autoArchiveDays) || null);
   }
-  if (promptPrefix !== undefined) updateData.promptPrefix = promptPrefix?.trim() || null;
+  if (promptPrefix !== undefined) {
+    const safety = checkPromptSafety(promptPrefix);
+    if (!safety.safe) {
+      return NextResponse.json({ error: safety.reason }, { status: 400 });
+    }
+    updateData.promptPrefix = promptPrefix?.trim() || null;
+  }
+
+  if (filenamePattern !== undefined) {
+    updateData.filenamePattern = filenamePattern?.trim() || "{address}-{seq}";
+  }
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });

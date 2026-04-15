@@ -151,6 +151,14 @@ export async function GET(
     })
     .catch(() => {});
 
+  // Mark invoice as sent
+  await prisma.job
+    .update({
+      where: { id: jobId },
+      data: { invoiceSentAt: new Date() },
+    })
+    .catch(() => {});
+
   return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {
       "Content-Type": "application/pdf",

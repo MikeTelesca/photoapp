@@ -46,10 +46,57 @@ export default async function BillingPage() {
   const dayOfMonth = now.getDate();
   const projected = dayOfMonth > 0 ? (cur.cost / dayOfMonth) * daysInMonth : 0;
 
+  const outstanding = await prisma.job.findMany({
+    where: {
+      photographerId: auth.userId,
+      invoiceSentAt: { not: null },
+      invoicePaidAt: null,
+      status: "approved",
+      archivedAt: null,
+    },
+    orderBy: { invoiceSentAt: "asc" },
+    take: 20,
+  }).catch(() => []);
+
+  const outstandingTotal = outstanding.reduce((s: number, j: any) => s + (j.cost || 0), 0);
+
   return (
     <>
       <Topbar title="Billing & Usage" subtitle="View your monthly costs and photo processing stats" />
       <div className="p-6 space-y-6">
+        {outstanding.length > 0 && (
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h2 className="text-sm font-semibold dark:text-white">⚠ Outstanding invoices</h2>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">${outstandingTotal.toFixed(2)} unpaid across {outstanding.length} job{outstanding.length === 1 ? "" : "s"}</p>
+                </div>
+              </div>
+              <table className="w-full text-sm">
+                <thead className="text-xs text-graphite-400 border-b border-graphite-100 dark:border-graphite-800">
+                  <tr>
+                    <th className="text-left py-2">Address</th>
+                    <th className="text-left">Client</th>
+                    <th className="text-right">Sent</th>
+                    <th className="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {outstanding.map((j: any) => (
+                    <tr key={j.id} className="border-b border-graphite-50 dark:border-graphite-800">
+                      <td className="py-2 dark:text-white">{j.address}</td>
+                      <td className="text-xs">{j.clientName || "—"}</td>
+                      <td className="text-right text-xs">{new Date(j.invoiceSentAt).toLocaleDateString()}</td>
+                      <td className="text-right font-semibold dark:text-white">${j.cost.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <div className="p-4">

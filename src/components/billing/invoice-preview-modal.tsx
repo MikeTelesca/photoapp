@@ -10,15 +10,28 @@ interface Props {
 export function InvoicePreviewModal({ jobId, open, onClose }: Props) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [paid, setPaid] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     fetch(`/api/jobs/${jobId}/invoice/preview`)
       .then(r => r.json())
-      .then(d => setData(d))
+      .then(d => {
+        setData(d);
+        setPaid(d?.paidAt || null);
+      })
       .finally(() => setLoading(false));
   }, [open, jobId]);
+
+  async function togglePaid() {
+    const res = await fetch(`/api/jobs/${jobId}/invoice/paid`, {
+      method: paid ? "DELETE" : "POST",
+    });
+    if (res.ok) {
+      setPaid(paid ? null : new Date().toISOString());
+    }
+  }
 
   if (!open) return null;
 
@@ -28,6 +41,12 @@ export function InvoicePreviewModal({ jobId, open, onClose }: Props) {
         <div className="px-6 py-3 border-b border-graphite-100 flex justify-between items-center sticky top-0 bg-white">
           <h2 className="text-lg font-bold text-graphite-900">Invoice preview</h2>
           <div className="flex gap-2">
+            <button onClick={togglePaid}
+              className={`text-xs px-3 py-1.5 rounded font-semibold ${
+                paid ? "bg-emerald-500 text-white" : "border border-graphite-200 text-graphite-700"
+              }`}>
+              {paid ? "✓ Paid" : "Mark as paid"}
+            </button>
             <a href={`/api/jobs/${jobId}/invoice`} download
               className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold">
               Download PDF

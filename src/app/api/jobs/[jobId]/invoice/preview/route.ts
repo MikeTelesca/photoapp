@@ -50,5 +50,6 @@ export async function GET(
     subtotal,
     total: subtotal,
     today: new Date().toISOString(),
+    paidAt: job.invoicePaidAt,
   });
 }

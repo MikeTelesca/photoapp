@@ -47,5 +47,16 @@ export async function POST(
     }),
   });
 
+  // Log the share email after sending
+  if (ok) {
+    await prisma.shareEmailLog.create({
+      data: {
+        jobId,
+        toEmail: to,
+        sentBy: access.userId,
+      },
+    }).catch(err => console.error("share log err:", err));
+  }
+
   return NextResponse.json({ ok });
 }

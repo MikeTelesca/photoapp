@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function ShareButton({
   jobId,
@@ -19,10 +19,20 @@ export function ShareButton({
   const [emailMsg, setEmailMsg] = useState("");
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [recipients, setRecipients] = useState<{ id: string; toEmail: string; sentAt: string }[]>([]);
+
+  useEffect(() => {
+    if (!emailOpen) return;
+    fetch(`/api/jobs/${jobId}/share/recipients`)
+      .then(r => r.json())
+      .then(data => {
+        setRecipients(data.recipients || []);
+      })
+      .catch(() => {});
+  }, [emailOpen, jobId]);
 
   async function enable() {
     const password = window.prompt("Optional password for this share link (leave blank for no password):");
-    // Cancel clicked
     if (password === null) return;
     const res = await fetch(`/api/jobs/${jobId}/share`, {
       method: "POST",
@@ -58,6 +68,10 @@ export function ShareButton({
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function quickResend(email: string) {
+    setEmailTo(email);
+  }
+
   async function sendShareEmail() {
     if (!emailTo) return;
     setSending(true);
@@ -75,6 +89,10 @@ export function ShareButton({
         setEmailPw("");
         setEmailMsg("");
         setTimeout(() => setSentTo(null), 3000);
+        fetch(`/api/jobs/${jobId}/share/recipients`)
+          .then(r => r.json())
+          .then(data => setRecipients(data.recipients || []))
+          .catch(() => {});
       } else {
         alert("Failed to send");
       }
@@ -136,6 +154,28 @@ export function ShareButton({
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-lg font-semibold dark:text-white">Email share link</h2>
+            
+            {recipients.length > 0 && (
+              <div className="mb-3 pb-3 border-b border-graphite-100 dark:border-graphite-800">
+                <div className="text-[11px] font-semibold text-graphite-500 dark:text-graphite-400 uppercase tracking-wide mb-1">
+                  Previously sent to
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {recipients.map(r => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => quickResend(r.toEmail)}
+                      className="text-xs px-2 py-1 rounded bg-graphite-100 dark:bg-graphite-800 text-graphite-700 dark:text-graphite-300 hover:bg-graphite-200 dark:hover:bg-graphite-700"
+                      title={`Last sent ${new Date(r.sentAt).toLocaleString()}`}
+                    >
+                      ↺ {r.toEmail}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <input
               type="email"
               value={emailTo}

@@ -107,6 +107,7 @@ model Job {
   photographer     User     @relation(fields: [photographerId], references: [id])
   photographerId   String
   photos           Photo[]
+  shareEmailLogs   ShareEmailLog[]
 
   @@index([photographerId, createdAt(sort: Desc)])
   @@index([status])
@@ -288,6 +289,17 @@ model FeatureFlag {
   enabled     Boolean  @default(false)
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
+}
+
+model ShareEmailLog {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  toEmail   String
+  sentAt    DateTime @default(now())
+  sentBy    String?
+
+  @@index([jobId])
 }
 
 model ApiKey {

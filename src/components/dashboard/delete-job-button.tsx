@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { useToast } from "@/components/ui/toast";
 
 export function DeleteJobButton({ jobId }: { jobId: string }) {
   const router = useRouter();
+  const { addToast } = useToast();
 
   async function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
@@ -15,12 +17,13 @@ export function DeleteJobButton({ jobId }: { jobId: string }) {
     try {
       const res = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
       if (res.ok) {
+        addToast("success", "Job deleted successfully.");
         router.refresh();
       } else {
-        alert("Failed to delete job");
+        addToast("error", "Failed to delete job. Please try again.");
       }
     } catch {
-      alert("Failed to delete job");
+      addToast("error", "Failed to delete job. Please try again.");
     }
   }
 

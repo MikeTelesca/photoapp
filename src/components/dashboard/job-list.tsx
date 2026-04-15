@@ -39,9 +39,17 @@ export function JobList({ jobs }: JobListProps) {
         </div>
       </CardHeader>
       <div className="py-1">
-        {filtered.map((job) => (
-          <JobCard key={job.id} job={job} />
-        ))}
+        {filtered.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <p className="text-sm text-graphite-400">
+              {activeFilter === "All"
+                ? "No jobs yet. Click 'New Job' to create your first one."
+                : `No ${activeFilter.toLowerCase()} jobs.`}
+            </p>
+          </div>
+        ) : (
+          filtered.map((job) => <JobCard key={job.id} job={job} />)
+        )}
       </div>
     </Card>
   );

@@ -49,6 +49,7 @@ interface ReviewGalleryProps {
 }
 
 export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
+  const { addToast } = useToast();
   const [job, setJob] = useState(initialJob);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [customInstruction, setCustomInstruction] = useState("");
@@ -378,17 +379,22 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       });
       if (res.ok) {
         // Update local state - mark all "edited" photos as "approved"
+        const approvedCount = photos.filter(p => p.status === "edited").length;
         setJob(prev => ({
           ...prev,
           photos: prev.photos.map(p => p.status === "edited" ? { ...p, status: "approved" } : p),
         }));
+        addToast("success", `${approvedCount} photo${approvedCount === 1 ? "" : "s"} approved.`);
+      } else {
+        addToast("error", "Failed to approve all photos.");
       }
     } catch (err) {
       console.error("Approve all failed:", err);
+      addToast("error", "Failed to approve all photos.");
     } finally {
       setIsUpdating(false);
     }
-  }, [job.id]);
+  }, [job.id, photos, addToast]);
 
   const handleQuickTag = (tag: string) => {
     setCustomInstruction(tag);
@@ -583,15 +589,23 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   : "bg-graphite-200"
               }`}
             >
-              {photo.editedUrl ? (
+              {(photo.editedUrl && (photo.status === "edited" || photo.status === "approved")) ? (
                 <img
                   src={photo.editedUrl}
                   alt={`Photo ${idx + 1}`}
+                  loading="lazy"
+                  className="w-full h-full object-cover rounded-md"
+                />
+              ) : (photo.originalUrl || photo.status !== "processing") ? (
+                <img
+                  src={photo.originalUrl || `/api/jobs/${job.id}/photos/${photo.id}/original`}
+                  alt={`Photo ${idx + 1}`}
+                  loading="lazy"
                   className="w-full h-full object-cover rounded-md"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-[9px] text-graphite-400 font-medium">
-                  {photo.status === "processing" ? "..." : idx + 1}
+                  ...
                 </div>
               )}
               {/* Status indicator */}
@@ -806,6 +820,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
         </div>
       </div>
+      <KeyboardHint />
     </div>
   );
 }

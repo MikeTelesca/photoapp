@@ -8,6 +8,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { RecentActivityWidget } from "@/components/dashboard/recent-activity-widget";
 import { RecentlyViewedWidget } from "@/components/dashboard/recently-viewed-widget";
 import { InboxWidget } from "@/components/dashboard/inbox-widget";
+import { AdminEventsWidget } from "@/components/dashboard/admin-events-widget";
 import { NotificationHandler } from "@/components/notifications/notification-handler";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
 import { WidgetWrapper } from "@/components/dashboard/widget-wrapper";
@@ -258,6 +259,9 @@ export default async function DashboardPage({
             </WidgetWrapper>
             <WidgetWrapper widgetKey="recent-activity">
               <RecentActivityWidget userId={userId || ""} isAdmin={userRole === "admin"} />
+            </WidgetWrapper>
+            <WidgetWrapper widgetKey="admin-events">
+              <AdminEventsWidget />
             </WidgetWrapper>
             <WidgetWrapper widgetKey="activity-feed">
               <ActivityFeed />

@@ -13,6 +13,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
   { key: "recently-viewed", label: "Recently viewed jobs", defaultVisible: true },
   { key: "recent-activity", label: "Recent activity", defaultVisible: true },
   { key: "activity-feed", label: "Activity feed", defaultVisible: true },
+  { key: "admin-events", label: "Admin events (admin only)", defaultVisible: true },
 ];
 
 const STORAGE_KEY = "dashboard-widgets-v1";

@@ -47,6 +47,10 @@ export function InvoicePreviewModal({ jobId, open, onClose }: Props) {
               }`}>
               {paid ? "✓ Paid" : "Mark as paid"}
             </button>
+            <a href={`/review/${jobId}/invoice/print`} target="_blank" rel="noopener"
+              className="text-xs px-3 py-1.5 rounded border border-graphite-200">
+              🖨 Print version
+            </a>
             <a href={`/api/jobs/${jobId}/invoice`} download
               className="text-xs px-3 py-1.5 rounded bg-cyan text-white font-semibold">
               Download PDF

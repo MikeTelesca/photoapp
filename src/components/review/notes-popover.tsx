@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
-import { Markdown } from "@/components/ui/markdown";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { SnippetPicker } from "@/components/notes/snippet-picker";
 import { StatusSnippetPicker } from "@/components/notes/status-snippet-picker";
 
@@ -19,6 +20,7 @@ export function NotesPopover({
   const [notes, setNotes] = useState(initialNotes || "");
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [tab, setTab] = useState<"edit" | "preview">("edit");
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Close on outside click
@@ -77,26 +79,58 @@ export function NotesPopover({
               {saving ? "Saving..." : savedAt ? "Saved" : "Auto-saves"}
             </span>
           </div>
-          <div className="flex flex-col gap-2">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={6}
-              placeholder="Add notes about this job - special instructions, client preferences, etc."
-              className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 text-xs focus:outline-none focus:border-cyan resize-none"
-            />
-            <div className="flex items-center gap-2 flex-wrap">
-              <SnippetPicker category="job" onInsert={(text) => setNotes(prev => prev ? `${prev}\n${text}` : text)} />
-              {jobStatus && (
-                <StatusSnippetPicker status={jobStatus} onInsert={(text) => setNotes(prev => prev ? `${prev}\n${text}` : text)} />
-              )}
-            </div>
+          <div className="flex items-center gap-1 mb-2 border-b border-graphite-200 dark:border-graphite-700">
+            <button
+              type="button"
+              onClick={() => setTab("edit")}
+              className={`px-3 py-1.5 text-[11px] font-semibold border-b-2 -mb-px transition-colors ${
+                tab === "edit"
+                  ? "border-cyan text-cyan"
+                  : "border-transparent text-graphite-500 hover:text-graphite-700 dark:hover:text-graphite-200"
+              }`}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("preview")}
+              className={`px-3 py-1.5 text-[11px] font-semibold border-b-2 -mb-px transition-colors ${
+                tab === "preview"
+                  ? "border-cyan text-cyan"
+                  : "border-transparent text-graphite-500 hover:text-graphite-700 dark:hover:text-graphite-200"
+              }`}
+            >
+              Preview
+            </button>
           </div>
-          <div className="text-[10px] text-graphite-400 mt-1">Markdown supported — **bold**, lists, [links](url)</div>
-          {hasNotes && (
-            <div className="mt-3 pt-3 border-t border-graphite-200 dark:border-graphite-700">
-              <span className="text-[10px] font-semibold text-graphite-600 dark:text-graphite-300 block mb-2">Preview:</span>
-              <Markdown>{notes}</Markdown>
+          {tab === "edit" ? (
+            <div className="flex flex-col gap-2">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={6}
+                placeholder="Add notes about this job - special instructions, client preferences, etc."
+                className="w-full px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700 text-xs focus:outline-none focus:border-cyan resize-none bg-transparent"
+              />
+              <div className="text-[10px] text-graphite-400 font-mono leading-relaxed">
+                **bold** *italic* [link](url) `code` - bullets # heading
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <SnippetPicker category="job" onInsert={(text) => setNotes(prev => prev ? `${prev}\n${text}` : text)} />
+                {jobStatus && (
+                  <StatusSnippetPicker status={jobStatus} onInsert={(text) => setNotes(prev => prev ? `${prev}\n${text}` : text)} />
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="min-h-[8rem] px-3 py-2 rounded-lg border border-graphite-200 dark:border-graphite-700">
+              {hasNotes ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{notes}</ReactMarkdown>
+                </div>
+              ) : (
+                <div className="text-xs text-graphite-400 italic">Nothing to preview yet.</div>
+              )}
             </div>
           )}
         </div>

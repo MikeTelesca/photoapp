@@ -1870,6 +1870,11 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300">
             📋 Contact sheet
           </a>
+          <a href={`/api/jobs/${job.id}/annotation-pdf`} download
+            className="text-xs px-3 py-1.5 rounded border border-amber-400 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+            title="Download PDF with pin annotations">
+            📌 Annotations PDF
+          </a>
           <a href={`/api/jobs/${job.id}/photos-csv`} download
             className="text-xs px-3 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800"
             title="Export photos metadata as CSV">

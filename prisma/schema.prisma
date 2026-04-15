@@ -254,6 +254,9 @@ model JobTemplate {
   clientName       String?
   tags             String?
   notes            String?
+  recurrencePattern String?  // null | "weekly" | "biweekly" | "monthly"
+  recurrenceLastFiredAt DateTime?
+  recurrenceEnabled Boolean @default(false)
   createdAt        DateTime @default(now())
 
   @@index([ownerId])

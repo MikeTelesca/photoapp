@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
       clientName?: string | null;
       tags?: string | null;
       notes?: string | null;
+      recurrencePattern?: string | null;
+      recurrenceEnabled?: boolean;
     };
 
     if (jobId) {
@@ -72,6 +74,8 @@ export async function POST(request: NextRequest) {
         clientName: job.clientName ?? null,
         tags: job.tags || null,
         notes: job.notes ?? null,
+        recurrencePattern: null,
+        recurrenceEnabled: false,
       };
     } else {
       templateData = {
@@ -83,6 +87,8 @@ export async function POST(request: NextRequest) {
         clientName: body.clientName ?? null,
         tags: body.tags ?? null,
         notes: body.notes ?? null,
+        recurrencePattern: body.recurrencePattern ?? null,
+        recurrenceEnabled: body.recurrenceEnabled ?? false,
       };
     }
 

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { BookmarkIcon } from "@heroicons/react/24/outline";
 import { DeleteTemplateButton } from "@/components/dashboard/delete-template-button";
+import { RecurrencePicker } from "@/components/templates/recurrence-picker";
 
 export const dynamic = "force-dynamic";
 
@@ -36,29 +37,38 @@ export default async function TemplatesPage() {
               {templates.map((t) => (
                 <div
                   key={t.id}
-                  className="flex items-center justify-between px-5 py-4 hover:bg-graphite-50 dark:hover:bg-graphite-800 transition-colors"
+                  className="px-5 py-4 hover:bg-graphite-50 dark:hover:bg-graphite-800 transition-colors"
                 >
-                  <div>
-                    <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{t.name}</div>
-                    <div className="flex gap-3 text-xs text-graphite-400 dark:text-graphite-500 mt-0.5 flex-wrap">
-                      <span className="capitalize">{t.preset}</span>
-                      {t.photographerName && <span>{t.photographerName}</span>}
-                      {t.clientName && <span>{t.clientName}</span>}
-                      {t.tvStyle && t.tvStyle !== "off" && (
-                        <span>TV: {t.tvStyle}</span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white">{t.name}</div>
+                      <div className="flex gap-3 text-xs text-graphite-400 dark:text-graphite-500 mt-0.5 flex-wrap">
+                        <span className="capitalize">{t.preset}</span>
+                        {t.photographerName && <span>{t.photographerName}</span>}
+                        {t.clientName && <span>{t.clientName}</span>}
+                        {t.tvStyle && t.tvStyle !== "off" && (
+                          <span>TV: {t.tvStyle}</span>
+                        )}
+                        {t.skyStyle && t.skyStyle !== "as-is" && (
+                          <span>Sky: {t.skyStyle}</span>
+                        )}
+                        {t.tags && (
+                          <span>Tags: {t.tags}</span>
+                        )}
+                      </div>
+                      {t.notes && (
+                        <p className="text-xs text-graphite-500 dark:text-graphite-400 mt-1 line-clamp-1">{t.notes}</p>
                       )}
-                      {t.skyStyle && t.skyStyle !== "as-is" && (
-                        <span>Sky: {t.skyStyle}</span>
-                      )}
-                      {t.tags && (
-                        <span>Tags: {t.tags}</span>
-                      )}
+                      <div className="mt-2">
+                        <RecurrencePicker
+                          templateId={t.id}
+                          initialPattern={t.recurrencePattern}
+                          initialEnabled={t.recurrenceEnabled}
+                        />
+                      </div>
                     </div>
-                    {t.notes && (
-                      <p className="text-xs text-graphite-500 dark:text-graphite-400 mt-1 line-clamp-1">{t.notes}</p>
-                    )}
+                    <DeleteTemplateButton templateId={t.id} />
                   </div>
-                  <DeleteTemplateButton templateId={t.id} />
                 </div>
               ))}
             </div>

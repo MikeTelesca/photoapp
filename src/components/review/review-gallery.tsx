@@ -73,6 +73,20 @@ interface ReviewGalleryProps {
   job: Job;
 }
 
+function SortableThumb({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   const { addToast } = useToast();
   const [job, setJob] = useState(initialJob);
@@ -912,91 +926,96 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
           {/* Scrollable thumbnail list */}
           <div className="overflow-y-auto flex-1 p-2 flex flex-col gap-1">
-            {photos.map((photo, idx) => {
-              if (thumbFilter === "favorites" && !photo.isFavorite) return null;
-              if (thumbFilter !== "all" && thumbFilter !== "favorites" && photo.status !== thumbFilter) return null;
-              return (
-                <button
-                  key={photo.id}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`relative w-[84px] h-[56px] rounded-md flex-shrink-0 transition-all duration-150 border-2 ${
-                    idx === currentIndex
-                      ? "border-cyan shadow-sm"
-                      : "border-transparent hover:border-graphite-300"
-                  } ${
-                    photo.status === "approved"
-                      ? "bg-emerald-100"
-                      : photo.status === "rejected"
-                      ? "bg-red-100"
-                      : "bg-graphite-200"
-                  }`}
-                >
-                  <div className="relative w-full h-full">
-                    {(photo.editedUrl && (photo.status === "edited" || photo.status === "approved")) ? (
-                      <img
-                        src={photo.editedUrl}
-                        alt={`Photo ${idx + 1}`}
-                        loading="lazy"
-                        className="w-full h-full object-cover rounded-md"
-                      />
-                    ) : (photo.originalUrl || photo.status !== "processing") ? (
-                      <img
-                        src={photo.originalUrl || `/api/jobs/${job.id}/photos/${photo.id}/original`}
-                        alt={`Photo ${idx + 1}`}
-                        loading="lazy"
-                        className="w-full h-full object-cover rounded-md"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[9px] text-graphite-400 font-medium">
-                        ...
-                      </div>
-                    )}
-                    {/* Status overlay */}
-                    {photo.status === "approved" && (
-                      <div className="absolute inset-0 ring-2 ring-emerald-500 rounded">
-                        <div className="absolute top-1 right-1 bg-emerald-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✓</div>
-                      </div>
-                    )}
-                    {photo.status === "rejected" && (
-                      <div className="absolute inset-0 ring-2 ring-red-500 rounded bg-red-500/30">
-                        <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✗</div>
-                        {photo.rejectionReason && (
-                          <div className="absolute bottom-1 left-1 right-1 text-[8px] text-red-600 bg-white/80 rounded px-1 py-0.5 truncate font-medium">
-                            {photo.rejectionReason}
-                          </div>
+            <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={photos.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                {photos.map((photo, idx) => {
+                  if (thumbFilter === "favorites" && !photo.isFavorite) return null;
+                  if (thumbFilter !== "all" && thumbFilter !== "favorites" && photo.status !== thumbFilter) return null;
+                  return (
+                    <SortableThumb key={photo.id} id={photo.id}>
+                      <button
+                        onClick={() => setCurrentIndex(idx)}
+                        className={`relative w-[84px] h-[56px] rounded-md flex-shrink-0 transition-all duration-150 border-2 ${
+                          idx === currentIndex
+                            ? "border-cyan shadow-sm"
+                            : "border-transparent hover:border-graphite-300"
+                        } ${
+                          photo.status === "approved"
+                            ? "bg-emerald-100"
+                            : photo.status === "rejected"
+                            ? "bg-red-100"
+                            : "bg-graphite-200"
+                        }`}
+                      >
+                        <div className="relative w-full h-full">
+                          {(photo.editedUrl && (photo.status === "edited" || photo.status === "approved")) ? (
+                            <img
+                              src={photo.editedUrl}
+                              alt={`Photo ${idx + 1}`}
+                              loading="lazy"
+                              className="w-full h-full object-cover rounded-md"
+                            />
+                          ) : (photo.originalUrl || photo.status !== "processing") ? (
+                            <img
+                              src={photo.originalUrl || `/api/jobs/${job.id}/photos/${photo.id}/original`}
+                              alt={`Photo ${idx + 1}`}
+                              loading="lazy"
+                              className="w-full h-full object-cover rounded-md"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[9px] text-graphite-400 font-medium">
+                              ...
+                            </div>
+                          )}
+                          {/* Status overlay */}
+                          {photo.status === "approved" && (
+                            <div className="absolute inset-0 ring-2 ring-emerald-500 rounded">
+                              <div className="absolute top-1 right-1 bg-emerald-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✓</div>
+                            </div>
+                          )}
+                          {photo.status === "rejected" && (
+                            <div className="absolute inset-0 ring-2 ring-red-500 rounded bg-red-500/30">
+                              <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">✗</div>
+                              {photo.rejectionReason && (
+                                <div className="absolute bottom-1 left-1 right-1 text-[8px] text-red-600 bg-white/80 rounded px-1 py-0.5 truncate font-medium">
+                                  {photo.rejectionReason}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {photo.status === "edited" && (
+                            <div className="absolute inset-0 ring-2 ring-cyan rounded animate-pulse" />
+                          )}
+                          {photo.status === "regenerating" && (
+                            <div className="absolute inset-0 bg-graphite-900/60 flex items-center justify-center rounded">
+                              <div className="w-3 h-3 border-2 border-cyan border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          )}
+                        </div>
+                        {photo.isTwilight && (
+                          <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
                         )}
-                      </div>
-                    )}
-                    {photo.status === "edited" && (
-                      <div className="absolute inset-0 ring-2 ring-cyan rounded animate-pulse" />
-                    )}
-                    {photo.status === "regenerating" && (
-                      <div className="absolute inset-0 bg-graphite-900/60 flex items-center justify-center rounded">
-                        <div className="w-3 h-3 border-2 border-cyan border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    )}
-                  </div>
-                  {photo.isTwilight && (
-                    <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
-                  )}
-                  {photo.isFavorite && (
-                    <div className="absolute top-1 right-1 text-amber-400 text-sm drop-shadow">★</div>
-                  )}
-                  {photo.qualityFlags && (() => {
-                    try {
-                      const f = JSON.parse(photo.qualityFlags);
-                      const hasIssue = f.blurry || f.underexposed || f.overexposed || f.lowContrast;
-                      return hasIssue ? (
-                        <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-amber-700 bg-amber-100/90 rounded px-0.5">⚠</span>
-                      ) : null;
-                    } catch { return null; }
-                  })()}
-                  <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500">
-                    {idx + 1}
-                  </span>
-                </button>
-              );
-            })}
+                        {photo.isFavorite && (
+                          <div className="absolute top-1 right-1 text-amber-400 text-sm drop-shadow">★</div>
+                        )}
+                        {photo.qualityFlags && (() => {
+                          try {
+                            const f = JSON.parse(photo.qualityFlags);
+                            const hasIssue = f.blurry || f.underexposed || f.overexposed || f.lowContrast;
+                            return hasIssue ? (
+                              <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-amber-700 bg-amber-100/90 rounded px-0.5">⚠</span>
+                            ) : null;
+                          } catch { return null; }
+                        })()}
+                        <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500">
+                          {idx + 1}
+                        </span>
+                      </button>
+                    </SortableThumb>
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
           </div>
         </div>
 

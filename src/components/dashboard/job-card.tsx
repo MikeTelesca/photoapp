@@ -17,6 +17,7 @@ import { SnoozeButton } from "@/components/dashboard/snooze-button";
 import { CopyJobLinkButton } from "@/components/dashboard/copy-job-link-button";
 import { InlinePresetSwitch } from "@/components/dashboard/inline-preset-switch";
 import { InvoicePreviewModal } from "@/components/billing/invoice-preview-modal";
+import { ColorLabelPicker } from "@/components/dashboard/color-label-picker";
 import { formatJobNumber } from "@/lib/job-number";
 import { tagColor } from "@/lib/tag-color";
 import { checkStale } from "@/lib/job-stale";

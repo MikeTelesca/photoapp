@@ -714,6 +714,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
     }
   }, [currentPhoto, job.id]);
 
+  const flip = useCallback(async (axis: "horizontal" | "vertical") => {
+    if (!currentPhoto) return;
+    setRotating(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.id}/photos/${currentPhoto.id}/flip`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ axis }),
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed");
+      }
+    } finally {
+      setRotating(false);
+    }
+  }, [currentPhoto, job.id]);
+
   const [enhanceErrors, setEnhanceErrors] = useState<Record<string, string>>({});
   const [enhancingIds, setEnhancingIds] = useState<Set<string>>(new Set());
 
@@ -2777,6 +2797,16 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
                   title="Flip 180°">
                   ↻↻
+                </button>
+                <button onClick={() => flip("horizontal")} disabled={rotating || isUpdating || enhanceLoading}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
+                  title="Mirror horizontal (left-right)">
+                  ⇄
+                </button>
+                <button onClick={() => flip("vertical")} disabled={rotating || isUpdating || enhanceLoading}
+                  className="text-xs px-2 py-1 rounded border border-graphite-200 dark:border-graphite-700 dark:text-graphite-300 hover:bg-graphite-50 dark:hover:bg-graphite-800 disabled:opacity-50"
+                  title="Mirror vertical (top-bottom)">
+                  ⇅
                 </button>
               </div>
               <button

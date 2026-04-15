@@ -37,6 +37,7 @@ interface Photo {
   exifData: string | null;
   errorMessage: string | null;
   errorAttempts: number;
+  qualityFlags?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -912,6 +913,15 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   {photo.isTwilight && (
                     <MoonIcon className="absolute bottom-0.5 left-0.5 w-3 h-3 text-purple-600" />
                   )}
+                  {photo.qualityFlags && (() => {
+                    try {
+                      const f = JSON.parse(photo.qualityFlags);
+                      const hasIssue = f.blurry || f.underexposed || f.overexposed || f.lowContrast;
+                      return hasIssue ? (
+                        <span className="absolute top-0.5 left-0.5 text-[8px] font-bold text-amber-700 bg-amber-100/90 rounded px-0.5">⚠</span>
+                      ) : null;
+                    } catch { return null; }
+                  })()}
                   <span className="absolute bottom-0.5 right-1 text-[8px] font-bold text-graphite-500">
                     {idx + 1}
                   </span>
@@ -1028,6 +1038,24 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                       ))}
                     </div>
                   )}
+                  {/* Quality flag badges */}
+                  {currentPhoto?.qualityFlags && (() => {
+                    try {
+                      const f = JSON.parse(currentPhoto.qualityFlags);
+                      const warnings: string[] = [];
+                      if (f.blurry) warnings.push("Blurry?");
+                      if (f.underexposed) warnings.push("Dark");
+                      if (f.overexposed) warnings.push("Blown");
+                      if (f.lowContrast) warnings.push("Flat");
+                      return warnings.length ? (
+                        <div className="absolute bottom-2.5 left-2.5 z-10">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">
+                            ⚠ {warnings.join(" · ")}
+                          </span>
+                        </div>
+                      ) : null;
+                    } catch { return null; }
+                  })()}
                 </div>
               </div>
             )}

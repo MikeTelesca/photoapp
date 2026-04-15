@@ -11,6 +11,7 @@ import { requireJobAccess } from "@/lib/api-auth";
 import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 import { logActivity } from "@/lib/activity";
 import { log } from "@/lib/logger";
+import { analyzeImage } from "@/lib/image-quality";
 
 // Download a file from Dropbox shared link using raw API
 async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
@@ -258,6 +259,15 @@ export async function POST(
 
     log.info("[enhance] completed", { jobId, photoId });
 
+    // Analyze quality of enhanced output (non-blocking — failure never breaks enhance flow)
+    let qualityFlags: string | null = null;
+    try {
+      const flags = await analyzeImage(outputBuffer);
+      qualityFlags = JSON.stringify(flags);
+    } catch (qErr) {
+      console.warn("[enhance] quality analysis failed (non-fatal):", qErr);
+    }
+
     await prisma.photo.update({
       where: { id: photoId },
       data: {
@@ -267,6 +277,7 @@ export async function POST(
         errorAttempts: 0,
         customInstructions: customInstructions || null,
         isTwilight: makeTwilight || photo.isTwilight,
+        qualityFlags,
       },
     });
 

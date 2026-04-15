@@ -7,6 +7,7 @@ import { AI_COST_PER_IMAGE } from "@/lib/pricing";
 import { logActivity } from "@/lib/activity";
 import { log } from "@/lib/logger";
 import { readExif } from "@/lib/exif";
+import { analyzeImage } from "@/lib/image-quality";
 
 // Allow up to 5 minutes for AI processing (model cascade + retries)
 export const maxDuration = 300;
@@ -346,9 +347,18 @@ export async function POST(
       }, { status: 500 });
     }
 
+    // Analyze quality of enhanced output (non-blocking — failure never breaks enhance flow)
+    let qualityFlags: string | null = null;
+    try {
+      const flags = await analyzeImage(outputBuffer);
+      qualityFlags = JSON.stringify(flags);
+    } catch (qErr) {
+      console.warn("[start-enhance] quality analysis failed (non-fatal):", qErr);
+    }
+
     await prisma.photo.update({
       where: { id: photo.id },
-      data: { editedUrl, status: "edited", errorMessage: null, errorAttempts: 0 },
+      data: { editedUrl, status: "edited", errorMessage: null, errorAttempts: 0, qualityFlags },
     });
 
     log.info("[start-enhance] completed", { jobId, photoId: photo.id });

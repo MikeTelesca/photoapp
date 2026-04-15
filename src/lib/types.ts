@@ -42,6 +42,7 @@ export interface Photo {
   twilightStyle?: string | null;
   customInstructions: string | null;
   detections: string[];
+  qualityFlags?: string | null;
   createdAt: Date;
 }
 

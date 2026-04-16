@@ -11,6 +11,7 @@ const config: Config = {
     extend: {
       colors: {
         graphite: {
+          950: '#09090B',
           900: '#18181B',
           800: '#27272A',
           700: '#3F3F46',

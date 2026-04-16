@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
-import { logActivity } from "@/lib/activity";
 
 // GET /api/jobs/:jobId - get a single job with its photos
 export async function GET(
@@ -48,21 +47,13 @@ export async function PATCH(
     const { jobId } = await params;
     const access = await requireJobAccess(jobId);
     if ("error" in access) return access.error;
-    const { role, job: existingJob } = access;
-
-    // Check if job is locked
-    if (existingJob.lockedAt) {
-      return NextResponse.json(
-        { error: "Job is locked. Unlock to make changes." },
-        { status: 423 }
-      );
-    }
+    const { role } = access;
 
     const body = await request.json();
 
     // Mass assignment defense: whitelist allowed fields
     const allowed: Record<string, any> = {};
-    const allowedFields = ["address", "preset", "tvStyle", "skyStyle", "seasonalStyle", "priority", "notes", "watermarkText", "watermarkPosition", "watermarkSize", "watermarkOpacity", "clientName", "tags", "customPromptOverride", "customFields", "colorLabel"] as const;
+    const allowedFields = ["address", "preset", "tvStyle", "skyStyle", "seasonalStyle", "notes"] as const;
     for (const field of allowedFields) {
       if (body[field] !== undefined) allowed[field] = body[field];
     }
@@ -72,7 +63,6 @@ export async function PATCH(
       if (role === "admin") {
         allowed.status = body.status;
       } else {
-        // Photographers can only cancel their own jobs
         if (body.status === "cancelled" || body.status === "deleted") {
           allowed.status = body.status;
         } else {
@@ -104,7 +94,7 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/jobs/:jobId - delete a job and its photos
+// DELETE /api/jobs/:jobId - hard delete a job and its photos
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
@@ -114,26 +104,7 @@ export async function DELETE(
     const access = await requireJobAccess(jobId);
     if ("error" in access) return access.error;
 
-    // Check if job is locked
-    if (access.job.lockedAt) {
-      return NextResponse.json(
-        { error: "Job is locked. Unlock to delete." },
-        { status: 423 }
-      );
-    }
-
-    // Soft delete - move to trash (preserves cost data and allows restore)
-    const deletedJob = await prisma.job.update({
-      where: { id: jobId },
-      data: { status: "deleted", deletedAt: new Date() },
-    });
-
-    await logActivity({
-      type: "job_deleted",
-      message: `Deleted job for ${deletedJob.address}`,
-      jobId: jobId,
-      userId: access.userId,
-    });
+    await prisma.job.delete({ where: { id: jobId } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

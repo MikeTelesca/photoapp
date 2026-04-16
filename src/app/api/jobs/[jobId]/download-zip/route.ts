@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import JSZip from "jszip";
-import { applyPattern, dedupeFilename } from "@/lib/filename-pattern";
-import { logDownload } from "@/lib/download-log";
 import sharp from "sharp";
 
 export const maxDuration = 300;
+
+// Parse a data URL (`data:<mime>;base64,<data>`) into a Buffer + mime string.
+function decodeDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
+  const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!match) return null;
+  return { buffer: Buffer.from(match[2], "base64"), mime: match[1] };
+}
+
+function sanitize(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_\-]+/g, "_").replace(/^_+|_+$/g, "");
+}
 
 export async function GET(
   request: NextRequest,
@@ -17,151 +26,62 @@ export async function GET(
   if ("error" in access) return access.error;
 
   const format = request.nextUrl.searchParams.get("format") || "jpeg-90";
-  // Supported formats: jpeg-75, jpeg-85, jpeg-90, jpeg-95, png
 
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
-    include: {
-      photographer: {
-        select: { filenamePattern: true, name: true },
-      },
-    },
-  });
-  if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const photos = await prisma.photo.findMany({
-    where: { jobId, status: "approved" },
-    orderBy: { orderIndex: "asc" },
-  });
-
-  if (photos.length === 0) {
-    return NextResponse.json(
-      { error: "No approved photos to download" },
-      { status: 400 }
-    );
-  }
-
-  // Also fetch any photos with retouch requests (including non-approved),
-  // so notes aren't dropped from the delivery package.
-  const photosWithRetouch = await prisma.photo.findMany({
-    where: { jobId, retouchRequest: { not: null } },
-    orderBy: { orderIndex: "asc" },
-    select: { id: true, orderIndex: true, retouchRequest: true },
-  });
-
-  const zip = new JSZip();
-  const user = job.photographer;
-  const pattern = user?.filenamePattern || "{address}-{seq}";
-
-  let idx = 0;
-  const retouchLines: string[] = [];
-  const retouchedPhotoIdsIncluded = new Set<string>();
-  const usedFilenames = new Set<string>();
-  for (const photo of photos) {
-    const url = photo.editedUrl || photo.originalUrl;
-    if (!url) continue;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const arrayBuf = await res.arrayBuffer();
-      let buf = Buffer.from(arrayBuf);
-      idx++;
-
-      // Re-encode based on requested format
-      let extension = "jpg";
-      if (format === "png") {
-        const encoded = await sharp(buf).png({ quality: 95 }).toBuffer();
-        buf = Buffer.from(encoded);
-        extension = "png";
-      } else if (format.startsWith("jpeg-")) {
-        const quality = parseInt(format.slice(5)) || 90;
-        const encoded = await sharp(buf).jpeg({ quality, mozjpeg: true }).toBuffer();
-        buf = Buffer.from(encoded);
-        extension = "jpg";
-      }
-
-      // Apply filename pattern and replace extension
-      let filename = applyPattern({
-        pattern,
-        address: job.address,
-        client: job.clientName || "",
-        preset: job.preset || "",
-        photographer: user?.name || "",
-        index: idx,
-        total: photos.length,
-      });
-      // Per-photo custom filename override (preserve extension)
-      if (photo.customFilename && photo.customFilename.trim().length > 0) {
-        // Strip any path separators / illegal chars defensively
-        const safeBase = photo.customFilename
-          .replace(/[\\/:*?"<>|\x00-\x1f]/g, "")
-          .replace(/^\.+|\.+$/g, "")
-          .trim();
-        if (safeBase.length > 0) {
-          // Strip any extension the user typed; we control the final extension.
-          filename = safeBase.replace(/\.[^/.]+$/, "");
-        }
-      }
-      // Replace extension in case pattern includes one
-      filename = filename.replace(/\.[^/.]+$/, "") + `.${extension}`;
-
-      // Dedupe in case two photos resolve to the same filename
-      filename = dedupeFilename(filename, usedFilenames);
-
-      zip.file(filename, buf);
-
-      if (photo.retouchRequest && photo.retouchRequest.trim().length > 0) {
-        retouchLines.push(`${filename}: ${photo.retouchRequest.trim()}`);
-        retouchedPhotoIdsIncluded.add(photo.id);
-      }
-    } catch (err) {
-      console.error("zip fetch error:", err);
+  try {
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
+
+    const photos = await prisma.photo.findMany({
+      where: { jobId, status: "approved" },
+      orderBy: { orderIndex: "asc" },
+    });
+
+    if (photos.length === 0) {
+      return NextResponse.json({ error: "No approved photos" }, { status: 400 });
+    }
+
+    const zip = new JSZip();
+    const addressSlug = sanitize(job.address) || "job";
+
+    const isPng = format === "png";
+    const jpegQuality = (() => {
+      if (format === "jpeg-75") return 75;
+      if (format === "jpeg-85") return 85;
+      if (format === "jpeg-95") return 95;
+      return 90;
+    })();
+
+    for (let i = 0; i < photos.length; i++) {
+      const photo = photos[i];
+      if (!photo.editedUrl) continue;
+      const decoded = decodeDataUrl(photo.editedUrl);
+      if (!decoded) continue;
+
+      const pipeline = sharp(decoded.buffer);
+      const output = isPng
+        ? await pipeline.png().toBuffer()
+        : await pipeline.jpeg({ quality: jpegQuality }).toBuffer();
+
+      const ext = isPng ? "png" : "jpg";
+      const fileName = `${addressSlug}_${i + 1}.${ext}`;
+      zip.file(fileName, output);
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+
+    void access;
+    return new NextResponse(zipBuffer as unknown as BodyInit, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": `attachment; filename="${addressSlug}.zip"`,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[download-zip] error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  if (idx === 0) {
-    return NextResponse.json(
-      { error: "No photos could be fetched" },
-      { status: 500 }
-    );
-  }
-
-  // Include retouch requests from non-approved photos too, so notes aren't lost.
-  for (const p of photosWithRetouch) {
-    if (!p.retouchRequest) continue;
-    if (retouchedPhotoIdsIncluded.has(p.id)) continue;
-    retouchLines.push(
-      `photo-#${p.orderIndex + 1} (not in export): ${p.retouchRequest.trim()}`
-    );
-  }
-
-  if (retouchLines.length > 0) {
-    const header = [
-      `Retouch requests for ${job.address}`,
-      `Generated: ${new Date().toISOString()}`,
-      `Total: ${retouchLines.length}`,
-      "",
-    ].join("\n");
-    zip.file("retouch-requests.txt", header + retouchLines.join("\n") + "\n");
-  }
-
-  const zipBuffer = await zip.generateAsync({
-    type: "nodebuffer",
-    compression: "DEFLATE",
-    compressionOptions: { level: 6 },
-  });
-
-  await logDownload({
-    userId: access.userId,
-    jobId,
-    type: "zip",
-    count: idx,
-  }).catch(() => {});
-
-  return new NextResponse(new Uint8Array(zipBuffer), {
-    headers: {
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${job.address}-photos.zip"`,
-    },
-  });
 }

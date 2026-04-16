@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/api-auth";
-import { logActivity } from "@/lib/activity";
 
 // GET /api/jobs - list all jobs
 export async function GET(request: NextRequest) {
@@ -15,8 +14,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
 
     const roleFilter = role === "admin" ? {} : { photographerId: userId };
-    const baseFilter = { ...roleFilter, deletedAt: null };
-    const where = status ? { ...baseFilter, status } : baseFilter;
+    const where = status ? { ...roleFilter, status } : roleFilter;
 
     const jobs = await prisma.job.findMany({
       where,
@@ -47,7 +45,7 @@ export async function POST(request: NextRequest) {
     const { userId: sessionUserId, role: sessionUserRole } = authResult;
 
     const body = await request.json();
-    const { address, dropboxUrl, preset, photographerId, tvStyle, skyStyle, seasonalStyle, priority, watermarkText, clientName, clientId, tags } = body;
+    const { address, dropboxUrl, preset, photographerId, tvStyle, skyStyle, seasonalStyle } = body;
 
     if (!address) {
       return NextResponse.json({ error: "Address is required" }, { status: 400 });
@@ -61,13 +59,6 @@ export async function POST(request: NextRequest) {
       userId = sessionUserId;
     }
 
-    // Increment job sequence counter and get updated values
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: { jobSequenceCounter: { increment: 1 } },
-      select: { jobSequenceCounter: true, jobSequencePrefix: true },
-    });
-
     const job = await prisma.job.create({
       data: {
         address,
@@ -76,27 +67,14 @@ export async function POST(request: NextRequest) {
         tvStyle: tvStyle || "netflix",
         skyStyle: skyStyle || "blue-clouds",
         seasonalStyle: seasonalStyle || null,
-        priority: priority || "medium",
-        watermarkText: watermarkText?.trim() || null,
-        clientName: clientName?.trim() || null,
-        clientId: clientId || null,
-        tags: tags?.trim() || "",
-        status: dropboxUrl ? "pending" : "pending",
+        status: "pending",
         photographerId: userId,
-        sequenceNumber: updated.jobSequenceCounter,
       },
       include: {
         photographer: {
           select: { id: true, name: true, email: true },
         },
       },
-    });
-
-    await logActivity({
-      type: "job_created",
-      message: `Created job for ${job.address}`,
-      jobId: job.id,
-      userId: userId,
     });
 
     return NextResponse.json(job, { status: 201 });

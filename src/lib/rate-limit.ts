@@ -72,17 +72,10 @@ export async function checkRate(
     default: { limit: 300, windowMs: 60 * 60 * 1000 },  // 300/hour
   };
 
-  // Look up user tier; fall back to "standard" on any error
-  let tier: string = "standard";
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { rateLimitTier: true },
-    });
-    if (user?.rateLimitTier) tier = user.rateLimitTier;
-  } catch {
-    tier = "standard";
-  }
+  // Tier lookup removed with rateLimitTier field; default everyone to "standard"
+  void userId;
+  void prisma;
+  const tier: string = "standard";
 
   // Banned users are always rejected
   if (tier === "banned") {

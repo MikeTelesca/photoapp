@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
-import { applyWatermark } from "@/lib/watermark";
-import { applyPattern } from "@/lib/filename-pattern";
-import { logDownload } from "@/lib/download-log";
+
+function decodeDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
+  const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!match) return null;
+  return { buffer: Buffer.from(match[2], "base64"), mime: match[1] };
+}
+
+function sanitize(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_\-]+/g, "_").replace(/^_+|_+$/g, "");
+}
 
 // GET /api/jobs/:jobId/photos/:photoId/download
 export async function GET(
@@ -17,90 +24,39 @@ export async function GET(
   try {
     const photo = await prisma.photo.findUnique({
       where: { id: photoId },
-      include: {
-        job: {
-          include: {
-            photographer: {
-              select: { watermarkLogoPath: true, name: true, filenamePattern: true },
-            },
-          },
-        },
-      },
+      include: { job: true },
     });
 
     if (!photo || photo.jobId !== jobId) {
-      return NextResponse.json({ error: "Photo not found" }, { status: 404 });
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (!photo.editedUrl) {
-      return NextResponse.json(
-        { error: "No edited photo available" },
-        { status: 400 }
-      );
+    const source = photo.editedUrl ?? photo.originalUrl;
+    if (!source) {
+      return NextResponse.json({ error: "No image available" }, { status: 404 });
     }
 
-    let buffer: Buffer;
-    if (photo.editedUrl.startsWith("http")) {
-      const res = await fetch(photo.editedUrl);
-      buffer = Buffer.from(await res.arrayBuffer());
-    } else {
-      // Fall back to base64 decode
-      const base64Data = photo.editedUrl.split(",")[1];
-      if (!base64Data) {
-        return NextResponse.json(
-          { error: "Invalid photo data" },
-          { status: 500 }
-        );
-      }
-      buffer = Buffer.from(base64Data, "base64");
+    const decoded = decodeDataUrl(source);
+    if (!decoded) {
+      return NextResponse.json({ error: "Invalid image data" }, { status: 500 });
     }
 
-    // Apply watermark if configured
-    const watermarkText = photo.job.watermarkText;
-    const watermarkLogoPath = photo.job.photographer?.watermarkLogoPath || null;
-    const hasWatermark = watermarkText?.trim().length || watermarkLogoPath;
+    const addressSlug = sanitize(photo.job.address) || "photo";
+    const ext = decoded.mime.includes("png") ? "png" : "jpg";
+    const fileName = `${addressSlug}_${photo.orderIndex + 1}.${ext}`;
 
-    if (hasWatermark) {
-      buffer = await applyWatermark(buffer, {
-        watermarkText: watermarkText,
-        watermarkPosition: (photo.job as any).watermarkPosition || "bottom-right",
-        watermarkSize: (photo.job as any).watermarkSize || 32,
-        watermarkOpacity: (photo.job as any).watermarkOpacity ?? 0.7,
-        watermarkLogoPath: watermarkLogoPath,
-      });
-
-      // Convert to JPEG
-      const sharp = (await import("sharp")).default;
-      buffer = await sharp(buffer).jpeg({ quality: 92 }).toBuffer();
-    }
-
-    const user = photo.job.photographer;
-    const pattern = user?.filenamePattern || "{address}-{seq}";
-    const filename = applyPattern({
-      pattern,
-      address: photo.job.address,
-      client: photo.job.clientName || "",
-      preset: photo.job.preset || "",
-      photographer: user?.name || "",
-      index: photo.orderIndex + 1,
-      total: 1,
-    });
-
-    await logDownload({
-      userId: access.userId,
-      jobId,
-      photoId,
-      type: "single",
-    }).catch(() => {});
-
-    return new NextResponse(new Uint8Array(buffer), {
+    void access;
+    void request;
+    return new NextResponse(decoded.buffer as unknown as BodyInit, {
+      status: 200,
       headers: {
-        "Content-Type": "image/jpeg",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": String(buffer.length),
+        "Content-Type": decoded.mime,
+        "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[photo-download] error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

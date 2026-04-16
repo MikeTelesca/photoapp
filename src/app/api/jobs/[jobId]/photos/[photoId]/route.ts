@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
-import { logActivity } from "@/lib/activity";
-import { notifyJobWatchers } from "@/lib/notify";
 
 // PATCH /api/jobs/:jobId/photos/:photoId - update a photo (approve, reject, etc)
 export async function PATCH(
@@ -19,16 +17,10 @@ export async function PATCH(
   const allowed: Record<string, any> = {};
   const allowedFields = [
     "status",
-    "customInstructions",
-    "customPromptOverride",
-    "isTwilight",
-    "isFavorite",
-    "twilightInstructions",
-    "twilightStyle",
-    "editedUrl",
-    "rejectionReason",
     "note",
-    "flagged",
+    "customInstructions",
+    "isTwilight",
+    "editedUrl",
   ] as const;
   for (const field of allowedFields) {
     if (body[field] !== undefined) allowed[field] = body[field];
@@ -58,7 +50,6 @@ export async function PATCH(
   ]);
 
   const job = await prisma.job.findUnique({ where: { id: photo.jobId } });
-  const jobNowApproved = job && (approvedCount + rejectedCount === job.totalPhotos && job.totalPhotos > 0) && job.status !== "approved";
   if (job) {
     await prisma.job.update({
       where: { id: job.id },
@@ -66,47 +57,13 @@ export async function PATCH(
         approvedPhotos: approvedCount,
         rejectedPhotos: rejectedCount,
         processedPhotos: processedCount,
-        // Auto-update job status: all reviewed (approved + rejected) and not empty
         status: (approvedCount + rejectedCount === job.totalPhotos && job.totalPhotos > 0)
           ? "approved"
           : job.status,
       },
     });
-
-    if (jobNowApproved) {
-      await logActivity({
-        type: "job_approved",
-        message: `All ${job.totalPhotos} photos reviewed — job approved`,
-        jobId: job.id,
-        userId: access.userId,
-      });
-      await notifyJobWatchers({
-        jobId: job.id,
-        newStatus: "approved",
-        jobAddress: job.address,
-        photographerId: job.photographerId,
-        excludeUserId: access.userId,
-      }).catch(() => {});
-    }
   }
 
-  if (body.status === "approved") {
-    await logActivity({
-      type: "photo_approved",
-      message: `Photo approved`,
-      jobId: photo.jobId,
-      photoId: photo.id,
-      userId: access.userId,
-    });
-  } else if (body.status === "rejected") {
-    await logActivity({
-      type: "photo_rejected",
-      message: `Photo rejected`,
-      jobId: photo.jobId,
-      photoId: photo.id,
-      userId: access.userId,
-    });
-  }
-
+  void access;
   return NextResponse.json(photo);
 }

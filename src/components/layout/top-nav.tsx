@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
-import { DropboxStatus } from "@/components/layout/dropbox-status";
 import { DarkModeToggle } from "@/components/layout/dark-mode-toggle";
 
 type NavItem = {
@@ -164,7 +163,6 @@ export function TopNav() {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
-          <div className="hidden md:block"><DropboxStatus /></div>
           <DarkModeToggle />
           <Link
             href="/jobs/new"

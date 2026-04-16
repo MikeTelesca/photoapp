@@ -37,7 +37,7 @@ export async function POST(
   // Mark matching photos as pending so the existing enhance loop picks them up
   const updated = await prisma.photo.updateMany({
     where,
-    data: { status: "pending", rejectionReason: null },
+    data: { status: "pending" },
   });
 
   // Set job to processing

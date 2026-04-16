@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { DarkModeToggle } from "@/components/layout/dark-mode-toggle";
-import { DropboxStatus } from "@/components/layout/dropbox-status";
 
 type NavItem = {
   label: string;
@@ -300,8 +299,7 @@ export function SideNav() {
         )}
 
         {!collapsed && (
-          <div className="px-2 flex items-center justify-between">
-            <DropboxStatus />
+          <div className="px-2 flex items-center justify-end">
             <DarkModeToggle />
           </div>
         )}

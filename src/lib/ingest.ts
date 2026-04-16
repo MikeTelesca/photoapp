@@ -1,6 +1,5 @@
 import { prisma } from "./db";
 import { detectJobTwilight } from "./twilight-detect";
-import { notifyJobWatchers } from "./notify";
 
 export interface IngestResult {
   jobId: string;
@@ -22,7 +21,6 @@ const RAW_EXTENSIONS = [".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf", ".tif", 
 export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
   const job = await prisma.job.findUnique({
     where: { id: jobId },
-    include: { photographer: { select: { tagsInheritFromJob: true } } },
   });
   if (!job) throw new Error(`Job ${jobId} not found`);
   if (!job.dropboxUrl) throw new Error(`Job ${jobId} has no Dropbox URL`);
@@ -122,22 +120,6 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
     const bracketCount = imageFiles.length % 5 === 0 ? 5 : 3;
     const groupCount = Math.ceil(imageFiles.length / bracketCount);
 
-    // Compute inherited auto-tags from job tags if user opted in
-    let inheritedAutoTags: string | null = null;
-    if (job.photographer?.tagsInheritFromJob && job.tags && job.tags.trim().length > 0) {
-      const jobTagList = Array.from(
-        new Set(
-          job.tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter((t) => t.length > 0)
-        )
-      );
-      if (jobTagList.length > 0) {
-        inheritedAutoTags = JSON.stringify(jobTagList);
-      }
-    }
-
     // Create Photo records — one per bracket group (final output image)
     const photoRecords = [];
     for (let g = 0; g < groupCount; g++) {
@@ -160,7 +142,6 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
         }),
         isExterior: false,
         isTwilight: false,
-        ...(inheritedAutoTags ? { autoTags: inheritedAutoTags } : {}),
       });
     }
 
@@ -170,7 +151,7 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
     const isTwilight = detectJobTwilight(photoRecords.map(p => p.exifData));
 
     // Set to "review" for now — enhance will be triggered separately
-    const updatedJob = await prisma.job.update({
+    await prisma.job.update({
       where: { id: jobId },
       data: {
         status: "review",
@@ -179,13 +160,6 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
         ...(isTwilight && !job.seasonalStyle && { seasonalStyle: "twilight" }),
       },
     });
-
-    await notifyJobWatchers({
-      jobId: updatedJob.id,
-      newStatus: "review",
-      jobAddress: updatedJob.address,
-      photographerId: updatedJob.photographerId,
-    }).catch(() => {});
 
     return {
       jobId,

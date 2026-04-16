@@ -260,10 +260,8 @@ export async function enhancePhoto(
     }
 
     // Append seasonal style modifier if provided
-    const { getSeasonalModifier } = await import("./seasonal-styles");
-    const seasonalText = getSeasonalModifier(seasonalStyle);
-    if (seasonalText) {
-      prompt = `${prompt}\n\nSEASONAL STYLE: ${seasonalText}`;
+    if (seasonalStyle && seasonalStyle.trim()) {
+      prompt = `${prompt}\n\nSEASONAL STYLE: ${seasonalStyle.trim()}`;
     }
 
     // Final safety check on the complete prompt

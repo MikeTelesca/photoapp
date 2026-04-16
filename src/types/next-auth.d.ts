@@ -8,10 +8,6 @@ declare module "next-auth" {
   }
 
   interface Session {
-    impersonating?: boolean;
-    realUserId?: string;
-    /** Original admin user id when impersonation is active via cookie. */
-    actualUserId?: string;
     user: {
       id: string;
       name?: string | null;
@@ -26,6 +22,5 @@ declare module "next-auth/jwt" {
   interface JWT {
     role?: string;
     id?: string;
-    impersonatedUserId?: string | null;
   }
 }

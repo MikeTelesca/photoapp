@@ -1,34 +1,9 @@
 {
-  "crons": [
-    { "path": "/api/cron/recover-stuck", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/fire-reminders", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/weekly-digest", "schedule": "0 13 * * 1" },
-    { "path": "/api/cron/daily-summary", "schedule": "0 22 * * *" },
-    { "path": "/api/cron/auto-archive", "schedule": "0 14 * * *" },
-    { "path": "/api/cron/pre-archive-warn", "schedule": "0 13 * * *" },
-    { "path": "/api/cron/purge-logs", "schedule": "0 5 * * 0" },
-    { "path": "/api/cron/recurring-templates", "schedule": "0 8 * * *" },
-    { "path": "/api/cron/purge-trash", "schedule": "0 4 * * *" }
-  ],
   "functions": {
     "src/app/api/jobs/[jobId]/start-enhance/route.ts": { "maxDuration": 300 },
     "src/app/api/jobs/[jobId]/photos/[photoId]/enhance/route.ts": { "maxDuration": 120 },
-    "src/app/api/photos/[photoId]/auto-caption/route.ts": { "maxDuration": 60 },
-    "src/app/api/jobs/[jobId]/auto-caption-all/route.ts": { "maxDuration": 300 },
-    "src/app/api/jobs/[jobId]/captions/route.ts": { "maxDuration": 300 },
-    "src/app/api/jobs/[jobId]/photos/batch-rotate/route.ts": { "maxDuration": 300 },
     "src/app/api/jobs/[jobId]/download-zip/route.ts": { "maxDuration": 120 },
-    "src/app/api/jobs/[jobId]/download-originals/route.ts": { "maxDuration": 120 },
     "src/app/api/jobs/[jobId]/ingest/route.ts": { "maxDuration": 120 },
     "src/app/api/jobs/[jobId]/photos/[photoId]/original/route.ts": { "maxDuration": 30 }
-  },
-  "headers": [
-    {
-      "source": "/sw.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
-      ]
-    }
-  ]
+  }
 }

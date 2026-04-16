@@ -16,6 +16,24 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   jobs      Job[]
+  agents    Agent[]
+}
+
+model Agent {
+  id             String   @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  notes          String?
+  dropboxFolder  String?  // path like "/BatchBase/Jane Doe"
+  dropboxShareUrl String? // public share link for the agent's root folder
+  photographerId String
+  photographer   User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  jobs           Job[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([photographerId, name])
 }
 
 model Job {
@@ -39,10 +57,13 @@ model Job {
   updatedAt        DateTime @updatedAt
   photographerId   String
   photographer     User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  agentId          String?
+  agent            Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
   photos           Photo[]
 
   @@index([photographerId, createdAt(sort: Desc)])
   @@index([status])
+  @@index([agentId])
 }
 
 model Photo {

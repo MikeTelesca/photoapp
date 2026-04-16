@@ -219,3 +219,60 @@ export async function testConnection(): Promise<{
     email: response.result.email,
   };
 }
+
+/**
+ * Sanitize a name for use as a Dropbox folder segment.
+ * Dropbox disallows: < > : " / \ | ? * and leading/trailing dots or whitespace.
+ */
+export function sanitizeFolderName(raw: string): string {
+  const cleaned = raw
+    .replace(/[<>:"/\\|?*\u0000-\u001F]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^\.+|\.+$/g, "")
+    .slice(0, 200);
+  return cleaned || "untitled";
+}
+
+/**
+ * Create a folder at the given Dropbox path. If the folder already exists,
+ * returns the existing path instead of erroring.
+ */
+export async function createFolder(path: string): Promise<{ path: string }> {
+  try {
+    const res = await getDbx().filesCreateFolderV2({ path, autorename: false });
+    const meta = res.result.metadata as unknown as Record<string, unknown>;
+    return { path: (meta.path_display as string) || path };
+  } catch (error: unknown) {
+    // Surface the actual Dropbox error tag so "conflict" is not an error.
+    const maybe = error as { error?: { error?: { ".tag"?: string; path?: { ".tag"?: string } } } };
+    const tag = maybe?.error?.error?.path?.[".tag"];
+    if (tag === "conflict") return { path };
+    throw error;
+  }
+}
+
+/**
+ * Create (or fetch existing) a public share link for a Dropbox path.
+ * Returns the www.dropbox.com share URL (not a direct download).
+ */
+export async function createShareLinkForPath(path: string): Promise<string> {
+  try {
+    const linkResponse = await getDbx().sharingCreateSharedLinkWithSettings({
+      path,
+      settings: {
+        requested_visibility: { ".tag": "public" },
+        audience: { ".tag": "public" },
+        access: { ".tag": "viewer" },
+      },
+    });
+    return linkResponse.result.url;
+  } catch (error: unknown) {
+    const maybe = error as { error?: { error?: { ".tag"?: string } } };
+    if (maybe?.error?.error?.[".tag"] === "shared_link_already_exists") {
+      const existing = await getDbx().sharingListSharedLinks({ path, direct_only: true });
+      if (existing.result.links.length > 0) return existing.result.links[0].url;
+    }
+    throw error;
+  }
+}

@@ -73,6 +73,14 @@ export function JobViewer({
             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
             <span className={badge.text}>{badge.label}</span>
           </span>
+          {photo.bracketCount > 1 && (
+            <span
+              className="inline-flex items-center px-2.5 py-1 rounded-full border border-cyan/30 bg-cyan/10 text-cyan text-[11px] font-medium"
+              title={`${photo.bracketCount} source exposures merged`}
+            >
+              {photo.bracketCount}× bracketed
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {canCompare && (

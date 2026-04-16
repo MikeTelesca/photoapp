@@ -15,6 +15,8 @@ export type PhotoRow = {
   hasEdited: boolean;
   hasThumbnail: boolean;
   errorMessage: string | null;
+  /** Number of source exposures for this bracket group (3-shot, 5-shot, etc). */
+  bracketCount: number;
 };
 
 type Props = {
@@ -151,10 +153,20 @@ function PhotoTile({
         <span className={badge.text}>{badge.label}</span>
       </span>
 
-      {/* Photo index chip */}
-      <span className="absolute top-2.5 right-2.5 tabular-nums text-[10px] px-2 py-0.5 rounded-full bg-graphite-950/70 backdrop-blur text-white/70 border border-white/5 z-10">
-        {index + 1}
-      </span>
+      {/* Right-side chips — bracket count + photo index */}
+      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
+        {photo.bracketCount > 1 && (
+          <span
+            className="tabular-nums text-[10px] px-2 py-0.5 rounded-full bg-graphite-950/70 backdrop-blur text-cyan border border-cyan/30 font-medium"
+            title={`${photo.bracketCount}-shot bracketed HDR`}
+          >
+            {photo.bracketCount}× HDR
+          </span>
+        )}
+        <span className="tabular-nums text-[10px] px-2 py-0.5 rounded-full bg-graphite-950/70 backdrop-blur text-white/70 border border-white/5">
+          {index + 1}
+        </span>
+      </div>
 
       {/* Bottom gradient + actions */}
       <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-graphite-950/90 via-graphite-950/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />

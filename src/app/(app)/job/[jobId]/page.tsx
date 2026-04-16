@@ -11,6 +11,27 @@ function shortUrl(v: string | null): string | null {
   return v;
 }
 
+// Derive how many source exposures fed this bracket group. `bracketIndex`
+// was the file count in the original ingest writer; fall back to exifData.
+function bracketCountFrom(bracketIndex: number | null, exifData: string | null): number {
+  if (typeof bracketIndex === "number" && bracketIndex > 0) return bracketIndex;
+  if (!exifData) return 1;
+  try {
+    const parsed: unknown = JSON.parse(exifData);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "photos" in parsed &&
+      Array.isArray((parsed as { photos: unknown[] }).photos)
+    ) {
+      return (parsed as { photos: unknown[] }).photos.length || 1;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 1;
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function JobPage({
@@ -40,6 +61,8 @@ export default async function JobPage({
           editedUrl: true,
           thumbnailUrl: true,
           errorMessage: true,
+          bracketIndex: true,
+          exifData: true,
         },
       },
       agent: { select: { name: true } },
@@ -73,6 +96,7 @@ export default async function JobPage({
         hasEdited: !!p.editedUrl,
         hasThumbnail: !!p.thumbnailUrl,
         errorMessage: p.errorMessage,
+        bracketCount: bracketCountFrom(p.bracketIndex, p.exifData),
       }))}
     />
   );

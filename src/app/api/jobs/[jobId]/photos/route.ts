@@ -26,6 +26,8 @@ export async function GET(
       editedUrl: true,
       thumbnailUrl: true,
       errorMessage: true,
+      bracketIndex: true,
+      exifData: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -42,6 +44,7 @@ export async function GET(
     hasEdited: !!p.editedUrl,
     hasThumbnail: !!p.thumbnailUrl,
     errorMessage: p.errorMessage,
+    bracketCount: bracketCountFrom(p.bracketIndex, p.exifData),
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   }));
@@ -53,4 +56,25 @@ function shortUrl(v: string | null): string | null {
   if (!v) return null;
   if (v.startsWith("data:")) return null;
   return v;
+}
+
+// `bracketIndex` holds the file count per the ingest writer, but fall back to
+// counting exifData.photos if it isn't set.
+function bracketCountFrom(bracketIndex: number | null, exifData: string | null): number {
+  if (typeof bracketIndex === "number" && bracketIndex > 0) return bracketIndex;
+  if (!exifData) return 1;
+  try {
+    const parsed: unknown = JSON.parse(exifData);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "photos" in parsed &&
+      Array.isArray((parsed as { photos: unknown[] }).photos)
+    ) {
+      return (parsed as { photos: unknown[] }).photos.length || 1;
+    }
+  } catch {
+    // ignore parse failures — default to single-shot
+  }
+  return 1;
 }

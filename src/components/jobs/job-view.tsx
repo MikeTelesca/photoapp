@@ -6,6 +6,7 @@ import Link from "next/link";
 import { JobGrid, type PhotoRow } from "@/components/jobs/job-grid";
 import { JobViewer } from "@/components/jobs/job-viewer";
 import { StyleSummary } from "@/components/jobs/style-summary";
+import { UploadZone } from "@/components/jobs/upload-zone";
 
 export type JobSummary = {
   id: string;
@@ -330,19 +331,40 @@ export function JobView({ initialJob, initialPhotos }: Props) {
         )}
 
         {/* Photo grid */}
-        <section>
-          <div className="flex items-baseline justify-between mb-4">
-            <h2 className="text-[11px] uppercase tracking-[0.25em] text-graphite-500">Photos</h2>
-          </div>
-          <JobGrid
-            jobId={initialJob.id}
-            photos={photos}
-            onOpen={(i) => setViewerIndex(i)}
-            onEnhance={enhanceOne}
-            onApprove={(id) => updatePhotoStatus(id, "approved")}
-            onReject={(id) => updatePhotoStatus(id, "rejected")}
-            onDelete={deletePhoto}
-          />
+        <section className="space-y-4">
+          {photos.length === 0 ? (
+            <UploadZone
+              variant="empty"
+              uploading={uploading}
+              syncing={syncing}
+              dropboxUrl={initialJob.dropboxUrl}
+              onUpload={uploadFiles}
+              onSync={syncDropbox}
+            />
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-[11px] uppercase tracking-[0.25em] text-graphite-500">Photos</h2>
+              </div>
+              <UploadZone
+                variant="compact"
+                uploading={uploading}
+                syncing={syncing}
+                dropboxUrl={initialJob.dropboxUrl}
+                onUpload={uploadFiles}
+                onSync={syncDropbox}
+              />
+              <JobGrid
+                jobId={initialJob.id}
+                photos={photos}
+                onOpen={(i) => setViewerIndex(i)}
+                onEnhance={enhanceOne}
+                onApprove={(id) => updatePhotoStatus(id, "approved")}
+                onReject={(id) => updatePhotoStatus(id, "rejected")}
+                onDelete={deletePhoto}
+              />
+            </>
+          )}
         </section>
       </div>
 

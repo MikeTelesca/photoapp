@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { JobGrid, type PhotoRow } from "@/components/jobs/job-grid";
 import { JobViewer } from "@/components/jobs/job-viewer";
+import {
+  PhotoSettingsModal,
+  type PhotoOverrides,
+} from "@/components/jobs/photo-settings-modal";
 import { StyleSummary } from "@/components/jobs/style-summary";
 import { UploadZone } from "@/components/jobs/upload-zone";
 
@@ -29,6 +33,7 @@ export function JobView({ initialJob, initialPhotos }: Props) {
   const router = useRouter();
   const [photos, setPhotos] = useState<PhotoRow[]>(initialPhotos);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [settingsIndex, setSettingsIndex] = useState<number | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -144,6 +149,20 @@ export function JobView({ initialJob, initialPhotos }: Props) {
       }
     },
     [initialJob.id, photos]
+  );
+
+  const savePhotoOverrides = useCallback(
+    async (photoId: string, overrides: PhotoOverrides) => {
+      setError("");
+      const res = await fetch(`/api/jobs/${initialJob.id}/photos/${photoId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(overrides),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      await reloadPhotos();
+    },
+    [initialJob.id, reloadPhotos],
   );
 
   const deletePhoto = useCallback(
@@ -499,6 +518,7 @@ export function JobView({ initialJob, initialPhotos }: Props) {
                 onApprove={(id) => updatePhotoStatus(id, "approved")}
                 onReject={(id) => updatePhotoStatus(id, "rejected")}
                 onDelete={deletePhoto}
+                onOpenSettings={(i) => setSettingsIndex(i)}
               />
             </>
           )}
@@ -519,6 +539,35 @@ export function JobView({ initialJob, initialPhotos }: Props) {
           onEnhance={() => enhanceOne(photos[viewerIndex].id)}
           onApprove={() => updatePhotoStatus(photos[viewerIndex].id, "approved")}
           onReject={() => updatePhotoStatus(photos[viewerIndex].id, "rejected")}
+          onOpenSettings={() => {
+            const i = viewerIndex;
+            setViewerIndex(null);
+            setSettingsIndex(i);
+          }}
+        />
+      )}
+
+      {settingsIndex !== null && photos[settingsIndex] && (
+        <PhotoSettingsModal
+          jobDefaults={{
+            preset: initialJob.preset,
+            tvStyle: initialJob.tvStyle,
+            skyStyle: initialJob.skyStyle,
+            seasonalStyle: initialJob.seasonalStyle,
+          }}
+          photoOverrides={{
+            preset: photos[settingsIndex].preset,
+            tvStyle: photos[settingsIndex].tvStyle,
+            skyStyle: photos[settingsIndex].skyStyle,
+            seasonalStyle: photos[settingsIndex].seasonalStyle,
+            customInstructions: photos[settingsIndex].customInstructions,
+          }}
+          photoOrderIndex={photos[settingsIndex].orderIndex}
+          onClose={() => setSettingsIndex(null)}
+          onSave={(overrides) =>
+            savePhotoOverrides(photos[settingsIndex!].id, overrides)
+          }
+          onEnhance={() => enhanceOne(photos[settingsIndex!].id)}
         />
       )}
     </main>

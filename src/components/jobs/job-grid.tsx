@@ -17,6 +17,12 @@ export type PhotoRow = {
   errorMessage: string | null;
   /** Number of source exposures for this bracket group (3-shot, 5-shot, etc). */
   bracketCount: number;
+  // Per-photo overrides — null means "inherit from the parent Job".
+  preset: string | null;
+  tvStyle: string | null;
+  skyStyle: string | null;
+  seasonalStyle: string | null;
+  customInstructions: string | null;
 };
 
 type Props = {
@@ -27,6 +33,7 @@ type Props = {
   onApprove: (photoId: string) => void;
   onReject: (photoId: string) => void;
   onDelete: (photoId: string) => void;
+  onOpenSettings: (index: number) => void;
 };
 
 const statusConfig: Record<string, { label: string; dot: string; text: string }> = {
@@ -55,7 +62,7 @@ function gradientForId(id: string): string {
   return palette[hash % palette.length];
 }
 
-export function JobGrid({ jobId, photos, onOpen, onEnhance, onApprove, onReject, onDelete }: Props) {
+export function JobGrid({ jobId, photos, onOpen, onEnhance, onApprove, onReject, onDelete, onOpenSettings }: Props) {
   if (photos.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-graphite-800 bg-graphite-900/40 p-16 text-center">
@@ -82,6 +89,7 @@ export function JobGrid({ jobId, photos, onOpen, onEnhance, onApprove, onReject,
           onApprove={() => onApprove(p.id)}
           onReject={() => onReject(p.id)}
           onDelete={() => onDelete(p.id)}
+          onOpenSettings={() => onOpenSettings(i)}
         />
       ))}
     </div>
@@ -97,6 +105,7 @@ function PhotoTile({
   onApprove,
   onReject,
   onDelete,
+  onOpenSettings,
 }: {
   jobId: string;
   photo: PhotoRow;
@@ -106,6 +115,7 @@ function PhotoTile({
   onApprove: () => void;
   onReject: () => void;
   onDelete: () => void;
+  onOpenSettings: () => void;
 }) {
   const [imgError, setImgError] = useState(false);
   const badge = statusConfig[photo.status] ?? statusConfig.pending;
@@ -118,6 +128,9 @@ function PhotoTile({
   // via the file path embedded in exifData.
   const directThumb = photo.thumbnailUrl || photo.editedUrl || photo.originalUrl;
   const thumbSrc = directThumb ?? `/api/jobs/${jobId}/photos/${photo.id}/thumb`;
+  // Pending photos have no edited image to view yet — clicking the tile body
+  // should open settings where the user can adjust the look before enhancing.
+  const primaryOpen = photo.status === "pending" ? onOpenSettings : onOpen;
 
   return (
     <div
@@ -130,7 +143,7 @@ function PhotoTile({
           src={thumbSrc}
           alt={`Photo ${index + 1}`}
           className="absolute inset-0 w-full h-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-[1.04]"
-          onClick={onOpen}
+          onClick={primaryOpen}
           onError={() => setImgError(true)}
           loading="lazy"
           decoding="async"
@@ -138,7 +151,7 @@ function PhotoTile({
       ) : (
         <button
           type="button"
-          onClick={onOpen}
+          onClick={primaryOpen}
           className={`absolute inset-0 w-full h-full bg-gradient-to-br ${gradientForId(photo.id)}`}
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_60%)]" />
@@ -195,6 +208,7 @@ function PhotoTile({
           tone={photo.status === "rejected" ? "red" : "default"}
         />
         <div className="flex-1" />
+        <IconButton label="Settings" onClick={onOpenSettings} icon="gear" />
         <IconButton label="Delete" onClick={onDelete} icon="trash" tone="danger" />
       </div>
 
@@ -215,7 +229,7 @@ function IconButton({
 }: {
   label: string;
   onClick: () => void;
-  icon: "view" | "enhance" | "check" | "x" | "trash";
+  icon: "view" | "enhance" | "check" | "x" | "trash" | "gear";
   tone?: "default" | "emerald" | "red" | "danger";
   disabled?: boolean;
 }) {
@@ -242,9 +256,21 @@ function IconButton({
   );
 }
 
-function renderIcon(kind: "view" | "enhance" | "check" | "x" | "trash") {
+function renderIcon(kind: "view" | "enhance" | "check" | "x" | "trash" | "gear") {
   const p = "currentColor";
   switch (kind) {
+    case "gear":
+      return (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="2" stroke={p} strokeWidth="1.3" />
+          <path
+            d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.4 1.4M11.55 11.55l1.4 1.4M3.05 12.95l1.4-1.4M11.55 4.45l1.4-1.4"
+            stroke={p}
+            strokeWidth="1.3"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
     case "view":
       return (
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

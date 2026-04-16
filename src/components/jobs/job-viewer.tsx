@@ -15,6 +15,7 @@ type Props = {
   onEnhance: () => void;
   onApprove: () => void;
   onReject: () => void;
+  onOpenSettings: () => void;
 };
 
 const statusConfig: Record<string, { label: string; dot: string; text: string }> = {
@@ -38,6 +39,7 @@ export function JobViewer({
   onEnhance,
   onApprove,
   onReject,
+  onOpenSettings,
 }: Props) {
   const [showCompare, setShowCompare] = useState(false);
   const badge = statusConfig[photo.status] ?? statusConfig.pending;
@@ -83,6 +85,12 @@ export function JobViewer({
           )}
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenSettings}
+            className="h-9 px-3 rounded-lg text-[13px] font-medium bg-graphite-900 text-graphite-300 border border-graphite-800 hover:text-white hover:border-graphite-600 transition"
+          >
+            Settings
+          </button>
           {canCompare && (
             <button
               onClick={() => setShowCompare((s) => !s)}

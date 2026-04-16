@@ -63,6 +63,11 @@ export default async function JobPage({
           errorMessage: true,
           bracketIndex: true,
           exifData: true,
+          preset: true,
+          tvStyle: true,
+          skyStyle: true,
+          seasonalStyle: true,
+          customInstructions: true,
         },
       },
       agent: { select: { name: true } },
@@ -97,6 +102,11 @@ export default async function JobPage({
         hasThumbnail: !!p.thumbnailUrl,
         errorMessage: p.errorMessage,
         bracketCount: bracketCountFrom(p.bracketIndex, p.exifData),
+        preset: p.preset,
+        tvStyle: p.tvStyle,
+        skyStyle: p.skyStyle,
+        seasonalStyle: p.seasonalStyle,
+        customInstructions: p.customInstructions,
       }))}
     />
   );

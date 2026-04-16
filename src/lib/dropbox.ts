@@ -287,41 +287,71 @@ export function toRawDropboxUrl(shareUrl: string): string {
 }
 
 /**
- * Persist an enhanced photo to Dropbox. Generates a 2560-px JPEG (display-
- * size) plus a 640-px WebP (thumbnail), uploads both, returns the raw-inline
- * URLs for <img src> use. Caller stores those URLs on Photo.editedUrl /
- * Photo.thumbnailUrl — no more multi-MB base64 data URLs in Postgres.
+ * Slugify a string for use as a filename segment. Real-estate deliverables
+ * typically embed the property address in the filename so the agent's
+ * downloaded copy is self-describing.
  */
-export async function persistEnhancedEdit(
-  photoId: string,
-  imageBuffer: Buffer,
-  jobId: string
-): Promise<{ editedUrl: string; thumbnailUrl: string }> {
+export function slugifyForFilename(raw: string): string {
+  const s = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return s || "photo";
+}
+
+/**
+ * Persist an enhanced photo to Dropbox. Generates a 2560-px JPEG (display-
+ * size) and a 640-px JPEG (preview thumb), uploads both into the job's
+ * property folder alongside the shooter's originals. Returns the raw-inline
+ * Dropbox URLs for <img src> use. Caller stores those URLs on Photo.editedUrl
+ * and Photo.thumbnailUrl — no multi-MB base64 data URLs in Postgres.
+ *
+ * File layout (clean, address-based naming):
+ *   {destFolderPath}/{fileBaseName}.jpg         (full 2560px)
+ *   {destFolderPath}/_thumbs/{fileBaseName}.jpg (preview 640px)
+ */
+export async function persistEnhancedEdit(args: {
+  imageBuffer: Buffer;
+  destFolderPath: string;
+  fileBaseName: string;
+}): Promise<{ editedUrl: string; thumbnailUrl: string }> {
   const sharp = (await import("sharp")).default;
 
-  const [fullJpeg, thumbWebp] = await Promise.all([
-    sharp(imageBuffer)
+  const [fullJpeg, thumbJpeg] = await Promise.all([
+    sharp(args.imageBuffer)
       .rotate()
       .resize(2560, 2560, { fit: "inside", withoutEnlargement: true })
       .jpeg({ quality: 88, mozjpeg: true })
       .toBuffer(),
-    sharp(imageBuffer)
+    sharp(args.imageBuffer)
       .rotate()
       .resize(640, 640, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 78 })
+      .jpeg({ quality: 78, mozjpeg: true })
       .toBuffer(),
   ]);
 
-  // Ensure parent folders exist (cheap; creates are idempotent in our helper)
-  await createFolder("/BatchBase");
-  await createFolder("/BatchBase/_edits");
-  const editFolder = `/BatchBase/_edits/${jobId}`;
-  await createFolder(editFolder);
+  // Ensure the destination folder (usually agent/property folder) exists
+  // along with the _thumbs subfolder. Creates are idempotent in our helper.
+  try {
+    await createFolder(args.destFolderPath);
+  } catch {
+    /* non-fatal */
+  }
+  const thumbsFolder = `${args.destFolderPath}/_thumbs`;
+  try {
+    await createFolder(thumbsFolder);
+  } catch {
+    /* non-fatal */
+  }
 
-  const fullPath = `${editFolder}/${photoId}.jpg`;
-  const thumbPath = `${editFolder}/${photoId}_thumb.webp`;
+  const fullPath = `${args.destFolderPath}/${args.fileBaseName}.jpg`;
+  const thumbPath = `${thumbsFolder}/${args.fileBaseName}.jpg`;
 
-  await Promise.all([uploadInternalFile(fullJpeg, fullPath), uploadInternalFile(thumbWebp, thumbPath)]);
+  await Promise.all([
+    uploadInternalFile(fullJpeg, fullPath),
+    uploadInternalFile(thumbJpeg, thumbPath),
+  ]);
 
   const [fullShare, thumbShare] = await Promise.all([
     createShareLinkForPath(fullPath),

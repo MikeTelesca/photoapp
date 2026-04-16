@@ -111,8 +111,9 @@ function pickSource(
   return photo.editedUrl ?? photo.thumbnailUrl ?? photo.originalUrl ?? null;
 }
 
-// For a bracket group, pick the middle exposure as the visual preview.
-// 3-shot -> index 1 (normal); 5-shot -> index 2 (normal); 1-shot -> index 0.
+// For a bracket group, pick the base (first) exposure as the visual preview.
+// Cameras typically shoot base first, then dark/bright brackets — using the
+// base exposure gives the most readable thumbnail.
 function pickDropboxPath(exifData: string | null, variant: Variant): string | null {
   if (variant === "edited") return null; // edited versions come from editedUrl, not Dropbox paths
   if (!exifData) return null;
@@ -128,8 +129,7 @@ function pickDropboxPath(exifData: string | null, variant: Variant): string | nu
     }
     const files = (parsed as { photos: Array<{ path?: string }> }).photos;
     if (files.length === 0) return null;
-    const idx = Math.floor(files.length / 2);
-    return files[idx]?.path ?? files[0]?.path ?? null;
+    return files[0]?.path ?? null;
   } catch {
     return null;
   }

@@ -33,6 +33,13 @@ ONLY DO THESE SAFE ADJUSTMENTS:
 
 NOTE on #7-10: Adjust the geometry/perspective WITHOUT changing what's in the photo. Same furniture, same walls, same content — just straightened.
 
+REFLECTION AND PERSON CLEANUP (CRITICAL — do this even if not asked):
+- Remove any person, photographer, camera, tripod, light stand, or crew member visible in the photo.
+- Remove photographer reflections from mirrors, windows, picture frames, glass doors, shiny appliances, polished floors, glossy countertops, faucets, and any other reflective surface.
+- Preserve the reflection itself — just replace the photographer/gear with the surrounding scene (clean wall, continuation of view, etc.). Mirrors should still read as mirrors.
+- Do NOT hallucinate new objects, text, signage, or content. Only remove, and fill in with plausible existing scene context.
+- Windows that reflect the photographer should show the expected exterior view OR a clean darker window with no person.
+
 The goal: make the photo look like it was taken with perfect lighting and exposure. NOT like a different photo of a different place.
 
 The output must be THE EXACT SAME SCENE — same sky, same grass, same buildings, same everything — just with better exposure and color.
@@ -55,6 +62,13 @@ ONLY DO THESE SAFE ADJUSTMENTS:
 3. COLORS: Soft, gentle, slightly desaturated for a clean look.
 4. WHITES: Make whites clean and bright (walls, ceilings, trim).
 5. SHARPNESS: Gentle sharpening.
+
+REFLECTION AND PERSON CLEANUP (CRITICAL — do this even if not asked):
+- Remove any person, photographer, camera, tripod, light stand, or crew member visible in the photo.
+- Remove photographer reflections from mirrors, windows, picture frames, glass doors, shiny appliances, polished floors, glossy countertops, faucets, and any other reflective surface.
+- Preserve the reflection itself — just replace the photographer/gear with the surrounding scene (clean wall, continuation of view, etc.). Mirrors should still read as mirrors.
+- Do NOT hallucinate new objects, text, signage, or content. Only remove, and fill in with plausible existing scene context.
+- Windows that reflect the photographer should show the expected exterior view OR a clean darker window with no person.
 
 The output must be THE EXACT SAME SCENE — same sky, same grass, same view through windows — just lighter, airier, and cleaner.
 
@@ -80,6 +94,13 @@ FLAMBIENT HDR CHARACTERISTICS:
 8. CONTRAST: Medium-high editorial contrast. Deep blacks without crushing detail. Bright whites without clipping.
 9. SHARPNESS: Crisp but never over-sharpened. Window muntins visible against bright exteriors.
 10. STRAIGHTEN verticals + horizontals; correct wide-angle lens distortion.
+
+REFLECTION AND PERSON CLEANUP (CRITICAL — do this even if not asked):
+- Remove any person, photographer, camera, tripod, light stand, or crew member visible in the photo.
+- Remove photographer reflections from mirrors, windows, picture frames, glass doors, shiny appliances, polished floors, glossy countertops, faucets, and any other reflective surface.
+- Preserve the reflection itself — just replace the photographer/gear with the surrounding scene (clean wall, continuation of view, etc.). Mirrors should still read as mirrors.
+- Do NOT hallucinate new objects, text, signage, or content. Only remove, and fill in with plausible existing scene context.
+- Windows that reflect the photographer should show the expected exterior view OR a clean darker window with no person.
 
 The look: magazine-ready, what a pro flambient shooter would composite in Photoshop from 5-9 brackets + flash. Clean, balanced, inviting.
 

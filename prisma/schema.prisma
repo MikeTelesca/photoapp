@@ -94,6 +94,11 @@ model Photo {
   isExterior         Boolean  @default(false)
   isTwilight         Boolean  @default(false)
   customInstructions String?
+  // Per-photo overrides — null means "inherit from the parent Job".
+  preset             String?
+  tvStyle            String?
+  skyStyle           String?
+  seasonalStyle      String?
   bracketGroup       Int?
   bracketIndex       Int?
   exifData           String?                      // JSON string

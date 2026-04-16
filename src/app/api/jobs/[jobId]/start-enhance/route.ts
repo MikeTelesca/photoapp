@@ -4,7 +4,7 @@ import { enhancePhoto } from "@/lib/ai-enhance";
 import { requireJobAccess } from "@/lib/api-auth";
 import { checkRate } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
-import { persistEnhancedEdit } from "@/lib/dropbox";
+import { persistEnhancedEdit, sanitizeFolderName, slugifyForFilename } from "@/lib/dropbox";
 
 // Allow up to 5 minutes for AI processing
 export const maxDuration = 300;
@@ -52,6 +52,7 @@ export async function POST(
   try {
     const job = await prisma.job.findUnique({
       where: { id: jobId },
+      include: { agent: true },
     });
 
     if (!job) {
@@ -103,13 +104,30 @@ export async function POST(
         buffers.push(buf);
       }
 
+      // Per-photo overrides win over job defaults. A null override means
+      // "use the job's setting".
+      const effectivePreset = nextPhoto.preset ?? job.preset;
+      const effectiveSeasonal = nextPhoto.seasonalStyle ?? job.seasonalStyle ?? null;
+
+      // If the preset isn't a built-in, see if the photographer has a user
+      // preset matching this slug and pass the prompt through.
+      let customPresetPrompt: string | null = null;
+      const BUILTIN_PRESETS = ["standard", "bright-airy", "flambient-hdr", "mls-standard", "flambient"];
+      if (!BUILTIN_PRESETS.includes(effectivePreset)) {
+        const userPreset = await prisma.preset.findUnique({
+          where: { photographerId_slug: { photographerId: access.userId, slug: effectivePreset } },
+        });
+        if (userPreset) customPresetPrompt = userPreset.prompt;
+      }
+
       const result = await enhancePhoto(
         buffers.length === 1 ? buffers[0] : buffers,
         "image/jpeg",
-        job.preset,
+        effectivePreset,
         nextPhoto.customInstructions ?? null,
-        job.seasonalStyle ?? null,
-        null
+        effectiveSeasonal,
+        null,
+        customPresetPrompt,
       );
 
       if (!result.success || !result.imageBase64) {
@@ -127,7 +145,17 @@ export async function POST(
       let thumbnailUrl: string | null = null;
       try {
         const imageBuffer = Buffer.from(result.imageBase64, "base64");
-        const urls = await persistEnhancedEdit(nextPhoto.id, imageBuffer, jobId);
+        const destFolderPath = job.agent?.dropboxFolder
+          ? `${job.agent.dropboxFolder}/${sanitizeFolderName(job.address)}`
+          : `/BatchBase/_uploads/${job.id}`;
+        const addressSlug = slugifyForFilename(job.address);
+        const num = String(nextPhoto.orderIndex + 1).padStart(2, "0");
+        const fileBaseName = `${addressSlug}-${num}`;
+        const urls = await persistEnhancedEdit({
+          imageBuffer,
+          destFolderPath,
+          fileBaseName,
+        });
         editedUrl = urls.editedUrl;
         thumbnailUrl = urls.thumbnailUrl;
       } catch (uploadErr) {

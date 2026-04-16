@@ -3,17 +3,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { signOut } from "@/lib/auth";
-import { NewJobForm } from "@/components/jobs/new-job-form";
+import { NewJobTile } from "@/components/jobs/new-job-modal";
+import { JobCard } from "@/components/jobs/job-card";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(d: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(d);
-}
+const ACTIVE_STATUSES = ["pending", "processing", "review"];
 
 export default async function JobsPage() {
   const session = await auth();
@@ -22,30 +17,70 @@ export default async function JobsPage() {
   const isAdmin = session.user.role === "admin";
   const where = isAdmin ? {} : { photographerId: session.user.id };
 
-  const jobs = await prisma.job.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: { select: { photos: true } },
-      photographer: { select: { name: true, email: true } },
-    },
-    take: 100,
+  const [jobs, photoAgg, todayCount, activeCount] = await Promise.all([
+    prisma.job.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: { select: { photos: true } },
+        photographer: { select: { name: true, email: true } },
+        photos: {
+          where: {
+            OR: [
+              { editedUrl: { not: null } },
+              { thumbnailUrl: { not: null } },
+              { originalUrl: { not: null } },
+            ],
+          },
+          orderBy: { orderIndex: "asc" },
+          take: 1,
+          select: { editedUrl: true, thumbnailUrl: true, originalUrl: true },
+        },
+      },
+      take: 60,
+    }),
+    prisma.photo.count({
+      where: { job: where },
+    }),
+    prisma.job.count({
+      where: {
+        ...where,
+        createdAt: { gte: startOfTodayUtc() },
+      },
+    }),
+    prisma.job.count({
+      where: { ...where, status: { in: ACTIVE_STATUSES } },
+    }),
+  ]);
+
+  const approvedCount = await prisma.photo.count({
+    where: { job: where, status: "approved" },
   });
 
+  const greeting = getGreeting();
+  const displayName = session.user.name?.split(" ")[0] ?? null;
+
   return (
-    <main className="min-h-screen bg-graphite-50 dark:bg-graphite-950 text-graphite-900 dark:text-white">
-      <header className="sticky top-0 z-10 border-b border-graphite-200 dark:border-graphite-800 bg-white/90 dark:bg-graphite-950/90 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/jobs" className="font-semibold text-lg tracking-tight">
-            <span className="text-graphite-900 dark:text-white">Batch</span>
+    <main className="min-h-screen bg-graphite-950 text-white">
+      {/* Top nav */}
+      <header className="sticky top-0 z-20 border-b border-graphite-900 bg-graphite-950/80 backdrop-blur-xl">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
+          <Link href="/jobs" className="font-semibold text-[15px] tracking-tight">
+            <span className="text-white">Batch</span>
             <span className="text-cyan">Base</span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/jobs" className="text-graphite-900 dark:text-white font-medium">
+          <nav className="flex items-center gap-1 text-sm">
+            <Link
+              href="/jobs"
+              className="px-3 h-8 flex items-center rounded-lg text-white font-medium bg-graphite-900"
+            >
               Jobs
             </Link>
             {isAdmin && (
-              <Link href="/users" className="text-graphite-500 hover:text-graphite-900 dark:hover:text-white">
+              <Link
+                href="/users"
+                className="px-3 h-8 flex items-center rounded-lg text-graphite-400 hover:text-white hover:bg-graphite-900"
+              >
                 Users
               </Link>
             )}
@@ -57,7 +92,7 @@ export default async function JobsPage() {
             >
               <button
                 type="submit"
-                className="text-graphite-500 hover:text-red-600 dark:hover:text-red-400"
+                className="px-3 h-8 flex items-center rounded-lg text-graphite-400 hover:text-red-300 hover:bg-red-950/20"
               >
                 Sign out
               </button>
@@ -66,66 +101,90 @@ export default async function JobsPage() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 pt-10 pb-16 space-y-8">
+        {/* Hero line */}
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-graphite-500 mb-3">
-            New job
-          </h2>
-          <NewJobForm />
+          <div className="text-[11px] uppercase tracking-[0.25em] text-graphite-500 mb-3">
+            {greeting}
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.02]">
+            {displayName ? (
+              <>
+                <span className="text-white">Welcome back, </span>
+                <span className="text-cyan">{displayName}</span>
+                <span className="text-white">.</span>
+              </>
+            ) : (
+              <span className="text-white">Your workbench.</span>
+            )}
+          </h1>
         </section>
 
+        {/* Bento row 1 — stats + CTA */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <StatTile
+            kicker="In pipeline"
+            value={activeCount}
+            hint={activeCount === 1 ? "job moving" : "jobs moving"}
+            accent="cyan"
+          />
+          <StatTile
+            kicker="Today"
+            value={todayCount}
+            hint={todayCount === 1 ? "new job" : "new jobs"}
+            accent="amber"
+          />
+          <StatTile
+            kicker="Photos delivered"
+            value={approvedCount}
+            hint={`of ${photoAgg} total`}
+            accent="emerald"
+          />
+          <div className="sm:col-span-2 lg:col-span-1">
+            <NewJobTile />
+          </div>
+        </section>
+
+        {/* Bento row 2+ — jobs */}
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-graphite-500 mb-3">
-            Jobs ({jobs.length})
-          </h2>
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="text-[11px] uppercase tracking-[0.25em] text-graphite-500">
+              Recent jobs
+            </h2>
+            <span className="text-[11px] text-graphite-600 tabular-nums">
+              {jobs.length} {jobs.length === 1 ? "job" : "jobs"}
+            </span>
+          </div>
+
           {jobs.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-graphite-200 dark:border-graphite-800 p-12 text-center text-graphite-500">
-              No jobs yet. Create your first one above.
-            </div>
+            <EmptyState />
           ) : (
-            <div className="rounded-lg border border-graphite-200 dark:border-graphite-800 overflow-hidden bg-white dark:bg-graphite-900">
-              <table className="w-full text-sm">
-                <thead className="bg-graphite-50 dark:bg-graphite-950 text-xs uppercase tracking-wide text-graphite-500">
-                  <tr>
-                    <th className="text-left px-4 py-3 font-medium">Address</th>
-                    <th className="text-left px-4 py-3 font-medium">Status</th>
-                    <th className="text-left px-4 py-3 font-medium">Photos</th>
-                    {isAdmin && <th className="text-left px-4 py-3 font-medium">Shooter</th>}
-                    <th className="text-left px-4 py-3 font-medium">Created</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jobs.map((job) => (
-                    <tr
-                      key={job.id}
-                      className="border-t border-graphite-100 dark:border-graphite-800 hover:bg-graphite-50 dark:hover:bg-graphite-950/50"
-                    >
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/job/${job.id}`}
-                          className="font-medium text-graphite-900 dark:text-white hover:text-cyan"
-                        >
-                          {job.address}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={job.status} />
-                      </td>
-                      <td className="px-4 py-3 text-graphite-600 dark:text-graphite-300">
-                        {job._count.photos}
-                      </td>
-                      {isAdmin && (
-                        <td className="px-4 py-3 text-graphite-600 dark:text-graphite-300">
-                          {job.photographer?.name || job.photographer?.email || "—"}
-                        </td>
-                      )}
-                      <td className="px-4 py-3 text-graphite-500">
-                        {formatDate(job.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {jobs.map((job, idx) => {
+                const cover =
+                  job.photos[0]?.editedUrl ||
+                  job.photos[0]?.thumbnailUrl ||
+                  job.photos[0]?.originalUrl ||
+                  null;
+                // Featured every 7th tile — breaks grid rhythm into an editorial feel
+                const featured = idx % 7 === 0 && jobs.length > 3;
+                return (
+                  <div key={job.id} className={featured ? "sm:col-span-2 lg:col-span-2" : ""}>
+                    <JobCard
+                      id={job.id}
+                      address={job.address}
+                      status={job.status}
+                      photoCount={job._count.photos}
+                      createdAt={job.createdAt}
+                      coverUrl={cover}
+                      size={featured ? "lg" : "md"}
+                      photographerName={
+                        isAdmin ? job.photographer?.name ?? job.photographer?.email ?? null : null
+                      }
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
@@ -134,18 +193,61 @@ export default async function JobsPage() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    pending: "bg-graphite-100 text-graphite-700 dark:bg-graphite-800 dark:text-graphite-200",
-    processing: "bg-cyan/10 text-cyan",
-    review: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
-    approved: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
-    rejected: "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300",
-  };
-  const cls = colors[status] ?? colors.pending;
+function StatTile({
+  kicker,
+  value,
+  hint,
+  accent,
+}: {
+  kicker: string;
+  value: number;
+  hint: string;
+  accent: "cyan" | "amber" | "emerald";
+}) {
+  const accentMap = {
+    cyan: "text-cyan bg-[radial-gradient(circle_at_80%_20%,rgba(34,211,238,0.18),transparent_60%)]",
+    amber: "text-amber-300 bg-[radial-gradient(circle_at_80%_20%,rgba(251,191,36,0.15),transparent_60%)]",
+    emerald: "text-emerald-300 bg-[radial-gradient(circle_at_80%_20%,rgba(52,211,153,0.15),transparent_60%)]",
+  } as const;
   return (
-    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>
-      {status}
-    </span>
+    <div className={`relative overflow-hidden rounded-3xl bg-graphite-900 border border-graphite-800 p-5 min-h-[140px] flex flex-col justify-between ${accentMap[accent]}`}>
+      <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-graphite-500">
+        {kicker}
+      </div>
+      <div>
+        <div className={`text-5xl font-semibold tracking-tight tabular-nums ${accentMap[accent].split(" ")[0]}`}>
+          {value}
+        </div>
+        <div className="text-xs text-graphite-400 mt-1">{hint}</div>
+      </div>
+    </div>
   );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-3xl border border-dashed border-graphite-800 bg-graphite-900/40 p-16 text-center">
+      <div className="text-[11px] uppercase tracking-[0.25em] text-graphite-500 mb-3">
+        No jobs yet
+      </div>
+      <p className="text-lg text-graphite-300">
+        Hit <span className="text-cyan font-medium">Create a job</span> to get started.
+      </p>
+    </div>
+  );
+}
+
+function startOfTodayUtc(): Date {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 5) return "Late night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Late night";
 }

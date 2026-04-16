@@ -7,7 +7,10 @@
       "Bash(/Users/aroundthehouse/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh --project-dir \"/Users/aroundthehouse/Ai Editor ATH\")",
       "Bash(python3 \"/Users/aroundthehouse/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.0.1/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"real estate photography SaaS tool dashboard dark professional\" --design-system -p \"Photo Editor\")",
       "Bash(python3 \"/Users/aroundthehouse/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.0.1/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"dark mode dashboard professional tool\" --domain style -n 5)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(npx tsc:*)",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__0d02f6eb-b839-4f7c-bfe7-ea9dddc6ce73__deploy_to_vercel"
     ]
   }
 }

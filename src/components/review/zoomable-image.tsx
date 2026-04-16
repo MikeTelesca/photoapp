@@ -66,7 +66,7 @@ export function ZoomableImage({ src, alt, zoom, pan, onZoomChange, onPanChange, 
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full overflow-hidden bg-graphite-800 ${zoom > 1 ? "cursor-grab" : "cursor-zoom-in"} ${className}`}
+      className={`relative w-full h-full overflow-hidden bg-graphite-950 ${zoom > 1 ? "cursor-grab" : "cursor-zoom-in"} ${className}`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

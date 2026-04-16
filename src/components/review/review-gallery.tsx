@@ -2615,14 +2615,14 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         />
       )}
       {/* Top Bar — Greseel minimal header */}
-      <div className="app-header review-toolbar-extras bg-graphite-950 border-b border-graphite-800/50 px-5 md:px-6 h-14 flex items-center justify-between gap-3 shrink-0">
+      <div className="app-header review-toolbar-extras bg-graphite-950 border-b border-graphite-800/50 px-5 md:px-6 h-12 flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-4 min-w-0">
           <Link href="/dashboard" className="flex items-center justify-center w-9 h-9 rounded-lg bg-graphite-800/50 text-graphite-300 hover:text-white hover:bg-graphite-700 transition-colors shrink-0">
             <ChevronLeftIcon className="w-4 h-4" />
           </Link>
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-white truncate">{job.address}</div>
-            <div className="text-[11px] text-graphite-500 flex gap-2 items-center">
+            <div className="text-[13px] font-semibold text-white truncate">{job.address}</div>
+            <div className="text-[11px] text-graphite-500/80 flex gap-2 items-center">
               <span>{job.photographer?.name}</span>
               <span className="text-graphite-700">&middot;</span>
               <span>{currentPhoto?.customFilename || `Photo ${currentIndex + 1}`}</span>
@@ -2636,12 +2636,12 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             <span className="text-graphite-300">{currentIndex + 1}/{photos.length}</span>
           </button>
           <button type="button" onClick={toggleMoreActions} aria-expanded={showMoreActions}
-            className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${showMoreActions ? "border-cyan bg-cyan/10 text-cyan" : "border-graphite-700 text-graphite-400 hover:text-white hover:border-graphite-600"}`}>
+            className={`text-[13px] px-3 py-1.5 rounded-lg border transition-all ${showMoreActions ? "border-cyan bg-cyan/10 text-cyan" : "border-graphite-700 text-graphite-400 hover:text-white hover:border-graphite-600"}`}>
             {showMoreActions ? "Hide tools" : "Tools"}
           </button>
           <ShareButton jobId={job.id} initialToken={job.shareToken ?? null} initialEnabled={job.shareEnabled ?? false} />
           <Link href={`/review/${job.id}/invoice`}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-graphite-700 text-graphite-300 hover:text-white hover:border-graphite-600 transition-colors">
+            className="hidden md:flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[13px] font-medium bg-cyan text-white hover:brightness-110 active:brightness-90 transition-all">
             Save / Export
           </Link>
         </div>
@@ -3659,21 +3659,21 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Icon Rail — Greseel inspo */}
-        <div className="hidden md:flex w-[72px] bg-graphite-950 border-r border-graphite-800/30 flex-col items-center pt-8 gap-2 flex-shrink-0">
-          <button onClick={() => {}} className="w-11 h-11 rounded-xl bg-cyan text-white flex items-center justify-center shadow-lg shadow-cyan/20" title="Review">
+        <div className="hidden md:flex w-[72px] bg-graphite-950 border-r border-graphite-800/30 flex-col items-center pt-5 gap-1.5 flex-shrink-0">
+          <button onClick={() => {}} className="w-10 h-10 rounded-xl bg-white/10 text-cyan ring-1 ring-cyan/30 flex items-center justify-center transition-all" title="Review">
             <CheckCircleIcon className="w-5 h-5" />
           </button>
-          <button onClick={() => {}} className="w-11 h-11 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="AI Enhance">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <button onClick={() => {}} className="w-10 h-10 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="AI Enhance">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
           </button>
-          <button onClick={() => {}} className="w-11 h-11 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Adjustments">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+          <button onClick={() => {}} className="w-10 h-10 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Adjustments">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
           </button>
-          <button onClick={() => {}} className="w-11 h-11 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Crop">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v14a2 2 0 002 2h14"/><path d="M18 22V8a2 2 0 00-2-2H2"/></svg>
+          <button onClick={() => {}} className="w-10 h-10 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Crop">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v14a2 2 0 002 2h14"/><path d="M18 22V8a2 2 0 00-2-2H2"/></svg>
           </button>
-          <button onClick={() => {}} className="w-11 h-11 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Settings">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <button onClick={() => {}} className="w-10 h-10 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
           </button>
         </div>
 
@@ -3985,9 +3985,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         </div>
 
         {/* Center column — Greseel canvas + strip */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         {/* Viewer */}
-        <div className="flex-1 flex flex-col relative" {...swipe}>
+        <div className="flex-1 flex flex-col relative min-h-0" {...swipe}>
           {viewMode === "grid" ? (
             <GridView
               photos={sortedPhotos}
@@ -4004,7 +4004,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           ) : (
             <>
               {/* Before / After Compare */}
-              <div className="flex-1 bg-graphite-900 min-h-0 p-2 md:p-4">
+              <div className="flex-1 bg-graphite-950 min-h-0 p-0">
             {compareSliderOn && currentPhoto?.originalUrl && currentPhoto?.editedUrl ? (
               <div className="w-full h-full rounded-lg overflow-hidden">
                 <CompareSlider
@@ -4043,9 +4043,6 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
                 {/* After — single image (Greseel layout) */}
                 <div className="w-full h-full rounded-lg overflow-hidden relative bg-graphite-950">
-                  <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10 pointer-events-none">
-                    After
-                  </div>
                   {/* Crop suggestion overlay */}
                   {cropSuggestion && currentPhoto && (
                     <div className="absolute inset-0 pointer-events-none z-20">
@@ -4180,19 +4177,22 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </>
           )}
 
+          {/* Gradient fade at bottom of canvas */}
+          <div className="pointer-events-none absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-graphite-950/80 to-transparent" />
+
           {/* Floating toolbar — inspo #1 bottom pill */}
           {currentPhoto && viewMode === "single" && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
               <FloatingToolbar>
                 {/* Primary actions — Greseel */}
                 <ToolbarButton ariaLabel="Approve (A)" onClick={handleApprove} title="Approve">
-                  <CheckIcon className="w-4 h-4 text-emerald-400" />
+                  <CheckIcon className="w-4 h-4 text-emerald-400 hover:text-emerald-300" />
                 </ToolbarButton>
                 <ToolbarButton ariaLabel="Reject (R)" onClick={handleReject} title="Reject">
-                  <XMarkIcon className="w-4 h-4 text-red-400" />
+                  <XMarkIcon className="w-4 h-4 text-red-400 hover:text-red-300" />
                 </ToolbarButton>
                 <ToolbarButton ariaLabel="Regenerate" onClick={handleRegenerate} title="Regenerate">
-                  <ArrowPathIcon className="w-4 h-4 text-cyan-light" />
+                  <ArrowPathIcon className="w-4 h-4 text-graphite-300 hover:text-white" />
                 </ToolbarButton>
                 <ToolbarDivider />
                 <ToolbarButton
@@ -4877,17 +4877,17 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         </div>{/* /viewer */}
 
         {/* Recent Edits strip — Greseel */}
-        <div className="h-[120px] border-t border-graphite-800/50 bg-graphite-950 px-4 py-3 flex-shrink-0">
-          <div className="text-[11px] font-semibold text-graphite-500 uppercase tracking-wider mb-2">Recent Edits</div>
+        <div className="h-[100px] border-t border-graphite-800/30 bg-graphite-950 px-5 py-2.5 flex-shrink-0">
+          <div className="text-[10px] font-medium text-graphite-600 uppercase tracking-widest mb-2">Recent Edits</div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
             {sortedPhotos.map((photo, idx) => (
               <button
                 key={photo.id}
                 onClick={() => setCurrentIndex(sortedPhotos.findIndex(p => p.id === photo.id))}
-                className={`relative w-[100px] h-[66px] rounded-lg flex-shrink-0 overflow-hidden border-2 transition-all ${
+                className={`relative w-[88px] h-[58px] rounded-lg flex-shrink-0 overflow-hidden border-2 transition-all ${
                   sortedPhotos.findIndex(p => p.id === photo.id) === currentIndex
-                    ? "border-cyan shadow-md shadow-cyan/20"
-                    : "border-transparent hover:border-graphite-600"
+                    ? "border-cyan/70 ring-1 ring-cyan/20"
+                    : "border-graphite-800/40 hover:border-graphite-600"
                 }`}
               >
                 <img src={photo.editedUrl || photo.originalUrl || ""} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
@@ -4909,50 +4909,57 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         </div>{/* /center-column */}
 
         {/* Right Panel — editing controls (Greseel) */}
-        <div className="hidden md:flex w-[280px] border-l border-graphite-800/50 bg-graphite-950 flex-col flex-shrink-0 overflow-y-auto">
-          <div className="p-5">
-            <div className="flex items-center gap-2 mb-5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-graphite-400"><path d="M6 9l6 6 6-6"/></svg>
-              <span className="text-sm font-semibold text-white">Basic</span>
+        <div className="hidden md:flex w-[280px] border-l border-graphite-800/30 bg-graphite-950 flex-col flex-shrink-0 overflow-y-auto">
+          <div className="p-5 space-y-6">
+            {/* Preset row */}
+            <div>
+              <div className="text-[10px] font-medium text-graphite-500 uppercase tracking-widest mb-2">Preset</div>
+              <select value={currentPreset} onChange={(e) => changePreset(e.target.value)}
+                className="w-full text-[13px] bg-graphite-900 border border-graphite-800 rounded-lg px-3 py-2 text-white appearance-none focus:outline-none focus:ring-1 focus:ring-cyan/40 transition-all cursor-pointer">
+                {presets.map(p => (<option key={p.slug} value={p.slug}>{p.name}</option>))}
+              </select>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-graphite-400">Preset</span>
-                <select value={currentPreset} onChange={(e) => changePreset(e.target.value)}
-                  className="text-xs bg-graphite-800 border border-graphite-700 rounded-md px-2.5 py-1 text-white focus:outline-none focus:border-cyan">
-                  {presets.map(p => (<option key={p.slug} value={p.slug}>{p.name}</option>))}
-                </select>
+
+            {/* Status + Photo */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className={`w-2 h-2 rounded-full ${
+                  currentPhoto?.status === "approved" ? "bg-emerald-400" :
+                  currentPhoto?.status === "rejected" ? "bg-red-400" :
+                  currentPhoto?.status === "edited" ? "bg-cyan" :
+                  "bg-graphite-600"
+                }`} />
+                <span className="text-[13px] text-graphite-300 capitalize">{currentPhoto?.status || "pending"}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-graphite-400">Status</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  currentPhoto?.status === "approved" ? "bg-emerald-500/20 text-emerald-400" :
-                  currentPhoto?.status === "rejected" ? "bg-red-500/20 text-red-400" :
-                  "bg-graphite-700 text-graphite-300"
-                }`}>{currentPhoto?.status || "pending"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-graphite-400">Photo</span>
-                <span className="text-xs text-graphite-300">{currentIndex + 1} of {photos.length}</span>
-              </div>
+              <span className="text-[13px] text-graphite-500 tabular-nums">{currentIndex + 1} / {photos.length}</span>
             </div>
-            <div className="mt-6">
-              <label className="text-xs text-graphite-400 block mb-2">Custom Instructions</label>
+
+            {/* Divider */}
+            <div className="h-px bg-graphite-800/60" />
+
+            {/* Instructions */}
+            <div>
+              <div className="text-[10px] font-medium text-graphite-500 uppercase tracking-widest mb-2">Instructions</div>
               <textarea value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && customInstruction.trim()) { e.preventDefault(); handleRegenerate(); } }}
                 placeholder="e.g. Remove photographer from mirror" rows={3}
-                className="w-full px-3 py-2 rounded-lg bg-graphite-800 border border-graphite-700 text-xs text-white placeholder:text-graphite-500 focus:outline-none focus:border-cyan resize-none" />
+                className="w-full px-3 py-2.5 rounded-lg bg-graphite-900 border border-graphite-800 text-[13px] text-white placeholder:text-graphite-600 focus:outline-none focus:ring-1 focus:ring-cyan/40 resize-none transition-all" />
+              <button onClick={handleRegenerate} disabled={isUpdating}
+                className="mt-2.5 w-full py-2 rounded-lg text-[13px] font-semibold bg-cyan text-white hover:brightness-110 active:brightness-90 transition-all disabled:opacity-40 disabled:hover:brightness-100">
+                Regenerate
+              </button>
             </div>
-            <button onClick={handleRegenerate} disabled={isUpdating}
-              className="mt-3 w-full py-2.5 rounded-lg text-sm font-semibold bg-cyan text-white hover:bg-cyan-dark transition-colors disabled:opacity-40">
-              Regenerate with AI
-            </button>
-            <div className="mt-5">
-              <span className="text-xs text-graphite-400 block mb-2">Quick Edits</span>
+
+            {/* Divider */}
+            <div className="h-px bg-graphite-800/60" />
+
+            {/* Quick Edits */}
+            <div>
+              <div className="text-[10px] font-medium text-graphite-500 uppercase tracking-widest mb-2.5">Quick Edits</div>
               <div className="flex flex-wrap gap-1.5">
                 {["Remove car", "Brighter", "Fix sky", "Enhance grass", "Pot lights on", "Remove photographer", "TV: off"].map(tag => (
                   <button key={tag} onClick={() => handleQuickTag(tag)}
-                    className="px-2 py-1 rounded-md bg-graphite-800 text-graphite-400 text-[11px] border border-graphite-700 hover:text-white hover:border-graphite-600 transition-colors">
+                    className="px-2.5 py-1 rounded-md bg-graphite-900 text-graphite-400 text-[11px] font-medium border border-graphite-800/60 hover:text-white hover:bg-graphite-800 hover:border-graphite-700 transition-all">
                     {tag}
                   </button>
                 ))}

@@ -1,22 +1,8 @@
 import { AutoRefresh } from "@/components/dashboard/auto-refresh";
-import { Topbar } from "@/components/layout/topbar";
 import { StatCard } from "@/components/ui/stat-card";
 import { JobList } from "@/components/dashboard/job-list";
-import { QuickActions } from "@/components/dashboard/quick-actions";
-import { CostTracker } from "@/components/dashboard/cost-tracker";
-import { ActivityFeed } from "@/components/dashboard/activity-feed";
-import { RecentActivityWidget } from "@/components/dashboard/recent-activity-widget";
-import { RecentlyViewedWidget } from "@/components/dashboard/recently-viewed-widget";
-import { InboxWidget } from "@/components/dashboard/inbox-widget";
 import { NotificationHandler } from "@/components/notifications/notification-handler";
 import { OnboardingTour } from "@/components/onboarding/onboarding-tour";
-import { WidgetWrapper } from "@/components/dashboard/widget-wrapper";
-import { CustomizeButton } from "@/components/dashboard/customize-button";
-import { GreetingWidget } from "@/components/dashboard/greeting-widget";
-import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
-import { StatsCards } from "@/components/dashboard/stats-cards";
-import { PhotoStatsWidget } from "@/components/dashboard/photo-stats-widget";
-import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 import { WeeklyActivity } from "@/components/dashboard/weekly-activity";
 import {
   FolderIcon,
@@ -193,18 +179,20 @@ export default async function DashboardPage({
         status: j.status,
       }))} />
       <OnboardingTour hasJobs={jobs.length > 0} />
-      <div className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-10 flex items-start justify-between gap-4 flex-wrap">
+      {/* per design-system/batchbase/pages/dashboard.md — 1400px data-dense container */}
+      <div className="mx-auto max-w-[1400px] px-6 py-6 space-y-6">
+        {/* 1. Page header */}
+        <header className="flex items-end justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan mb-1.5">
               Dashboard
             </p>
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-graphite-900 dark:text-white">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-graphite-900 dark:text-white">
               {session?.user?.name
                 ? `Welcome back, ${session.user.name.split(" ")[0]}`
                 : "Welcome back"}
             </h1>
-            <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-2">
+            <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-1.5">
               {stats.reviewJobs > 0
                 ? `${stats.reviewJobs} job${stats.reviewJobs === 1 ? "" : "s"} waiting on your review.`
                 : stats.processingJobs > 0
@@ -212,18 +200,13 @@ export default async function DashboardPage({
                 : "No jobs in flight."}
             </p>
           </div>
-          <div className="hidden md:flex items-center gap-2 text-xs text-graphite-500 dark:text-graphite-400 border border-graphite-200 dark:border-graphite-800 rounded-full px-3 py-1.5 bg-white dark:bg-graphite-900">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <span className="tabular-nums">
-              {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
-            </span>
-          </div>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {/* 2. KPI strip — 4 across lg, 2 across md */}
+        <section
+          aria-label="Key metrics"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        >
           <StatCard
             label="Total jobs"
             value={stats.totalJobs}
@@ -254,13 +237,35 @@ export default async function DashboardPage({
             accent="emerald"
             icon={<CheckCircleIcon className="w-4 h-4" />}
           />
-        </div>
+        </section>
 
-        <div className="mb-10">
+        {/* 3. Weekly activity chart */}
+        <section aria-label="Weekly activity">
           <WeeklyActivity />
-        </div>
+        </section>
 
-        <JobList jobs={jobs} />
+        {/* 4. Live progress banner — only when something is actively processing */}
+        {stats.processingJobs > 0 && (
+          <div className="relative overflow-hidden rounded-xl border border-cyan/30 bg-gradient-to-r from-cyan/10 via-cyan/5 to-transparent px-4 py-3 flex items-center gap-3">
+            <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan opacity-60" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan" />
+            </span>
+            <p className="text-sm text-graphite-800 dark:text-graphite-100">
+              <span className="font-semibold tabular-nums">{stats.processingJobs}</span>{" "}
+              job{stats.processingJobs === 1 ? "" : "s"} processing —{" "}
+              <span className="tabular-nums">{stats.totalImages}</span> photos enhanced this month.
+            </p>
+            <span className="ml-auto text-[10px] uppercase tracking-wide text-cyan font-semibold">
+              Live
+            </span>
+          </div>
+        )}
+
+        {/* 5. Jobs area */}
+        <section aria-label="Jobs">
+          <JobList jobs={jobs} />
+        </section>
 
         {jobs.length === 0 && (
           <div className="text-center py-16 rounded-xl border border-dashed border-graphite-200 dark:border-graphite-800 bg-white/40 dark:bg-graphite-900/40">
@@ -269,7 +274,7 @@ export default async function DashboardPage({
             </p>
             <a
               href="/jobs/new"
-              className="inline-block px-4 py-2 rounded-md bg-cyan-500 text-white font-medium text-sm hover:bg-cyan-600"
+              className="inline-flex items-center h-9 px-3.5 rounded-lg bg-cyan text-white font-semibold text-sm hover:bg-cyan/90 shadow-sm shadow-cyan/20"
             >
               Create your first job
             </a>

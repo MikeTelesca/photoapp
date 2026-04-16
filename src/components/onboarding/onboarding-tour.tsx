@@ -3,24 +3,24 @@ import { useState, useEffect } from "react";
 
 const STEPS = [
   {
-    title: "Welcome to ATH AI Editor",
-    body: "This app merges your bracketed HDR photos and applies professional real estate editing automatically using Google Gemini AI.",
-    emoji: "👋",
+    title: "Welcome to BatchBase",
+    body: "Merge bracketed HDR photos and apply professional real estate editing automatically with Google Gemini.",
+    label: "Welcome",
   },
   {
     title: "Upload your photos",
-    body: "Start by creating a new job. Paste a Dropbox shared folder link OR upload JPEG/PNG files directly. Bracketed sets (3 or 5 exposures per angle) are auto-detected.",
-    emoji: "📤",
+    body: "Create a new job. Paste a Dropbox shared folder link or upload JPEG/PNG files directly. Bracketed sets (3 or 5 exposures per angle) are auto-detected.",
+    label: "Upload",
   },
   {
     title: "AI enhances in minutes",
-    body: "The AI merges brackets into HDR images, fixes vertical lines, pulls windows, and applies your selected preset (Standard, Bright & Airy, Luxury, MLS Standard, or Flambient).",
-    emoji: "✨",
+    body: "The AI merges brackets into HDR, fixes vertical lines, pulls windows, and applies your selected preset (Standard, Bright & Airy, Luxury, MLS Standard, Flambient).",
+    label: "Enhance",
   },
   {
     title: "Review and download",
-    body: "Approve or reject each photo with A/R keys. Regenerate specific photos with different prompts. Download the final set as a ZIP when you're done.",
-    emoji: "⬇️",
+    body: "Approve or reject each photo with A/R keys. Regenerate specific photos with different prompts. Download the final set as a ZIP when done.",
+    label: "Deliver",
   },
 ];
 
@@ -49,7 +49,7 @@ export function OnboardingTour({ hasJobs }: { hasJobs: boolean }) {
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={dismiss}>
       <div className="bg-white dark:bg-graphite-900 rounded-xl p-8 max-w-md w-full shadow-2xl"
         onClick={(e) => e.stopPropagation()}>
-        <div className="text-5xl mb-3 text-center">{current.emoji}</div>
+        <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-cyan text-center mb-3">{current.label}</div>
         <h2 className="text-xl font-bold text-center mb-2 text-graphite-900 dark:text-white">{current.title}</h2>
         <p className="text-sm text-graphite-600 dark:text-graphite-300 text-center leading-relaxed">{current.body}</p>
 

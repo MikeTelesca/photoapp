@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       const baseUrl = process.env.NEXTAUTH_URL || "https://ath-editor.vercel.app";
       await sendEmail({
         to: user.email,
-        subject: "Welcome to ATH AI Editor 🎉",
+        subject: "Welcome to BatchBase",
         html: welcomeTemplate({
           name: user.name || "there",
           loginUrl: `${baseUrl}/login`,

@@ -47,8 +47,8 @@ export function EtaBadge({ jobId }: Props) {
   if (!eta || eta.remaining === 0) return null;
 
   return (
-    <span className="text-xs text-amber-600 dark:text-amber-400">
-      Estimated time remaining: {formatEta(eta.etaSeconds)}
+    <span className="text-[10px] text-amber-600 dark:text-amber-400 whitespace-nowrap">
+      ETA {formatEta(eta.etaSeconds)}
     </span>
   );
 }

@@ -177,16 +177,16 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
 
   return (
     <>
-      <Wrapper className={`flex items-center justify-between ${padding} cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0 ${borderColor}`}>
-        <div className="flex items-center gap-3">
+      <Wrapper className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${padding} cursor-pointer transition-colors duration-150 hover:bg-graphite-50 dark:hover:bg-graphite-800 border-b border-graphite-50 dark:border-graphite-800 last:border-b-0 ${borderColor}`}>
+        <div className="flex items-start gap-3 min-w-0 flex-1">
         {job.coverPhotoUrl ? (
           <img src={job.coverPhotoUrl} alt=""
             className="w-10 h-10 object-cover rounded shadow-sm flex-shrink-0" />
         ) : (
           <div {...statusHoverHandlers} className={`w-2 h-2 rounded-full ${dotColors[job.status]}`} />
         )}
-        <div>
-          <div className="flex gap-1 items-center mb-0.5">
+        <div className="min-w-0 flex-1">
+          <div className="flex gap-1 items-center mb-0.5 flex-wrap">
             {job.sequenceNumber && (
               <span className="text-[9px] font-mono font-semibold text-cyan dark:text-cyan">
                 {formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt })}
@@ -219,12 +219,12 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
             /* hover preview disabled — was getting stuck open + causing freezes */
             onMouseLeave={() => setHover(null)}
           >
-            <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white inline-flex items-center">
-              {job.address}
+            <div className="text-[13.5px] font-semibold text-graphite-900 dark:text-white flex items-baseline gap-2 flex-wrap">
+              <span className="truncate">{job.address}</span>
               <EditAddressButton jobId={job.id} initial={job.address} />
             </div>
           </div>
-          <div className="flex gap-3 text-xs text-graphite-400 mt-0.5">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-graphite-400 mt-0.5 items-center">
             <span>{job.photographerName}</span>
             <span>{formatTime(job.createdAt)}</span>
             <span>
@@ -361,11 +361,11 @@ function JobCardInternal({ job, density = "normal" }: JobCardProps) {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:gap-3 w-full sm:w-auto sm:justify-end pl-13 sm:pl-0">
         {job.status === "processing" && (
-          <div {...statusHoverHandlers}>
-            <div className="text-xs font-semibold text-amber-600">Processing {job.processedPhotos}/{job.totalPhotos}</div>
-            <ProgressBar value={progress} color="amber" />
+          <div {...statusHoverHandlers} className="min-w-0">
+            <div className="text-xs font-semibold text-amber-600 whitespace-nowrap">Processing {job.processedPhotos}/{job.totalPhotos}</div>
+            <ProgressBar value={progress} color="amber" className="w-24" />
             <EtaBadge jobId={job.id} />
           </div>
         )}

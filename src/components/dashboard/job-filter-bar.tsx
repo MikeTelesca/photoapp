@@ -523,7 +523,7 @@ export function JobFilterBar({ jobs }: Props) {
           </button>
         </div>
       )}
-      <div className="flex gap-2 px-5 py-3 border-b border-graphite-50 dark:border-graphite-800 bg-graphite-50/30 dark:bg-graphite-900/30 items-center">
+      <div className="flex gap-2 px-5 py-3 border-b border-graphite-50 dark:border-graphite-800 bg-graphite-50/30 dark:bg-graphite-900/30 items-center overflow-x-auto flex-nowrap">
         <input
           type="text"
           value={search}

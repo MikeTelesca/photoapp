@@ -8,7 +8,7 @@ export async function POST(_request: NextRequest) {
 
   const ok = await sendSlackNotification(
     auth.userId,
-    "Test message from ATH AI Editor"
+    "Test message from BatchBase"
   );
 
   if (!ok) {

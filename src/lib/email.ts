@@ -25,7 +25,7 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
 export function welcomeTemplate(opts: { name: string; loginUrl: string; signature?: string }) {
   return `
     <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-      <h1 style="color: #111; font-size: 28px;">Welcome to ATH AI Editor, ${escapeHtml(opts.name)} 👋</h1>
+      <h1 style="color: #111; font-size: 28px;">Welcome to BatchBase, ${escapeHtml(opts.name)}</h1>
       <p style="color: #555; font-size: 16px; line-height: 1.6;">
         You just signed up for the fastest way to batch-edit real estate photos. Here's what to do next:
       </p>

@@ -11,16 +11,16 @@ export async function sendWebhook(opts: {
     const payload = isDiscord
       ? {
           embeds: [{
-            title: opts.title || "ATH AI Editor",
+            title: opts.title || "BatchBase",
             description: opts.text,
             color: 0x06b6d4, // cyan
             url: opts.jobUrl,
           }],
         }
       : {
-          text: opts.title || "ATH AI Editor",
+          text: opts.title || "BatchBase",
           blocks: [
-            { type: "header", text: { type: "plain_text", text: opts.title || "ATH AI Editor" } },
+            { type: "header", text: { type: "plain_text", text: opts.title || "BatchBase" } },
             { type: "section", text: { type: "mrkdwn", text: opts.text } },
             ...(opts.jobUrl ? [{
               type: "actions",

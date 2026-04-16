@@ -11,8 +11,8 @@ export default async function LandingPage() {
       {/* Top bar */}
       <header className="border-b border-graphite-100 dark:border-graphite-800 bg-white/80 dark:bg-graphite-900/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
-          <div className="text-lg font-bold text-graphite-900 dark:text-white">
-            ATH AI Editor
+          <div className="text-lg font-semibold tracking-[-0.05em]">
+            <span className="text-graphite-900 dark:text-white">Batch</span><span className="text-cyan">Base</span>
           </div>
           <div className="flex gap-2 items-center">
             <Link href="/whats-new" className="text-xs text-graphite-500 dark:text-graphite-400 hover:text-cyan hidden sm:inline">
@@ -55,33 +55,33 @@ export default async function LandingPage() {
       <section className="max-w-5xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Feature
-            icon="✨"
-            title="HDR auto-merge"
-            desc="Bracketed exposures (3 or 5) merge into a single optimized image. Window pull, vertical line straightening, perspective correction — all automatic."
+            label="HDR"
+            title="Auto-merge brackets"
+            desc="Bracketed exposures (3 or 5) merge into a single optimized image. Window pull, vertical straightening, perspective correction — all automatic."
           />
           <Feature
-            icon="🎨"
-            title="4 editing presets"
+            label="Presets"
+            title="5 editing styles"
             desc="Standard, Bright & Airy, Luxury, MLS Standard, Flambient. Plus customizable prompts and seasonal style variants."
           />
           <Feature
-            icon="📦"
-            title="Dropbox-first"
+            label="Dropbox"
+            title="Link in, link out"
             desc="Paste a shared link. Outputs go back to your Dropbox folder. No re-uploads. Or upload files directly."
           />
           <Feature
-            icon="🤝"
-            title="Client-ready delivery"
-            desc="Generate password-protected share links. Email galleries to clients with one click. Track ratings and comments."
+            label="Delivery"
+            title="Client-ready share"
+            desc="Password-protected share links. Email galleries to clients with one click. Track ratings and comments."
           />
           <Feature
-            icon="🧾"
+            label="Billing"
             title="Invoicing built-in"
-            desc="Generate branded PDF invoices per job. Track paid status. CSV exports for bookkeeping."
+            desc="Branded PDF invoices per job. Track paid status. CSV exports for bookkeeping."
           />
           <Feature
-            icon="📊"
-            title="Per-photo control"
+            label="Control"
+            title="Per-photo review"
             desc="Approve/reject with A/R keys. Re-enhance with different presets. Crop suggestions. Photo ratings. AI auto-tagging."
           />
         </div>
@@ -117,17 +117,17 @@ export default async function LandingPage() {
 
       {/* Footer */}
       <footer className="max-w-6xl mx-auto px-6 py-6 text-center text-[11px] text-graphite-400">
-        ATH Media &middot; AI photo editing for real estate &middot;{" "}
+        BatchBase &middot; AI photo workflow for real estate &middot;{" "}
         <Link href="/status" className="hover:underline">Status</Link>
       </footer>
     </div>
   );
 }
 
-function Feature({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+function Feature({ label, title, desc }: { label: string; title: string; desc: string }) {
   return (
-    <div className="bg-white dark:bg-graphite-900 rounded-lg border border-graphite-100 dark:border-graphite-800 p-5">
-      <div className="text-3xl mb-3">{icon}</div>
+    <div className="bg-white dark:bg-graphite-900 rounded-xl border border-graphite-100 dark:border-graphite-800 p-5">
+      <div className="text-[10px] font-bold tracking-[0.18em] uppercase text-cyan mb-3">{label}</div>
       <h3 className="text-base font-semibold text-graphite-900 dark:text-white mb-1">{title}</h3>
       <p className="text-sm text-graphite-500 dark:text-graphite-400 leading-relaxed">{desc}</p>
     </div>

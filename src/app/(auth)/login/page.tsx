@@ -65,8 +65,8 @@ function LoginPageInner() {
     <div className="min-h-screen bg-graphite-50 dark:bg-graphite-950 flex items-center justify-center px-4">
       <div className="w-full max-w-[380px]">
         <div className="mb-8">
-          <h1 className="text-xl font-semibold tracking-tight text-graphite-900 dark:text-white">
-            ATH AI Editor
+          <h1 className="text-2xl font-semibold tracking-[-0.05em]">
+            <span className="text-graphite-900 dark:text-white">Batch</span><span className="text-cyan">Base</span>
           </h1>
           <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-1">
             Sign in to continue.

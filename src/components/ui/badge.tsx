@@ -15,7 +15,7 @@ interface BadgeProps {
 
 export function Badge({ variant, children }: BadgeProps) {
   return (
-    <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-md ${styles[variant]}`}>
+    <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap ${styles[variant]}`}>
       {children}
     </span>
   );

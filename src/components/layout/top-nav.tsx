@@ -91,14 +91,14 @@ export function TopNav() {
       ref={navRef}
       className="sticky top-0 z-40 w-full bg-white/90 dark:bg-graphite-950/90 backdrop-blur border-b border-graphite-200 dark:border-graphite-800"
     >
-      <div className="mx-auto max-w-7xl px-4 h-14 flex items-center gap-6">
+      <div className="mx-auto max-w-7xl px-4 h-14 flex items-center gap-4 md:gap-6">
         <Link
           href="/dashboard"
-          className="font-semibold text-graphite-900 dark:text-white text-sm tracking-tight hover:text-cyan transition-colors"
+          className="font-semibold text-[18px] tracking-[-0.05em] hover:opacity-80 transition-opacity whitespace-nowrap"
         >
-          ATH AI Editor
+          <span className="text-graphite-900 dark:text-white">Batch</span><span className="text-cyan">Base</span>
         </Link>
-        <nav className="flex items-center gap-1 text-sm">
+        <nav className="hidden md:flex items-center gap-1 text-sm">
           {triggers.map((t) => {
             if (t.dropdown) {
               const active = open === t.key;
@@ -168,7 +168,7 @@ export function TopNav() {
           <DarkModeToggle />
           <Link
             href="/jobs/new"
-            className="px-3 py-1.5 rounded-md bg-graphite-900 dark:bg-white text-white dark:text-graphite-900 font-medium hover:bg-graphite-800 dark:hover:bg-graphite-100 transition-colors"
+            className="hidden md:inline-flex px-3 py-1.5 rounded-md bg-graphite-900 dark:bg-white text-white dark:text-graphite-900 font-medium hover:bg-graphite-800 dark:hover:bg-graphite-100 transition-colors"
           >
             New job
           </Link>

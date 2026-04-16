@@ -83,6 +83,24 @@ Visual references Mike sent. Patterns to steal from each, mapped to BatchBase sc
 - Rounded-xl cards ✓
 - Graphite neutrals ✓
 
+## Status — what's built
+
+| Component | File | Wired in |
+|---|---|---|
+| `StatCard` (gradient + sparkline + delta) | `src/components/ui/stat-card.tsx` | ✓ dashboard |
+| `ProgressRow`, `ProgressStat` | `src/components/ui/progress-row.tsx` | not yet — drop into upload/enhance flows |
+| `BeforeAfterSlider` (standalone w/ keyboard) | `src/components/ui/before-after-slider.tsx` | not yet — available for any page |
+| Review gallery slider (cyan handle upgrade) | `src/components/review/before-after-slider.tsx` | ✓ review gallery |
+| `JobKanban` + view toggle | `src/components/dashboard/job-kanban.tsx` | ✓ dashboard (toggle persists to localStorage) |
+| `FloatingToolbar`, `ToolbarButton`, `ToolbarText`, `ToolbarDivider` | `src/components/ui/floating-toolbar.tsx` | not yet — for review gallery canvas |
+| `IconRail`, `IconRailButton` | `src/components/ui/icon-rail.tsx` | not yet — for review gallery side nav |
+| Dashboard welcome header + date pill | `src/app/(app)/dashboard/page.tsx` | ✓ |
+
+## Deferred — needs dedicated session
+
+- **Review-gallery floating toolbar + left icon rail wire-in** — the component file is 5,400 lines; replacing the zoom indicator + adding a left rail safely requires a dedicated pass. Components are ready and drop-in.
+- **App-shell left rail migration** — TopNav works; a full left-rail replacement touches every route's layout. Wait until the review gallery rebuild is in flight, then align.
+
 ## Biggest gaps vs inspo
 
 1. **Before/after slider on review gallery** — critical for real estate workflow, currently missing a proper slider handle

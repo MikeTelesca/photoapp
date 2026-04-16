@@ -31,7 +31,7 @@ export function FloatingToolbar({
 }) {
   return (
     <div
-      className={`inline-flex items-center gap-0.5 rounded-full bg-graphite-900/90 dark:bg-graphite-800/90 backdrop-blur-md border border-graphite-700/50 shadow-xl shadow-black/30 px-1.5 py-1 ${className}`}
+      className={`inline-flex items-center gap-0.5 rounded-full bg-graphite-900/70 dark:bg-graphite-800/70 backdrop-blur-md border border-white/[0.06] shadow-lg shadow-black/20 px-1 py-0.5 ${className}`}
       role="toolbar"
     >
       {children}
@@ -62,7 +62,7 @@ export function ToolbarButton({
       aria-label={ariaLabel}
       aria-pressed={active}
       title={title}
-      className={`inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full text-xs font-medium transition-colors ${
+      className={`inline-flex items-center justify-center min-w-[26px] h-6 px-2 rounded-full text-[11px] font-medium transition-colors ${
         active
           ? "bg-cyan text-white"
           : "text-white/80 hover:text-white hover:bg-white/10"
@@ -82,7 +82,7 @@ export function ToolbarText({ children }: { children: ReactNode }) {
 }
 
 export function ToolbarDivider() {
-  return <span className="w-px h-4 bg-white/15 mx-1" aria-hidden="true" />;
+  return <span className="w-px h-3.5 bg-white/15 mx-0.5" aria-hidden="true" />;
 }
 
 /** Small gap between grouped buttons (not a divider) */

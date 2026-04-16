@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { JobGrid, type PhotoRow } from "@/components/jobs/job-grid";
 import { JobViewer } from "@/components/jobs/job-viewer";
+import { StyleSummary } from "@/components/jobs/style-summary";
 
 export type JobSummary = {
   id: string;
@@ -11,9 +13,9 @@ export type JobSummary = {
   status: string;
   dropboxUrl: string | null;
   preset: string;
-  totalPhotos: number;
-  processedPhotos: number;
-  approvedPhotos: number;
+  tvStyle: string;
+  skyStyle: string;
+  seasonalStyle: string | null;
 };
 
 type Props = {
@@ -28,26 +30,34 @@ export function JobView({ initialJob, initialPhotos }: Props) {
   const [syncing, setSyncing] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
 
-  const approvedCount = useMemo(
-    () => photos.filter((p) => p.status === "approved").length,
-    [photos]
-  );
-  const pendingCount = useMemo(
-    () => photos.filter((p) => p.status === "pending").length,
-    [photos]
-  );
+  const counts = useMemo(() => {
+    let approved = 0;
+    let rejected = 0;
+    let pending = 0;
+    let edited = 0;
+    let processing = 0;
+    for (const p of photos) {
+      if (p.status === "approved") approved += 1;
+      else if (p.status === "rejected") rejected += 1;
+      else if (p.status === "edited") edited += 1;
+      else if (p.status === "processing" || p.status === "regenerating") processing += 1;
+      else pending += 1;
+    }
+    const total = photos.length;
+    const done = approved + rejected;
+    const percent = total > 0 ? Math.round(((approved + edited) / total) * 100) : 0;
+    return { total, approved, rejected, pending, edited, processing, done, percent };
+  }, [photos]);
 
   const reloadPhotos = useCallback(async () => {
     try {
       const res = await fetch(`/api/jobs/${initialJob.id}/photos`, { cache: "no-store" });
       if (!res.ok) return;
       const data: unknown = await res.json();
-      if (Array.isArray(data)) {
-        setPhotos(data as PhotoRow[]);
-      }
+      if (Array.isArray(data)) setPhotos(data as PhotoRow[]);
     } catch {
       // ignore
     }
@@ -65,54 +75,48 @@ export function JobView({ initialJob, initialPhotos }: Props) {
       });
       if (!res.ok) throw new Error("Dropbox sync failed");
       await reloadPhotos();
-      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sync failed");
     } finally {
       setSyncing(false);
     }
-  }, [initialJob.dropboxUrl, initialJob.id, reloadPhotos, router]);
+  }, [initialJob.dropboxUrl, initialJob.id, reloadPhotos]);
 
   const startEnhance = useCallback(async () => {
     setEnhancing(true);
     setError("");
     try {
-      // Loop: keep calling start-enhance until no more pending photos
-      for (let i = 0; i < 100; i += 1) {
-        const res = await fetch(`/api/jobs/${initialJob.id}/start-enhance`, {
-          method: "POST",
-        });
+      for (let i = 0; i < 200; i += 1) {
+        const res = await fetch(`/api/jobs/${initialJob.id}/start-enhance`, { method: "POST" });
         if (!res.ok) throw new Error("Enhance failed");
         await reloadPhotos();
-        const latest = await fetch(`/api/jobs/${initialJob.id}/photos`, {
-          cache: "no-store",
-        });
+        const latest = await fetch(`/api/jobs/${initialJob.id}/photos`, { cache: "no-store" });
         if (!latest.ok) break;
         const data: unknown = await latest.json();
         if (!Array.isArray(data)) break;
         const stillPending = (data as PhotoRow[]).some((p) => p.status === "pending");
         if (!stillPending) break;
       }
-      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Enhance failed");
     } finally {
       setEnhancing(false);
     }
-  }, [initialJob.id, reloadPhotos, router]);
+  }, [initialJob.id, reloadPhotos]);
 
   const enhanceOne = useCallback(
     async (photoId: string) => {
       setError("");
+      setPhotos((ps) => ps.map((p) => (p.id === photoId ? { ...p, status: "processing" } : p)));
       try {
-        const res = await fetch(
-          `/api/jobs/${initialJob.id}/photos/${photoId}/enhance`,
-          { method: "POST" }
-        );
+        const res = await fetch(`/api/jobs/${initialJob.id}/photos/${photoId}/enhance`, {
+          method: "POST",
+        });
         if (!res.ok) throw new Error("Enhance failed");
         await reloadPhotos();
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Enhance failed");
+        await reloadPhotos();
       }
     },
     [initialJob.id, reloadPhotos]
@@ -121,45 +125,43 @@ export function JobView({ initialJob, initialPhotos }: Props) {
   const updatePhotoStatus = useCallback(
     async (photoId: string, status: string) => {
       setError("");
+      const prev = photos;
+      setPhotos((ps) => ps.map((p) => (p.id === photoId ? { ...p, status } : p)));
       try {
-        const res = await fetch(
-          `/api/jobs/${initialJob.id}/photos/${photoId}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status }),
-          }
-        );
+        const res = await fetch(`/api/jobs/${initialJob.id}/photos/${photoId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        });
         if (!res.ok) throw new Error("Update failed");
-        setPhotos((ps) =>
-          ps.map((p) => (p.id === photoId ? { ...p, status } : p))
-        );
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Update failed");
+        setPhotos(prev);
       }
     },
-    [initialJob.id]
+    [initialJob.id, photos]
   );
 
   const deletePhoto = useCallback(
     async (photoId: string) => {
       setError("");
+      const prev = photos;
+      setPhotos((ps) => ps.filter((p) => p.id !== photoId));
       try {
-        const res = await fetch(
-          `/api/jobs/${initialJob.id}/photos/${photoId}`,
-          { method: "DELETE" }
-        );
+        const res = await fetch(`/api/jobs/${initialJob.id}/photos/${photoId}`, {
+          method: "DELETE",
+        });
         if (!res.ok) throw new Error("Delete failed");
-        setPhotos((ps) => ps.filter((p) => p.id !== photoId));
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Delete failed");
+        setPhotos(prev);
       }
     },
-    [initialJob.id]
+    [initialJob.id, photos]
   );
 
   const downloadZip = useCallback(async () => {
-    if (approvedCount === 0) return;
+    if (counts.approved === 0) return;
     setDownloading(true);
     setError("");
     try {
@@ -179,7 +181,7 @@ export function JobView({ initialJob, initialPhotos }: Props) {
     } finally {
       setDownloading(false);
     }
-  }, [approvedCount, initialJob.id, initialJob.address]);
+  }, [counts.approved, initialJob.id, initialJob.address]);
 
   const uploadFiles = useCallback(
     async (files: FileList) => {
@@ -204,6 +206,15 @@ export function JobView({ initialJob, initialPhotos }: Props) {
     [initialJob.id, reloadPhotos]
   );
 
+  // Auto-refresh while anything is processing
+  useEffect(() => {
+    if (counts.processing === 0 && !enhancing) return;
+    const id = setInterval(() => {
+      void reloadPhotos();
+    }, 3500);
+    return () => clearInterval(id);
+  }, [counts.processing, enhancing, reloadPhotos]);
+
   // Viewer keyboard nav
   useEffect(() => {
     if (viewerIndex === null) return;
@@ -218,76 +229,120 @@ export function JobView({ initialJob, initialPhotos }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [viewerIndex, photos.length]);
 
-  const btn =
-    "h-9 px-4 rounded-md text-sm font-medium disabled:opacity-50 transition-colors";
+  void router; // reserved for future refresh calls
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-6 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">{initialJob.address}</h1>
-          <p className="text-xs text-graphite-500 mt-0.5">
-            {photos.length} photos · {approvedCount} approved · {pendingCount} pending
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {initialJob.dropboxUrl ? (
-            <button
-              onClick={syncDropbox}
-              disabled={syncing}
-              className={`${btn} border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-900 hover:bg-graphite-50 dark:hover:bg-graphite-800`}
+    <main className="min-h-screen bg-graphite-950 text-white">
+      {/* Top nav (matches dashboard) */}
+      <header className="sticky top-0 z-20 border-b border-graphite-900 bg-graphite-950/80 backdrop-blur-xl">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href="/jobs"
+              className="text-[13px] text-graphite-400 hover:text-white flex items-center gap-1.5 transition"
             >
-              {syncing ? "Syncing…" : "Sync from Dropbox"}
-            </button>
-          ) : (
-            <label
-              className={`${btn} cursor-pointer border border-graphite-200 dark:border-graphite-800 bg-white dark:bg-graphite-900 hover:bg-graphite-50 dark:hover:bg-graphite-800 inline-flex items-center`}
-            >
-              {uploading ? "Uploading…" : "Upload photos"}
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                className="hidden"
-                disabled={uploading}
-                onChange={(e) => e.target.files && uploadFiles(e.target.files)}
-              />
-            </label>
-          )}
-          <button
-            onClick={startEnhance}
-            disabled={enhancing || pendingCount === 0}
-            className={`${btn} bg-cyan text-white hover:bg-cyan-600`}
-          >
-            {enhancing ? "Enhancing…" : `Start enhance (${pendingCount})`}
-          </button>
-          <button
-            onClick={downloadZip}
-            disabled={downloading || approvedCount === 0}
-            className={`${btn} bg-graphite-900 dark:bg-white text-white dark:text-graphite-900 hover:bg-graphite-800 dark:hover:bg-graphite-100`}
-          >
-            {downloading ? "Zipping…" : `Download ZIP (${approvedCount})`}
-          </button>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M9 12L4 7L9 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Jobs
+            </Link>
+            <span className="text-graphite-700">/</span>
+            <span className="text-[13px] text-white font-medium truncate">{initialJob.address}</span>
+          </div>
         </div>
+      </header>
+
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 pt-10 pb-16 space-y-8">
+        {/* Hero — address + style summary */}
+        <section className="flex flex-wrap items-end justify-between gap-6">
+          <div className="min-w-0">
+            <div className="text-[11px] uppercase tracking-[0.25em] text-graphite-500 mb-3">
+              Job
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.05]">
+              {initialJob.address}
+            </h1>
+            <StyleSummary
+              preset={initialJob.preset}
+              tvStyle={initialJob.tvStyle}
+              skyStyle={initialJob.skyStyle}
+              seasonalStyle={initialJob.seasonalStyle}
+            />
+          </div>
+
+          <ActionsCluster
+            hasDropbox={!!initialJob.dropboxUrl}
+            pending={counts.pending}
+            approved={counts.approved}
+            syncing={syncing}
+            enhancing={enhancing}
+            downloading={downloading}
+            uploading={uploading}
+            onSync={syncDropbox}
+            onEnhance={startEnhance}
+            onDownload={downloadZip}
+            onUpload={uploadFiles}
+          />
+        </section>
+
+        {/* Progress + stats */}
+        <section className="rounded-3xl bg-graphite-900 border border-graphite-800 p-6 sm:p-7">
+          <div className="flex items-baseline justify-between mb-4 gap-4">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.25em] text-graphite-500">
+                Pipeline
+              </div>
+              <div className="text-2xl font-semibold text-white mt-1 tabular-nums">
+                {counts.percent}% <span className="text-graphite-500 text-lg font-normal">complete</span>
+              </div>
+            </div>
+            <div className="text-[11px] text-graphite-500 tabular-nums">
+              {counts.total} {counts.total === 1 ? "photo" : "photos"}
+            </div>
+          </div>
+
+          <div className="relative h-2 rounded-full bg-graphite-950 overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan to-emerald-400 transition-all duration-700 ease-out"
+              style={{ width: `${counts.percent}%` }}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mt-6">
+            <MiniStat label="Pending" value={counts.pending} tone="graphite" />
+            <MiniStat label="Processing" value={counts.processing} tone="cyan" pulse={counts.processing > 0} />
+            <MiniStat label="Edited" value={counts.edited} tone="white" />
+            <MiniStat label="Approved" value={counts.approved} tone="emerald" />
+            <MiniStat label="Rejected" value={counts.rejected} tone="red" />
+          </div>
+        </section>
+
+        {error && (
+          <div className="text-sm text-red-300 bg-red-950/40 border border-red-900/60 px-4 py-3 rounded-xl">
+            {error}
+          </div>
+        )}
+
+        {/* Photo grid */}
+        <section>
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="text-[11px] uppercase tracking-[0.25em] text-graphite-500">Photos</h2>
+          </div>
+          <JobGrid
+            jobId={initialJob.id}
+            photos={photos}
+            onOpen={(i) => setViewerIndex(i)}
+            onEnhance={enhanceOne}
+            onApprove={(id) => updatePhotoStatus(id, "approved")}
+            onReject={(id) => updatePhotoStatus(id, "rejected")}
+            onDelete={deletePhoto}
+          />
+        </section>
       </div>
-
-      {error && (
-        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 px-3 py-2 rounded-md">
-          {error}
-        </div>
-      )}
-
-      <JobGrid
-        photos={photos}
-        onOpen={(i) => setViewerIndex(i)}
-        onEnhance={enhanceOne}
-        onApprove={(id) => updatePhotoStatus(id, "approved")}
-        onReject={(id) => updatePhotoStatus(id, "rejected")}
-        onDelete={deletePhoto}
-      />
 
       {viewerIndex !== null && photos[viewerIndex] && (
         <JobViewer
+          jobId={initialJob.id}
           photo={photos[viewerIndex]}
           index={viewerIndex}
           total={photos.length}
@@ -301,6 +356,106 @@ export function JobView({ initialJob, initialPhotos }: Props) {
           onReject={() => updatePhotoStatus(photos[viewerIndex].id, "rejected")}
         />
       )}
+    </main>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  tone,
+  pulse,
+}: {
+  label: string;
+  value: number;
+  tone: "graphite" | "cyan" | "white" | "emerald" | "red";
+  pulse?: boolean;
+}) {
+  const colorMap = {
+    graphite: "text-graphite-400",
+    cyan: "text-cyan",
+    white: "text-white",
+    emerald: "text-emerald-300",
+    red: "text-red-300",
+  } as const;
+  const dotMap = {
+    graphite: "bg-graphite-600",
+    cyan: "bg-cyan",
+    white: "bg-white/90",
+    emerald: "bg-emerald-400",
+    red: "bg-red-400",
+  } as const;
+  return (
+    <div className="flex items-center gap-2.5 min-w-0">
+      <span className={`w-1.5 h-1.5 rounded-full ${dotMap[tone]} ${pulse ? "animate-pulse" : ""}`} />
+      <div className="min-w-0">
+        <div className={`text-xl font-semibold tabular-nums ${colorMap[tone]}`}>{value}</div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-graphite-500 truncate">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function ActionsCluster({
+  hasDropbox,
+  pending,
+  approved,
+  syncing,
+  enhancing,
+  downloading,
+  uploading,
+  onSync,
+  onEnhance,
+  onDownload,
+  onUpload,
+}: {
+  hasDropbox: boolean;
+  pending: number;
+  approved: number;
+  syncing: boolean;
+  enhancing: boolean;
+  downloading: boolean;
+  uploading: boolean;
+  onSync: () => void;
+  onEnhance: () => void;
+  onDownload: () => void;
+  onUpload: (f: FileList) => void;
+}) {
+  const ghostBtn =
+    "h-10 px-4 rounded-xl text-sm font-medium border border-graphite-800 text-graphite-200 hover:text-white hover:border-graphite-600 bg-graphite-900/50 disabled:opacity-40 disabled:cursor-not-allowed transition";
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {hasDropbox ? (
+        <button onClick={onSync} disabled={syncing} className={ghostBtn}>
+          {syncing ? "Syncing…" : "Sync Dropbox"}
+        </button>
+      ) : (
+        <label className={`${ghostBtn} cursor-pointer inline-flex items-center`}>
+          {uploading ? "Uploading…" : "Upload photos"}
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => e.target.files && onUpload(e.target.files)}
+          />
+        </label>
+      )}
+      <button
+        onClick={onEnhance}
+        disabled={enhancing || pending === 0}
+        className="h-10 px-5 rounded-xl bg-cyan text-graphite-950 text-sm font-semibold hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-lg shadow-cyan/20"
+      >
+        {enhancing ? "Enhancing…" : pending > 0 ? `Start enhance (${pending})` : "Nothing to enhance"}
+      </button>
+      <button
+        onClick={onDownload}
+        disabled={downloading || approved === 0}
+        className="h-10 px-5 rounded-xl bg-white text-graphite-950 text-sm font-semibold hover:bg-graphite-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+      >
+        {downloading ? "Zipping…" : `Download ZIP (${approved})`}
+      </button>
     </div>
   );
 }

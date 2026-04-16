@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { JobView } from "@/components/jobs/job-view";
 
@@ -20,7 +19,21 @@ export default async function JobPage({
   const job = await prisma.job.findUnique({
     where: { id: jobId },
     include: {
-      photos: { orderBy: { orderIndex: "asc" } },
+      // Select only scalar columns — NOT originalUrl/editedUrl/thumbnailUrl,
+      // which are base64 data URLs multiple MB each. Client loads those on
+      // demand through /api/jobs/:id/photos/:id/thumb.
+      photos: {
+        orderBy: { orderIndex: "asc" },
+        select: {
+          id: true,
+          orderIndex: true,
+          status: true,
+          originalUrl: true,
+          editedUrl: true,
+          thumbnailUrl: true,
+          errorMessage: true,
+        },
+      },
     },
   });
 
@@ -28,40 +41,26 @@ export default async function JobPage({
   if (!isAdmin && job.photographerId !== session.user.id) notFound();
 
   return (
-    <main className="min-h-screen bg-graphite-50 dark:bg-graphite-950 text-graphite-900 dark:text-white">
-      <header className="sticky top-0 z-10 border-b border-graphite-200 dark:border-graphite-800 bg-white/90 dark:bg-graphite-950/90 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/jobs" className="text-graphite-500 hover:text-graphite-900 dark:hover:text-white text-sm">
-              ← Jobs
-            </Link>
-            <span className="text-graphite-300 dark:text-graphite-700">/</span>
-            <span className="font-medium text-sm truncate max-w-[360px]">{job.address}</span>
-          </div>
-        </div>
-      </header>
-
-      <JobView
-        initialJob={{
-          id: job.id,
-          address: job.address,
-          status: job.status,
-          dropboxUrl: job.dropboxUrl,
-          preset: job.preset,
-          totalPhotos: job.totalPhotos,
-          processedPhotos: job.processedPhotos,
-          approvedPhotos: job.approvedPhotos,
-        }}
-        initialPhotos={job.photos.map((p) => ({
-          id: p.id,
-          orderIndex: p.orderIndex,
-          status: p.status,
-          originalUrl: p.originalUrl,
-          editedUrl: p.editedUrl,
-          thumbnailUrl: p.thumbnailUrl,
-          errorMessage: p.errorMessage,
-        }))}
-      />
-    </main>
+    <JobView
+      initialJob={{
+        id: job.id,
+        address: job.address,
+        status: job.status,
+        dropboxUrl: job.dropboxUrl,
+        preset: job.preset,
+        tvStyle: job.tvStyle,
+        skyStyle: job.skyStyle,
+        seasonalStyle: job.seasonalStyle,
+      }}
+      initialPhotos={job.photos.map((p) => ({
+        id: p.id,
+        orderIndex: p.orderIndex,
+        status: p.status,
+        hasOriginal: !!p.originalUrl,
+        hasEdited: !!p.editedUrl,
+        hasThumbnail: !!p.thumbnailUrl,
+        errorMessage: p.errorMessage,
+      }))}
+    />
   );
 }

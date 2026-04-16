@@ -8,6 +8,7 @@ export type Agent = {
   email?: string | null;
   phone?: string | null;
   dropboxFolder?: string | null;
+  dropboxShareUrl?: string | null;
 };
 
 type Props = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   PresetKey,
@@ -13,17 +13,50 @@ import {
   seasonalPreviews,
   NoneSeasonalPreview,
 } from "./style-previews";
+import { AgentPicker, Agent } from "./agent-picker";
+import { AddressAutocomplete } from "./address-autocomplete";
+
+type UserPreset = {
+  id: string;
+  name: string;
+  slug: string;
+  prompt: string;
+  gradient: string | null;
+};
 
 export function NewJobForm({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
   const [address, setAddress] = useState("");
   const [dropboxUrl, setDropboxUrl] = useState("");
-  const [preset, setPreset] = useState<PresetKey>("standard");
+  const [agent, setAgent] = useState<Agent | null>(null);
+  // preset is any string — built-in PresetKey OR a user preset slug
+  const [preset, setPreset] = useState<string>("standard");
   const [tvStyle, setTvStyle] = useState<TvKey>("netflix");
   const [skyStyle, setSkyStyle] = useState<SkyKey>("blue-clouds");
   const [seasonalStyle, setSeasonalStyle] = useState<SeasonalKey>("");
+  const [userPresets, setUserPresets] = useState<UserPreset[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/presets", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as unknown;
+        if (!cancelled && Array.isArray(data)) setUserPresets(data as UserPreset[]);
+      } catch {
+        /* non-fatal — user just won't see custom presets */
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const agentHasFolder = !!agent?.dropboxFolder;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,11 +69,12 @@ export function NewJobForm({ onClose }: { onClose?: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           address,
-          dropboxUrl: dropboxUrl || null,
+          dropboxUrl: agentHasFolder ? null : dropboxUrl || null,
           preset,
           tvStyle,
           skyStyle,
           seasonalStyle: seasonalStyle || null,
+          agentId: agent?.id ?? null,
         }),
       });
 
@@ -74,26 +108,48 @@ export function NewJobForm({ onClose }: { onClose?: () => void }) {
           <label className="text-[11px] uppercase tracking-[0.2em] text-graphite-500 mb-2 block">
             Property address
           </label>
-          <input
-            className="w-full h-14 px-5 rounded-2xl bg-graphite-950 border border-graphite-800 text-lg text-white placeholder:text-graphite-600 focus:outline-none focus:border-cyan focus:ring-2 focus:ring-cyan/20 transition"
+          <AddressAutocomplete
             value={address}
-            onChange={(e) => setAddress(e.target.value)}
+            onChange={setAddress}
             placeholder="1247 N Main St, Denver CO"
-            required
             autoFocus
           />
         </div>
+
         <div>
           <label className="text-[11px] uppercase tracking-[0.2em] text-graphite-500 mb-2 block">
-            Dropbox link <span className="text-graphite-600 normal-case tracking-normal">— optional</span>
+            Agent
+          </label>
+          <AgentPicker value={agent} onChange={setAgent} />
+          {agent?.dropboxShareUrl && (
+            <p className="mt-2 text-[11px] text-graphite-500">
+              Property photos will land inside{" "}
+              <span className="text-graphite-300 font-mono">{agent.dropboxFolder}</span> on Dropbox.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-[11px] uppercase tracking-[0.2em] text-graphite-500 mb-2 block">
+            {agentHasFolder ? "Or paste a Dropbox link" : "Dropbox link"}{" "}
+            <span className="text-graphite-600 normal-case tracking-normal">— optional</span>
           </label>
           <input
-            className="w-full h-11 px-4 rounded-xl bg-graphite-950 border border-graphite-800 text-sm text-white placeholder:text-graphite-600 focus:outline-none focus:border-cyan focus:ring-2 focus:ring-cyan/20 transition"
+            className={`w-full h-11 px-4 rounded-xl bg-graphite-950 border border-graphite-800 text-sm text-white placeholder:text-graphite-600 focus:outline-none focus:border-cyan focus:ring-2 focus:ring-cyan/20 transition ${
+              agentHasFolder ? "opacity-50" : ""
+            }`}
             value={dropboxUrl}
             onChange={(e) => setDropboxUrl(e.target.value)}
             placeholder="https://www.dropbox.com/scl/fo/..."
             type="url"
+            disabled={agentHasFolder}
           />
+          {agentHasFolder && (
+            <p className="mt-1.5 text-[11px] text-graphite-600">
+              Using <span className="text-graphite-400">{agent?.name}</span>&apos;s folder. Clear
+              the agent to paste a link instead.
+            </p>
+          )}
         </div>
       </div>
 
@@ -111,6 +167,36 @@ export function NewJobForm({ onClose }: { onClose?: () => void }) {
             </StyleTile>
           ))}
         </div>
+        {userPresets.length > 0 && (
+          <>
+            <div className="flex items-center gap-3 mt-5 mb-3">
+              <div className="h-px bg-graphite-800 flex-1" />
+              <span className="text-[10px] uppercase tracking-[0.25em] text-graphite-500">
+                Your presets
+              </span>
+              <div className="h-px bg-graphite-800 flex-1" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {userPresets.map((p) => (
+                <StyleTile
+                  key={p.id}
+                  label={p.name}
+                  selected={preset === p.slug}
+                  onClick={() => setPreset(p.slug)}
+                  aspect="aspect-[4/3]"
+                >
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage: p.gradient ?? fallbackGradient(p.id),
+                      backgroundSize: "cover",
+                    }}
+                  />
+                </StyleTile>
+              ))}
+            </div>
+          </>
+        )}
       </TileSection>
 
       <TileSection title="TV screen" subtitle="What appears on TVs in the photos">
@@ -252,4 +338,13 @@ function StyleTile({
       </span>
     </button>
   );
+}
+
+function fallbackGradient(seed: string): string {
+  let hash = 0;
+  for (const ch of seed) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const hue1 = hash % 360;
+  const hue2 = (hue1 + 45) % 360;
+  const hue3 = (hue1 + 180) % 360;
+  return `linear-gradient(135deg, hsl(${hue1} 55% 22%), hsl(${hue2} 55% 42%), hsl(${hue3} 70% 72%))`;
 }

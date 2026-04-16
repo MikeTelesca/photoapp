@@ -1,10 +1,9 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { signOut } from "@/lib/auth";
 import { NewJobTile } from "@/components/jobs/new-job-modal";
 import { JobCard } from "@/components/jobs/job-card";
+import { AppNav } from "@/components/layout/app-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -65,44 +64,7 @@ export default async function JobsPage() {
 
   return (
     <main className="min-h-screen bg-graphite-950 text-white">
-      {/* Top nav */}
-      <header className="sticky top-0 z-20 border-b border-graphite-900 bg-graphite-950/80 backdrop-blur-xl">
-        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
-          <Link href="/jobs" className="font-semibold text-[15px] tracking-tight">
-            <span className="text-white">Batch</span>
-            <span className="text-cyan">Base</span>
-          </Link>
-          <nav className="flex items-center gap-1 text-sm">
-            <Link
-              href="/jobs"
-              className="px-3 h-8 flex items-center rounded-lg text-white font-medium bg-graphite-900"
-            >
-              Jobs
-            </Link>
-            {isAdmin && (
-              <Link
-                href="/users"
-                className="px-3 h-8 flex items-center rounded-lg text-graphite-400 hover:text-white hover:bg-graphite-900"
-              >
-                Users
-              </Link>
-            )}
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/login" });
-              }}
-            >
-              <button
-                type="submit"
-                className="px-3 h-8 flex items-center rounded-lg text-graphite-400 hover:text-red-300 hover:bg-red-950/20"
-              >
-                Sign out
-              </button>
-            </form>
-          </nav>
-        </div>
-      </header>
+      <AppNav active="jobs" isAdmin={isAdmin} />
 
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 pt-10 pb-16 space-y-8">
         {/* Hero line */}

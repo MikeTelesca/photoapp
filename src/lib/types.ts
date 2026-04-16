@@ -1,7 +1,7 @@
 export type JobStatus = "pending" | "processing" | "review" | "approved" | "rejected" | "deleted";
 export type PhotoStatus = "pending" | "processing" | "edited" | "approved" | "rejected" | "regenerating";
 export type UserRole = "admin" | "photographer";
-export type PresetName = "standard" | "bright-airy" | "luxury" | "mls-standard" | "custom";
+export type PresetName = "standard" | "bright-airy" | "flambient-hdr" | "mls-standard" | "custom";
 export type TvStyle = "netflix" | "black" | "beach" | "mountains" | "fireplace" | "art" | "off";
 export type SkyStyle = "blue-clouds" | "clear-blue" | "golden-hour" | "dramatic" | "overcast-soft" | "as-is";
 export type SeasonalStyle = "spring" | "summer" | "autumn" | "winter" | "twilight";

@@ -42,6 +42,7 @@ export default async function JobPage({
           errorMessage: true,
         },
       },
+      agent: { select: { name: true } },
     },
   });
 
@@ -59,6 +60,7 @@ export default async function JobPage({
         tvStyle: job.tvStyle,
         skyStyle: job.skyStyle,
         seasonalStyle: job.seasonalStyle,
+        agentName: job.agent?.name ?? null,
       }}
       initialPhotos={job.photos.map((p) => ({
         id: p.id,

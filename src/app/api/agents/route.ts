@@ -2,8 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createFolder, createShareLinkForPath, sanitizeFolderName } from "@/lib/dropbox";
+import { log } from "@/lib/logger";
 
 const DROPBOX_ROOT = "/BatchBase";
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return "Unknown error";
+  }
+}
 
 // GET /api/agents - list the signed-in user's agents (admins see all).
 export async function GET() {
@@ -66,29 +77,40 @@ export async function POST(req: NextRequest) {
     const folderPath = `${DROPBOX_ROOT}/${sanitizeFolderName(name)}`;
     try {
       await createFolder(DROPBOX_ROOT);
+    } catch (err: unknown) {
+      log.warn("agents.create.dropbox_root_failed", { err: errorMessage(err) });
+    }
+    try {
       const created = await createFolder(folderPath);
       dropboxFolder = created.path;
+    } catch (err: unknown) {
+      log.warn("agents.create.dropbox_folder_failed", { folderPath, err: errorMessage(err) });
+    }
+    if (dropboxFolder) {
       try {
-        dropboxShareUrl = await createShareLinkForPath(created.path);
-      } catch {
-        // Share link is optional; folder creation is what matters.
+        dropboxShareUrl = await createShareLinkForPath(dropboxFolder);
+      } catch (err: unknown) {
+        log.warn("agents.create.dropbox_share_failed", { dropboxFolder, err: errorMessage(err) });
       }
-    } catch {
-      // Swallow — user probably doesn't have Dropbox configured.
     }
   }
 
-  const agent = await prisma.agent.create({
-    data: {
-      name,
-      email,
-      phone,
-      notes,
-      dropboxFolder,
-      dropboxShareUrl,
-      photographerId: session.user.id,
-    },
-  });
-
-  return NextResponse.json(agent, { status: 201 });
+  try {
+    const agent = await prisma.agent.create({
+      data: {
+        name,
+        email,
+        phone,
+        notes,
+        dropboxFolder,
+        dropboxShareUrl,
+        photographerId: session.user.id,
+      },
+    });
+    log.info("agents.create.ok", { agentId: agent.id, hasFolder: !!dropboxFolder });
+    return NextResponse.json(agent, { status: 201 });
+  } catch (err: unknown) {
+    log.error("agents.create.prisma_failed", { err: errorMessage(err) });
+    return NextResponse.json({ error: `Database error: ${errorMessage(err)}` }, { status: 500 });
+  }
 }

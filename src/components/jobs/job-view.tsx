@@ -16,6 +16,7 @@ export type JobSummary = {
   tvStyle: string;
   skyStyle: string;
   seasonalStyle: string | null;
+  agentName: string | null;
 };
 
 type Props = {
@@ -262,6 +263,11 @@ export function JobView({ initialJob, initialPhotos }: Props) {
             <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.05]">
               {initialJob.address}
             </h1>
+            {initialJob.agentName && (
+              <div className="mt-3 text-sm text-graphite-400">
+                with <span className="text-white font-medium">{initialJob.agentName}</span>
+              </div>
+            )}
             <StyleSummary
               preset={initialJob.preset}
               tvStyle={initialJob.tvStyle}

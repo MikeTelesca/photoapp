@@ -6,7 +6,7 @@ import { ReactNode } from "react";
 
 type PreviewMap<K extends string> = Record<K, { label: string; render: () => ReactNode }>;
 
-export type PresetKey = "standard" | "bright-airy" | "luxury";
+export type PresetKey = "standard" | "bright-airy" | "flambient-hdr";
 export type TvKey = "netflix" | "black" | "beach" | "mountains" | "fireplace" | "art" | "off";
 export type SkyKey = "blue-clouds" | "clear-blue" | "golden-hour" | "dramatic" | "overcast-soft" | "as-is";
 export type SeasonalKey = "" | "spring" | "summer" | "autumn" | "winter" | "twilight";
@@ -28,11 +28,15 @@ export const presetPreviews: PreviewMap<PresetKey> = {
       </div>
     ),
   },
-  luxury: {
-    label: "Luxury",
+  "flambient-hdr": {
+    label: "Flambient HDR",
     render: () => (
-      <div className="absolute inset-0 bg-gradient-to-br from-graphite-950 via-amber-950/70 to-amber-500/70">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(251,191,36,0.5),transparent_60%)]" />
+      // Warm window highlights + cool clean ambient + soft interior glow —
+      // the flash-blended look without the gold-plated luxury vibe.
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-700 to-amber-200">
+        <div className="absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-sky-100/35 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_78%_72%,rgba(253,224,150,0.55),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_28%,rgba(255,255,255,0.28),transparent_45%)]" />
       </div>
     ),
   },

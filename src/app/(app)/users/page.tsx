@@ -1,8 +1,8 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { UsersManager } from "@/components/users/users-manager";
+import { AppNav } from "@/components/layout/app-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -23,35 +23,31 @@ export default async function UsersPage() {
   });
 
   return (
-    <main className="min-h-screen bg-graphite-50 dark:bg-graphite-950 text-graphite-900 dark:text-white">
-      <header className="sticky top-0 z-10 border-b border-graphite-200 dark:border-graphite-800 bg-white/90 dark:bg-graphite-950/90 backdrop-blur">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/jobs" className="font-semibold text-lg tracking-tight">
-            <span className="text-graphite-900 dark:text-white">Batch</span>
-            <span className="text-cyan">Base</span>
-          </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/jobs" className="text-graphite-500 hover:text-graphite-900 dark:hover:text-white">
-              Jobs
-            </Link>
-            <Link href="/users" className="text-graphite-900 dark:text-white font-medium">
-              Users
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <main className="min-h-screen bg-graphite-950 text-white">
+      <AppNav active="users" isAdmin />
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 pt-10 pb-16 space-y-8">
+        <section>
+          <div className="text-[11px] uppercase tracking-[0.25em] text-graphite-500 mb-3">
+            Admin
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.02]">
+            <span className="text-white">Users</span>
+            <span className="text-cyan">.</span>
+          </h1>
+        </section>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <UsersManager
-          initialUsers={users.map((u) => ({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            role: u.role,
-            createdAt: u.createdAt.toISOString(),
-          }))}
-          selfId={session.user.id}
-        />
+        <div className="rounded-3xl bg-graphite-900 border border-graphite-800 p-6 sm:p-8">
+          <UsersManager
+            initialUsers={users.map((u) => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: u.role,
+              createdAt: u.createdAt.toISOString(),
+            }))}
+            selfId={session.user.id}
+          />
+        </div>
       </div>
     </main>
   );

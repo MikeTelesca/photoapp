@@ -26,7 +26,22 @@ export function StyleSummary({
   const items: { label: string; children: React.ReactNode }[] = [];
 
   const p = presetPreviews[preset as PresetKey];
-  if (p) items.push({ label: p.label, children: p.render() });
+  if (p) {
+    items.push({ label: p.label, children: p.render() });
+  } else if (preset) {
+    // Legacy or user-defined preset — show the slug prettied up with a
+    // neutral tile so old jobs (e.g. "luxury") still render a chip.
+    const label = preset
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+    items.push({
+      label,
+      children: (
+        <div className="absolute inset-0 bg-gradient-to-br from-graphite-700 via-graphite-600 to-graphite-800" />
+      ),
+    });
+  }
 
   const tv = tvPreviews[tvStyle as TvKey];
   if (tv) items.push({ label: tv.label, children: tv.render() });

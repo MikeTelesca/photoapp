@@ -60,7 +60,7 @@ The output must be THE EXACT SAME SCENE — same sky, same grass, same view thro
 
 Output the corrected image.`,
 
-  luxury: `You are performing REAL ESTATE PHOTO CORRECTION in a LUXURY MAGAZINE style. This is a LISTING PHOTO that must accurately represent the property. Do NOT embellish reality.
+  "flambient-hdr": `You are performing REAL ESTATE PHOTO CORRECTION in FLAMBIENT HDR style — the flash+ambient blend real estate shooters bracket for. This is a LISTING PHOTO that must accurately represent the property. Do NOT embellish reality.
 
 STRICT RULES — DO NOT VIOLATE:
 - DO NOT add, remove, or change ANY physical content
@@ -68,16 +68,22 @@ STRICT RULES — DO NOT VIOLATE:
 - Enhance grass UNIFORMLY across the entire visible lawn (front AND back). Natural green, never neon. Do not hallucinate grass where there is dirt or stone.
 - DO NOT change what's visible through windows
 - DO NOT modify buildings, landscaping, or any objects
-- DO NOT add or remove anything structural
 
-ONLY DO THESE SAFE ADJUSTMENTS:
-1. EXPOSURE: Balanced exposure with rich shadows. Don't crush blacks completely.
-2. CONTRAST: Higher contrast for editorial feel.
-3. COLORS: Rich, saturated but natural. Warm highlights, cool shadows.
-4. WHITE BALANCE: Slightly warm neutral.
-5. SHARPNESS: Crisp sharpening for high-end look.
+FLAMBIENT HDR CHARACTERISTICS:
+1. FLASH + AMBIENT BLEND: Look like ambient room light with soft directional fill flash. Shadows soft but present, never flat.
+2. WINDOW PULL: Strong HDR window pull — exteriors visible through windows, fully detailed, NEVER blown out. No halo artifacts.
+3. SHADOW LIFT: Lift shadows fully so every corner is readable; preserve micro-contrast, don't wash out.
+4. HIGHLIGHT CONTROL: Recover blown ceilings, lampshades, window trims. Skies pulled from windows but still natural blue/grey, not surreal.
+5. TV SCREENS: Natural skin tones and correct color in anything showing on TV screens. No green/magenta shifts.
+6. WHITE BALANCE: Mixed-temperature interiors stay believable — warm practicals (lamps, pots) stay warm; walls and trim read clean neutral white (never yellow, green, or blue cast).
+7. REFLECTIVE FLOORS: Wood floors warm brown, polished tile clean neutral — never blue-cast from sky reflections.
+8. CONTRAST: Medium-high editorial contrast. Deep blacks without crushing detail. Bright whites without clipping.
+9. SHARPNESS: Crisp but never over-sharpened. Window muntins visible against bright exteriors.
+10. STRAIGHTEN verticals + horizontals; correct wide-angle lens distortion.
 
-The output must be THE EXACT SAME SCENE — same sky, same grass, same view through windows — just with a premium color grade.
+The look: magazine-ready, what a pro flambient shooter would composite in Photoshop from 5-9 brackets + flash. Clean, balanced, inviting.
+
+The output must be THE EXACT SAME SCENE — same sky, same grass, same view through windows — just with the flambient HDR light balance applied.
 
 Output the corrected image.`,
 
@@ -212,7 +218,11 @@ export async function enhancePhoto(
   preset: string,
   customInstructions?: string | null,
   seasonalStyle?: string | null,
-  userPromptPrefix?: string | null
+  userPromptPrefix?: string | null,
+  // Optional lookup for user-defined preset prompts (keyed by slug). When the
+  // caller's `preset` string doesn't match a built-in, we try this map before
+  // falling back to `customInstructions` or standard.
+  customPresetPrompt?: string | null,
 ): Promise<EnhanceResult> {
   try {
     // Check custom instructions safety
@@ -241,13 +251,19 @@ export async function enhancePhoto(
       }
     }
 
-    // Use preset prompt, or fall back to standard
-    let basePrompt = presetPrompts[preset] || presetPrompts.standard;
-    let extraInstructions = customInstructions;
+    // Prefer built-in preset prompt → user preset prompt → customInstructions-as-prompt → standard fallback
+    let basePrompt: string;
+    let extraInstructions: string | null | undefined = customInstructions;
 
-    if (!presetPrompts[preset] && customInstructions) {
+    if (presetPrompts[preset]) {
+      basePrompt = presetPrompts[preset];
+    } else if (customPresetPrompt && customPresetPrompt.trim()) {
+      basePrompt = customPresetPrompt.trim();
+    } else if (customInstructions && customInstructions.trim()) {
       basePrompt = customInstructions;
       extraInstructions = null;
+    } else {
+      basePrompt = presetPrompts.standard;
     }
 
     let prompt = extraInstructions

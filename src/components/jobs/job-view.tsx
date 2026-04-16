@@ -33,6 +33,8 @@ export function JobView({ initialJob, initialPhotos }: Props) {
   const [enhancing, setEnhancing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
 
   const counts = useMemo(() => {
@@ -190,22 +192,107 @@ export function JobView({ initialJob, initialPhotos }: Props) {
       if (!files.length) return;
       setUploading(true);
       setError("");
+      const list = Array.from(files);
+      setUploadProgress({ done: 0, total: list.length });
+
+      // Vercel hobby tier caps request bodies at 4.5MB so we upload one file
+      // per request, then register them all with /ingest-uploaded at the end.
+      const uploaded: Array<{ name: string; path: string; size: number }> = [];
+      const failed: Array<{ name: string; reason: string }> = [];
+
+      for (let i = 0; i < list.length; i += 1) {
+        const f = list[i];
+        const fd = new FormData();
+        fd.append("file", f);
+        try {
+          const res = await fetch(`/api/jobs/${initialJob.id}/upload`, {
+            method: "POST",
+            body: fd,
+          });
+          if (!res.ok) {
+            let msg = `HTTP ${res.status}`;
+            try {
+              const body: unknown = await res.json();
+              if (body && typeof body === "object" && "error" in body) {
+                msg = String((body as { error: unknown }).error);
+              }
+            } catch {
+              /* ignore */
+            }
+            if (res.status === 413) msg = `${f.name} is larger than 4.5MB — please resize before upload`;
+            failed.push({ name: f.name, reason: msg });
+          } else {
+            const body = (await res.json()) as {
+              uploaded?: Array<{ name: string; path: string; size: number }>;
+            };
+            if (body.uploaded && body.uploaded.length > 0) uploaded.push(...body.uploaded);
+          }
+        } catch (err: unknown) {
+          failed.push({
+            name: f.name,
+            reason: err instanceof Error ? err.message : "upload failed",
+          });
+        }
+        setUploadProgress({ done: i + 1, total: list.length });
+      }
+
+      if (uploaded.length === 0) {
+        setError(
+          failed.length > 0
+            ? `Upload failed: ${failed.map((x) => `${x.name} (${x.reason})`).join("; ")}`
+            : "Nothing uploaded",
+        );
+        setUploading(false);
+        setUploadProgress(null);
+        return;
+      }
+
       try {
-        const formData = new FormData();
-        for (const f of Array.from(files)) formData.append("files", f);
         const res = await fetch(`/api/jobs/${initialJob.id}/ingest-uploaded`, {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ files: uploaded }),
         });
-        if (!res.ok) throw new Error("Upload failed");
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? "Ingest failed");
+        }
         await reloadPhotos();
+        if (failed.length > 0) {
+          setError(`Ingested ${uploaded.length}, ${failed.length} failed`);
+        }
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Upload failed");
+        setError(err instanceof Error ? err.message : "Ingest failed");
       } finally {
         setUploading(false);
+        setUploadProgress(null);
       }
     },
-    [initialJob.id, reloadPhotos]
+    [initialJob.id, reloadPhotos],
+  );
+
+  const importFromLink = useCallback(
+    async (sourceUrl: string) => {
+      setImporting(true);
+      setError("");
+      try {
+        const res = await fetch(`/api/jobs/${initialJob.id}/ingest-from-link`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sourceUrl }),
+        });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? "Import failed");
+        }
+        await reloadPhotos();
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Import failed");
+      } finally {
+        setImporting(false);
+      }
+    },
+    [initialJob.id, reloadPhotos],
   );
 
   // Auto-refresh while anything is processing
@@ -337,9 +424,12 @@ export function JobView({ initialJob, initialPhotos }: Props) {
               variant="empty"
               uploading={uploading}
               syncing={syncing}
+              importing={importing}
+              progress={uploadProgress}
               dropboxUrl={initialJob.dropboxUrl}
               onUpload={uploadFiles}
               onSync={syncDropbox}
+              onImportLink={importFromLink}
             />
           ) : (
             <>
@@ -350,9 +440,12 @@ export function JobView({ initialJob, initialPhotos }: Props) {
                 variant="compact"
                 uploading={uploading}
                 syncing={syncing}
+                importing={importing}
+                progress={uploadProgress}
                 dropboxUrl={initialJob.dropboxUrl}
                 onUpload={uploadFiles}
                 onSync={syncDropbox}
+                onImportLink={importFromLink}
               />
               <JobGrid
                 jobId={initialJob.id}

@@ -195,37 +195,78 @@ export function JobView({ initialJob, initialPhotos }: Props) {
       const list = Array.from(files);
       setUploadProgress({ done: 0, total: list.length });
 
-      // Vercel hobby tier caps request bodies at 4.5MB so we upload one file
-      // per request, then register them all with /ingest-uploaded at the end.
+      // Browser uploads DIRECTLY to Dropbox (bypassing Vercel's 4.5MB body cap).
+      // We mint a short-lived access token + resolve the destination folder
+      // server-side, then the browser streams each file straight to Dropbox's
+      // content API. Finalise by registering the file metadata with us.
+      type UploadConfig = { accessToken: string; folderPath: string; expiresInSec: number };
+      let config: UploadConfig;
+      try {
+        const cfgRes = await fetch(`/api/jobs/${initialJob.id}/upload-config`, {
+          cache: "no-store",
+        });
+        if (!cfgRes.ok) {
+          const body = (await cfgRes.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? "Could not get upload config");
+        }
+        const parsed = (await cfgRes.json()) as Partial<UploadConfig>;
+        if (!parsed.accessToken || !parsed.folderPath) {
+          throw new Error("Upload config missing required fields");
+        }
+        config = {
+          accessToken: parsed.accessToken,
+          folderPath: parsed.folderPath,
+          expiresInSec: parsed.expiresInSec ?? 14400,
+        };
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Upload config failed");
+        setUploading(false);
+        setUploadProgress(null);
+        return;
+      }
+
       const uploaded: Array<{ name: string; path: string; size: number }> = [];
       const failed: Array<{ name: string; reason: string }> = [];
 
       for (let i = 0; i < list.length; i += 1) {
         const f = list[i];
-        const fd = new FormData();
-        fd.append("file", f);
+        const ext = f.name.slice(f.name.lastIndexOf(".")).toLowerCase();
+        if (![".jpg", ".jpeg", ".png"].includes(ext)) {
+          failed.push({ name: f.name, reason: "unsupported extension" });
+          setUploadProgress({ done: i + 1, total: list.length });
+          continue;
+        }
         try {
-          const res = await fetch(`/api/jobs/${initialJob.id}/upload`, {
+          const dest = `${config.folderPath}/${f.name}`;
+          const res = await fetch("https://content.dropboxapi.com/2/files/upload", {
             method: "POST",
-            body: fd,
+            headers: {
+              Authorization: `Bearer ${config.accessToken}`,
+              "Content-Type": "application/octet-stream",
+              "Dropbox-API-Arg": JSON.stringify({
+                path: dest,
+                mode: "overwrite",
+                autorename: false,
+                mute: true,
+                strict_conflict: false,
+              }),
+            },
+            body: f,
           });
           if (!res.ok) {
-            let msg = `HTTP ${res.status}`;
-            try {
-              const body: unknown = await res.json();
-              if (body && typeof body === "object" && "error" in body) {
-                msg = String((body as { error: unknown }).error);
-              }
-            } catch {
-              /* ignore */
-            }
-            if (res.status === 413) msg = `${f.name} is larger than 4.5MB — please resize before upload`;
-            failed.push({ name: f.name, reason: msg });
+            const txt = await res.text();
+            failed.push({ name: f.name, reason: `Dropbox ${res.status}: ${txt.slice(0, 160)}` });
           } else {
-            const body = (await res.json()) as {
-              uploaded?: Array<{ name: string; path: string; size: number }>;
+            const meta = (await res.json()) as {
+              path_display?: string;
+              name?: string;
+              size?: number;
             };
-            if (body.uploaded && body.uploaded.length > 0) uploaded.push(...body.uploaded);
+            uploaded.push({
+              name: meta.name ?? f.name,
+              path: meta.path_display ?? dest,
+              size: meta.size ?? f.size,
+            });
           }
         } catch (err: unknown) {
           failed.push({
@@ -239,7 +280,10 @@ export function JobView({ initialJob, initialPhotos }: Props) {
       if (uploaded.length === 0) {
         setError(
           failed.length > 0
-            ? `Upload failed: ${failed.map((x) => `${x.name} (${x.reason})`).join("; ")}`
+            ? `Upload failed: ${failed
+                .slice(0, 3)
+                .map((x) => `${x.name} (${x.reason})`)
+                .join("; ")}${failed.length > 3 ? ` +${failed.length - 3} more` : ""}`
             : "Nothing uploaded",
         );
         setUploading(false);

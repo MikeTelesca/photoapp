@@ -5,5 +5,9 @@ import { authConfig } from "@/lib/auth.config";
 export default NextAuth(authConfig).auth;
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Exclude static assets AND the service worker + its manifest — these must
+  // load unauthenticated or the PWA can never update from a stale cache.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json|icon-\\d+\\.png|icons/).*)",
+  ],
 };

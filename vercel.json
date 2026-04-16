@@ -21,5 +21,14 @@
     "src/app/api/jobs/[jobId]/download-originals/route.ts": { "maxDuration": 120 },
     "src/app/api/jobs/[jobId]/ingest/route.ts": { "maxDuration": 120 },
     "src/app/api/jobs/[jobId]/photos/[photoId]/original/route.ts": { "maxDuration": 30 }
-  }
+  },
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    }
+  ]
 }

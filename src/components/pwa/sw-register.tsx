@@ -7,9 +7,13 @@ export function ServiceWorkerRegister() {
     if (!("serviceWorker" in navigator)) return;
     if (process.env.NODE_ENV !== "production") return;
 
-    navigator.serviceWorker.register("/sw.js").then((reg) => {
-      // Check for updates every 5 min
+    // updateViaCache:"none" tells the browser to NEVER use HTTP cache for sw.js
+    // itself — pair with Cache-Control on /sw.js so new deploys are always seen.
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((reg) => {
+      // Check immediately on load + every 5 min
+      reg.update().catch(() => {});
       const checkInterval = setInterval(() => reg.update().catch(() => {}), 5 * 60 * 1000);
+      void checkInterval;
 
       // Listen for new SW waiting
       reg.addEventListener("updatefound", () => {

@@ -22,6 +22,10 @@ import {
   CheckCircleIcon,
   FolderOpenIcon,
   Bars3Icon,
+  MagnifyingGlassMinusIcon,
+  MagnifyingGlassPlusIcon,
+  InformationCircleIcon,
+  ArrowsPointingOutIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -145,13 +149,33 @@ function SortableThumb({ id, children }: { id: string; children: React.ReactNode
   );
 }
 
+const STATUS_BADGE_CONFIG: Record<string, { bg: string; label: string; title: string } | undefined> = {
+  approved: { bg: "bg-emerald-500", label: "A", title: "Approved" },
+  rejected: { bg: "bg-red-500", label: "R", title: "Rejected" },
+  failed: { bg: "bg-red-600", label: "!", title: "Failed after retries" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const config = STATUS_BADGE_CONFIG[status];
+  if (!config) return null;
+  return (
+    <div
+      className={`absolute top-1 right-1 w-5 h-5 rounded-full ${config.bg} text-white text-xs flex items-center justify-center font-bold`}
+      title={config.title}
+    >
+      {config.label}
+    </div>
+  );
+}
+
 function GridView({ photos, cols, onPhotoClick, jobId }: {
   photos: Photo[];
   cols: 2 | 3 | 4;
   onPhotoClick: (id: string) => void;
   jobId: string;
 }) {
-  const colClass = cols === 2 ? "grid-cols-2" : cols === 3 ? "grid-cols-3" : "grid-cols-4";
+  const colClassMap = { 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" } as const;
+  const colClass = colClassMap[cols];
   return (
     <div className={`grid ${colClass} gap-2 p-4 overflow-y-auto bg-graphite-900 flex-1`}>
       {photos.map(p => {
@@ -170,15 +194,7 @@ function GridView({ photos, cols, onPhotoClick, jobId }: {
                 alt=""
               />
             )}
-            {p.status === "approved" && (
-              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold" title="Approved">A</div>
-            )}
-            {p.status === "rejected" && (
-              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold" title="Rejected">R</div>
-            )}
-            {p.status === "failed" && (
-              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center font-bold" title="Failed after retries">!</div>
-            )}
+            <StatusBadge status={p.status} />
             {p.favorited && (
               <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-graphite-900" title="Favorite" />
             )}
@@ -223,43 +239,33 @@ function RetouchRequestPopover({
 
   const hasRequest = (initialValue || "").trim().length > 0;
 
-  const save = async () => {
+  async function submitRequest(request: string | null) {
     setSaving(true);
     try {
-      const trimmed = value.trim();
-      const payload = trimmed.length === 0 ? null : trimmed;
       const res = await fetch(`/api/photos/${photoId}/retouch-request`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request: payload }),
+        body: JSON.stringify({ request }),
       });
       if (res.ok) {
         const data = await res.json();
         onSaved(data.retouchRequest ?? null);
         setOpen(false);
+        if (request === null) setValue("");
       }
     } finally {
       setSaving(false);
     }
-  };
+  }
 
-  const clear = async () => {
-    setValue("");
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/photos/${photoId}/retouch-request`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request: null }),
-      });
-      if (res.ok) {
-        onSaved(null);
-        setOpen(false);
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
+  function save() {
+    const trimmed = value.trim();
+    submitRequest(trimmed.length === 0 ? null : trimmed);
+  }
+
+  function clear() {
+    submitRequest(null);
+  }
 
   return (
     <div className="relative" ref={popoverRef}>
@@ -2600,7 +2606,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
   );
 
   return (
-    <div className={`flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden ${focusMode ? "ath-focus-root" : ""}`}>
+    <div className={`fixed inset-0 z-40 flex flex-col bg-graphite-950 overflow-hidden ${focusMode ? "ath-focus-root" : ""}`}>
       {showMoreActions && (
         <PhotoMinimap
           photos={sortedPhotos}
@@ -2608,29 +2614,41 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           jumpTo={jumpToPhoto}
         />
       )}
-      {/* Top Bar */}
-      <div className="app-header review-toolbar-extras bg-white/95 dark:bg-graphite-950/95 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-800 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3.5">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1 text-sm font-medium text-cyan hover:opacity-70 transition-opacity"
-          >
+      {/* Top Bar — Greseel minimal header */}
+      <div className="app-header review-toolbar-extras bg-graphite-950 border-b border-graphite-800/50 px-5 md:px-6 h-14 flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-4 min-w-0">
+          <Link href="/dashboard" className="flex items-center justify-center w-9 h-9 rounded-lg bg-graphite-800/50 text-graphite-300 hover:text-white hover:bg-graphite-700 transition-colors shrink-0">
             <ChevronLeftIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
           </Link>
-          <div>
-            <div className="flex gap-2 items-baseline">
-              <div className="text-sm md:text-base font-bold text-graphite-900 dark:text-white">{job.address}</div>
-              {job.sequenceNumber && (
-                <div className="text-[9px] font-mono font-semibold text-cyan dark:text-cyan">
-                  {formatJobNumber({ sequence: job.sequenceNumber, createdAt: job.createdAt })}
-                </div>
-              )}
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-white truncate">{job.address}</div>
+            <div className="text-[11px] text-graphite-500 flex gap-2 items-center">
+              <span>{job.photographer?.name}</span>
+              <span className="text-graphite-700">&middot;</span>
+              <span>{currentPhoto?.customFilename || `Photo ${currentIndex + 1}`}</span>
             </div>
-            <div className="text-xs text-graphite-400 flex gap-3 items-center flex-wrap">
-              <span>{job.photographer.name}</span>
-              <span>{photos.length} photos</span>
-              <span className="capitalize hidden sm:inline">{job.preset} preset</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Mobile nav */}
+          <button onClick={() => setShowMobileNav(true)} className="md:hidden flex items-center gap-1 px-2 py-1 rounded text-xs bg-graphite-800">
+            <Bars3Icon className="w-4 h-4 text-graphite-300" />
+            <span className="text-graphite-300">{currentIndex + 1}/{photos.length}</span>
+          </button>
+          <button type="button" onClick={toggleMoreActions} aria-expanded={showMoreActions}
+            className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${showMoreActions ? "border-cyan bg-cyan/10 text-cyan" : "border-graphite-700 text-graphite-400 hover:text-white hover:border-graphite-600"}`}>
+            {showMoreActions ? "Hide tools" : "Tools"}
+          </button>
+          <ShareButton jobId={job.id} initialToken={job.shareToken ?? null} initialEnabled={job.shareEnabled ?? false} />
+          <Link href={`/review/${job.id}/invoice`}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-graphite-700 text-graphite-300 hover:text-white hover:border-graphite-600 transition-colors">
+            Save / Export
+          </Link>
+        </div>
+      </div>
+
+      {/* === OLD TOP BAR CONTENT HIDDEN === */}
+      <div className="hidden"><div><div><div>
               {job.clientApprovalStatus === "approved" && (
                 <span
                   className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-semibold"
@@ -3410,7 +3428,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             Download
           </a>
         </div>
-      </div>
+      </div>{/* /OLD TOP BAR CONTENT HIDDEN */}
 
       {/* Mobile Nav Overlay */}
       {showMobileNav && (
@@ -3640,8 +3658,27 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
 
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Thumbnail Strip - hidden on mobile */}
-        <div className="hidden md:flex w-[100px] bg-graphite-100 dark:bg-graphite-950 border-r border-graphite-200 dark:border-graphite-800 flex-col flex-shrink-0">
+        {/* Left Icon Rail — Greseel inspo */}
+        <div className="hidden md:flex w-[72px] bg-graphite-950 border-r border-graphite-800/30 flex-col items-center pt-8 gap-2 flex-shrink-0">
+          <button onClick={() => {}} className="w-11 h-11 rounded-xl bg-cyan text-white flex items-center justify-center shadow-lg shadow-cyan/20" title="Review">
+            <CheckCircleIcon className="w-5 h-5" />
+          </button>
+          <button onClick={() => {}} className="w-11 h-11 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="AI Enhance">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </button>
+          <button onClick={() => {}} className="w-11 h-11 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Adjustments">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+          </button>
+          <button onClick={() => {}} className="w-11 h-11 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Crop">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2v14a2 2 0 002 2h14"/><path d="M18 22V8a2 2 0 00-2-2H2"/></svg>
+          </button>
+          <button onClick={() => {}} className="w-11 h-11 rounded-xl text-graphite-400 hover:text-white hover:bg-graphite-800/60 flex items-center justify-center transition-colors" title="Settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+        </div>
+
+        {/* Old Thumbnail Strip - hidden */}
+        <div className="hidden">
           {/* Filter pills */}
           <div className="flex flex-col gap-0.5 p-1 border-b border-graphite-200 dark:border-graphite-700 flex-shrink-0">
             {/* Only favorites toggle */}
@@ -3947,6 +3984,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           </div>
         </div>
 
+        {/* Center column — Greseel canvas + strip */}
+        <div className="flex-1 flex flex-col min-w-0">
         {/* Viewer */}
         <div className="flex-1 flex flex-col relative" {...swipe}>
           {viewMode === "grid" ? (
@@ -3984,7 +4023,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                 />
               </div>
             ) : (
-              <div className="flex flex-col md:flex-row gap-0.5 w-full h-full relative">
+              <div className="w-full h-full relative">
                 {/* Zoom level indicator + reset (shown when zoomed) */}
                 {zoom > 1 && (
                   <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
@@ -4001,27 +4040,9 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                     Click to zoom · Scroll to zoom · Drag to pan
                   </div>
                 )}
-                {/* Before */}
-                <div className="flex-1 rounded-lg overflow-hidden relative bg-graphite-800">
-                  <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10 pointer-events-none">
-                    Before
-                  </div>
-                  {currentPhoto ? (
-                    <ZoomableImage
-                      src={currentPhoto.originalUrl || `/api/jobs/${job.id}/photos/${currentPhoto.id}/original`}
-                      alt="Before"
-                      zoom={zoom}
-                      pan={pan}
-                      onZoomChange={setZoom}
-                      onPanChange={setPan}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center w-full h-full text-graphite-500 dark:text-graphite-400 text-sm">Original HDR Merge</div>
-                  )}
-                </div>
 
-                {/* After */}
-                <div className="flex-1 rounded-lg overflow-hidden relative bg-graphite-800">
+                {/* After — single image (Greseel layout) */}
+                <div className="w-full h-full rounded-lg overflow-hidden relative bg-graphite-950">
                   <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm z-10 pointer-events-none">
                     After
                   </div>
@@ -4163,11 +4184,22 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           {currentPhoto && viewMode === "single" && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
               <FloatingToolbar>
+                {/* Primary actions — Greseel */}
+                <ToolbarButton ariaLabel="Approve (A)" onClick={handleApprove} title="Approve">
+                  <CheckIcon className="w-4 h-4 text-emerald-400" />
+                </ToolbarButton>
+                <ToolbarButton ariaLabel="Reject (R)" onClick={handleReject} title="Reject">
+                  <XMarkIcon className="w-4 h-4 text-red-400" />
+                </ToolbarButton>
+                <ToolbarButton ariaLabel="Regenerate" onClick={handleRegenerate} title="Regenerate">
+                  <ArrowPathIcon className="w-4 h-4 text-cyan-light" />
+                </ToolbarButton>
+                <ToolbarDivider />
                 <ToolbarButton
                   ariaLabel="Zoom out"
                   onClick={() => setZoom(z => Math.max(0.25, z / 1.5))}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>
+                  <MagnifyingGlassMinusIcon className="w-3.5 h-3.5" />
                 </ToolbarButton>
                 <ToolbarButton
                   ariaLabel="Reset zoom"
@@ -4180,7 +4212,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   ariaLabel="Zoom in"
                   onClick={() => setZoom(z => Math.min(8, z * 1.5))}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>
+                  <MagnifyingGlassPlusIcon className="w-3.5 h-3.5" />
                 </ToolbarButton>
                 <ToolbarDivider />
                 <ToolbarButton
@@ -4209,7 +4241,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   active={exifPanelOpen}
                   title="EXIF"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                  <InformationCircleIcon className="w-3.5 h-3.5" />
                 </ToolbarButton>
                 <ToolbarButton
                   ariaLabel="Focus mode"
@@ -4217,7 +4249,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
                   active={focusMode}
                   title="Focus"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                  <ArrowsPointingOutIcon className="w-3.5 h-3.5" />
                 </ToolbarButton>
               </FloatingToolbar>
             </div>
@@ -4232,6 +4264,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             />
           )}
 
+          {/* Below-image panels — hidden in Greseel layout, available via Tools toggle */}
+          <div className="hidden">
           {/* Enhancement Version History */}
           {currentPhoto && (
             <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
@@ -4299,6 +4333,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </div>
           )}
 
+          </div>{/* /hidden below-image panels */}
+
           {/* Failed Photo Banner */}
           {currentPhoto?.status === "failed" && (
             <div className="bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800 px-3 md:px-6 py-3">
@@ -4338,26 +4374,26 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </div>
           )}
 
-          {/* Internal Job Comments */}
-          <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
-            <JobComments jobId={job.id} />
+          {/* Comments + Ratings — hidden in Greseel layout */}
+          <div className="hidden">
+            <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
+              <JobComments jobId={job.id} />
+            </div>
+            {currentPhoto && currentPhoto.ratings && currentPhoto.ratings.length > 0 && (() => {
+              const ratings = currentPhoto.ratings!;
+              const avg = ratings.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / ratings.length;
+              return (
+                <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
+                  <div className="text-xs text-amber-600 font-semibold">
+                    {avg.toFixed(1)} client rating ({ratings.length})
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
-          {/* Client Ratings */}
-          {currentPhoto && currentPhoto.ratings && currentPhoto.ratings.length > 0 && (() => {
-            const ratings = currentPhoto.ratings!;
-            const avg = ratings.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / ratings.length;
-            return (
-              <div className="bg-graphite-50 dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-2">
-                <div className="text-xs text-amber-600 font-semibold">
-                  {avg.toFixed(1)} client rating ({ratings.length})
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Action Bar */}
-          <div className="bg-white dark:bg-graphite-900 border-t border-graphite-200 dark:border-graphite-700 px-3 md:px-6 py-3 flex items-center justify-between flex-wrap gap-2">
+          {/* Action Bar — hidden (Greseel: actions in floating toolbar + right panel) */}
+          <div className="hidden">
             <div className="flex items-center gap-4">
               <div className="flex gap-1">
                 <button
@@ -4802,8 +4838,8 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             </div>
           </div>
 
-          {/* Custom Instructions */}
-          <div className="bg-white dark:bg-graphite-900 border-t border-graphite-100 dark:border-graphite-800 px-6 py-3 flex items-center gap-2.5">
+          {/* Custom Instructions — hidden (Greseel: moved to right panel) */}
+          <div className="hidden">
             {showMoreActions && (
               <div className="flex gap-1.5 flex-wrap">
                 {["Remove car", "Make brighter", "Fix sky", "Enhance grass", "Pot lights on", "Remove photographer", "TV: Netflix home screen", "TV: fireplace video", "TV: black screen off", "TV: beach scene"].map(
@@ -4838,8 +4874,94 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
               Send &amp; Regenerate
             </Button>
           </div>
+        </div>{/* /viewer */}
+
+        {/* Recent Edits strip — Greseel */}
+        <div className="h-[120px] border-t border-graphite-800/50 bg-graphite-950 px-4 py-3 flex-shrink-0">
+          <div className="text-[11px] font-semibold text-graphite-500 uppercase tracking-wider mb-2">Recent Edits</div>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            {sortedPhotos.map((photo, idx) => (
+              <button
+                key={photo.id}
+                onClick={() => setCurrentIndex(sortedPhotos.findIndex(p => p.id === photo.id))}
+                className={`relative w-[100px] h-[66px] rounded-lg flex-shrink-0 overflow-hidden border-2 transition-all ${
+                  sortedPhotos.findIndex(p => p.id === photo.id) === currentIndex
+                    ? "border-cyan shadow-md shadow-cyan/20"
+                    : "border-transparent hover:border-graphite-600"
+                }`}
+              >
+                <img src={photo.editedUrl || photo.originalUrl || ""} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                {photo.status === "approved" && (
+                  <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
+                  </div>
+                )}
+                {photo.status === "rejected" && (
+                  <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+
+        </div>{/* /center-column */}
+
+        {/* Right Panel — editing controls (Greseel) */}
+        <div className="hidden md:flex w-[280px] border-l border-graphite-800/50 bg-graphite-950 flex-col flex-shrink-0 overflow-y-auto">
+          <div className="p-5">
+            <div className="flex items-center gap-2 mb-5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-graphite-400"><path d="M6 9l6 6 6-6"/></svg>
+              <span className="text-sm font-semibold text-white">Basic</span>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-graphite-400">Preset</span>
+                <select value={currentPreset} onChange={(e) => changePreset(e.target.value)}
+                  className="text-xs bg-graphite-800 border border-graphite-700 rounded-md px-2.5 py-1 text-white focus:outline-none focus:border-cyan">
+                  {presets.map(p => (<option key={p.slug} value={p.slug}>{p.name}</option>))}
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-graphite-400">Status</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  currentPhoto?.status === "approved" ? "bg-emerald-500/20 text-emerald-400" :
+                  currentPhoto?.status === "rejected" ? "bg-red-500/20 text-red-400" :
+                  "bg-graphite-700 text-graphite-300"
+                }`}>{currentPhoto?.status || "pending"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-graphite-400">Photo</span>
+                <span className="text-xs text-graphite-300">{currentIndex + 1} of {photos.length}</span>
+              </div>
+            </div>
+            <div className="mt-6">
+              <label className="text-xs text-graphite-400 block mb-2">Custom Instructions</label>
+              <textarea value={customInstruction} onChange={(e) => setCustomInstruction(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && customInstruction.trim()) { e.preventDefault(); handleRegenerate(); } }}
+                placeholder="e.g. Remove photographer from mirror" rows={3}
+                className="w-full px-3 py-2 rounded-lg bg-graphite-800 border border-graphite-700 text-xs text-white placeholder:text-graphite-500 focus:outline-none focus:border-cyan resize-none" />
+            </div>
+            <button onClick={handleRegenerate} disabled={isUpdating}
+              className="mt-3 w-full py-2.5 rounded-lg text-sm font-semibold bg-cyan text-white hover:bg-cyan-dark transition-colors disabled:opacity-40">
+              Regenerate with AI
+            </button>
+            <div className="mt-5">
+              <span className="text-xs text-graphite-400 block mb-2">Quick Edits</span>
+              <div className="flex flex-wrap gap-1.5">
+                {["Remove car", "Brighter", "Fix sky", "Enhance grass", "Pot lights on", "Remove photographer", "TV: off"].map(tag => (
+                  <button key={tag} onClick={() => handleQuickTag(tag)}
+                    className="px-2 py-1 rounded-md bg-graphite-800 text-graphite-400 text-[11px] border border-graphite-700 hover:text-white hover:border-graphite-600 transition-colors">
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>{/* /body flex */}
 
       {/* Keyboard Shortcuts Help Overlay */}
       {showHelpOverlay && (

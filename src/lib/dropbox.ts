@@ -253,6 +253,67 @@ export async function createFolder(path: string): Promise<{ path: string }> {
 }
 
 /**
+ * Turn a Dropbox share URL into a raw-inline URL suitable for <img src>.
+ * Dropbox's share URLs come with `?dl=0`, which hits an HTML preview page.
+ * Swapping to `?raw=1` makes Dropbox serve the file bytes directly.
+ */
+export function toRawDropboxUrl(shareUrl: string): string {
+  if (shareUrl.includes("?dl=0")) return shareUrl.replace("?dl=0", "?raw=1");
+  if (shareUrl.includes("&dl=0")) return shareUrl.replace("&dl=0", "&raw=1");
+  if (shareUrl.includes("?dl=1")) return shareUrl.replace("?dl=1", "?raw=1");
+  if (shareUrl.includes("&dl=1")) return shareUrl.replace("&dl=1", "&raw=1");
+  return shareUrl + (shareUrl.includes("?") ? "&raw=1" : "?raw=1");
+}
+
+/**
+ * Persist an enhanced photo to Dropbox. Generates a 2560-px JPEG (display-
+ * size) plus a 640-px WebP (thumbnail), uploads both, returns the raw-inline
+ * URLs for <img src> use. Caller stores those URLs on Photo.editedUrl /
+ * Photo.thumbnailUrl — no more multi-MB base64 data URLs in Postgres.
+ */
+export async function persistEnhancedEdit(
+  photoId: string,
+  imageBuffer: Buffer,
+  jobId: string
+): Promise<{ editedUrl: string; thumbnailUrl: string }> {
+  const sharp = (await import("sharp")).default;
+
+  const [fullJpeg, thumbWebp] = await Promise.all([
+    sharp(imageBuffer)
+      .rotate()
+      .resize(2560, 2560, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 88, mozjpeg: true })
+      .toBuffer(),
+    sharp(imageBuffer)
+      .rotate()
+      .resize(640, 640, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 78 })
+      .toBuffer(),
+  ]);
+
+  // Ensure parent folders exist (cheap; creates are idempotent in our helper)
+  await createFolder("/BatchBase");
+  await createFolder("/BatchBase/_edits");
+  const editFolder = `/BatchBase/_edits/${jobId}`;
+  await createFolder(editFolder);
+
+  const fullPath = `${editFolder}/${photoId}.jpg`;
+  const thumbPath = `${editFolder}/${photoId}_thumb.webp`;
+
+  await Promise.all([uploadInternalFile(fullJpeg, fullPath), uploadInternalFile(thumbWebp, thumbPath)]);
+
+  const [fullShare, thumbShare] = await Promise.all([
+    createShareLinkForPath(fullPath),
+    createShareLinkForPath(thumbPath),
+  ]);
+
+  return {
+    editedUrl: toRawDropboxUrl(fullShare),
+    thumbnailUrl: toRawDropboxUrl(thumbShare),
+  };
+}
+
+/**
  * Create (or fetch existing) a public share link for a Dropbox path.
  * Returns the www.dropbox.com share URL (not a direct download).
  */

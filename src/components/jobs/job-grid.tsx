@@ -6,6 +6,11 @@ export type PhotoRow = {
   id: string;
   orderIndex: number;
   status: string;
+  // Short http URLs when available (Dropbox CDN). Null when the photo has no
+  // source yet or the URL lives only as a legacy data URL in the DB.
+  originalUrl: string | null;
+  editedUrl: string | null;
+  thumbnailUrl: string | null;
   hasOriginal: boolean;
   hasEdited: boolean;
   hasThumbnail: boolean;
@@ -104,7 +109,10 @@ function PhotoTile({
   const badge = statusConfig[photo.status] ?? statusConfig.pending;
   const hasAnyImage = photo.hasEdited || photo.hasOriginal || photo.hasThumbnail;
   const showImage = hasAnyImage && !imgError;
-  const thumbSrc = `/api/jobs/${jobId}/photos/${photo.id}/thumb`;
+  // Prefer the direct Dropbox/CDN URL so the browser never pipes through our
+  // serverless function. Fall back to /thumb only for legacy data URLs.
+  const directThumb = photo.thumbnailUrl || photo.editedUrl || photo.originalUrl;
+  const thumbSrc = directThumb ?? `/api/jobs/${jobId}/photos/${photo.id}/thumb`;
 
   return (
     <div

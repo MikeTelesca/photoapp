@@ -36,16 +36,19 @@ export async function GET(
   const source = pickSource(photo, variant);
   if (!source) return NextResponse.json({ error: "No image" }, { status: 404 });
 
+  // Fast path: http URLs are already externally hosted (Dropbox CDN etc).
+  // Redirect the browser straight to them instead of piping through this
+  // server and re-encoding. The browser caches against the destination URL.
+  if (source.startsWith("http")) {
+    return NextResponse.redirect(source, { status: 302 });
+  }
+
   let sourceBuf: Buffer | null = null;
   try {
     if (source.startsWith("data:")) {
       const comma = source.indexOf(",");
       if (comma === -1) throw new Error("Invalid data URL");
       sourceBuf = Buffer.from(source.slice(comma + 1), "base64");
-    } else if (source.startsWith("http")) {
-      const res = await fetch(source);
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      sourceBuf = Buffer.from(await res.arrayBuffer());
     }
   } catch {
     return NextResponse.json({ error: "Source unreachable" }, { status: 502 });

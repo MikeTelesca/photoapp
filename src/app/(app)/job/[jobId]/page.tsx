@@ -3,6 +3,14 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { JobView } from "@/components/jobs/job-view";
 
+// Strip base64 data URLs (multi-MB) from the server → client payload. Short
+// http URLs pass through untouched so the client can embed them directly.
+function shortUrl(v: string | null): string | null {
+  if (!v) return null;
+  if (v.startsWith("data:")) return null;
+  return v;
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function JobPage({
@@ -56,6 +64,9 @@ export default async function JobPage({
         id: p.id,
         orderIndex: p.orderIndex,
         status: p.status,
+        originalUrl: shortUrl(p.originalUrl),
+        editedUrl: shortUrl(p.editedUrl),
+        thumbnailUrl: shortUrl(p.thumbnailUrl),
         hasOriginal: !!p.originalUrl,
         hasEdited: !!p.editedUrl,
         hasThumbnail: !!p.thumbnailUrl,

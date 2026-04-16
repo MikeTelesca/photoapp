@@ -44,9 +44,11 @@ export function JobViewer({
 
   const canCompare = photo.hasEdited && photo.hasOriginal;
   const base = `/api/jobs/${jobId}/photos/${photo.id}/thumb`;
-  const displaySrc = `${base}?size=large`;
-  const beforeSrc = `${base}?size=large&variant=original`;
-  const afterSrc = `${base}?size=large&variant=edited`;
+  // Prefer direct URLs (Dropbox CDN) for full-resolution viewing. Fall back
+  // to the /thumb endpoint which handles legacy data URLs + variant routing.
+  const displaySrc = photo.editedUrl || photo.originalUrl || `${base}?size=large`;
+  const beforeSrc = photo.originalUrl || `${base}?size=large&variant=original`;
+  const afterSrc = photo.editedUrl || `${base}?size=large&variant=edited`;
 
   const hasAnyImage = photo.hasEdited || photo.hasOriginal || photo.hasThumbnail;
 

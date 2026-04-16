@@ -24,6 +24,9 @@ export default async function JobsPage() {
       include: {
         _count: { select: { photos: true } },
         photographer: { select: { name: true, email: true } },
+        // Just the IDs — the card component hits /api/jobs/:id/photos/:id/thumb
+        // which 302-redirects to the Dropbox CDN for new photos. Data URLs
+        // never cross the wire to the client.
         photos: {
           where: {
             OR: [
@@ -34,7 +37,7 @@ export default async function JobsPage() {
           },
           orderBy: { orderIndex: "asc" },
           take: 1,
-          select: { editedUrl: true, thumbnailUrl: true, originalUrl: true },
+          select: { id: true },
         },
       },
       take: 60,
@@ -161,11 +164,10 @@ export default async function JobsPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {jobs.map((job, idx) => {
-                const cover =
-                  job.photos[0]?.editedUrl ||
-                  job.photos[0]?.thumbnailUrl ||
-                  job.photos[0]?.originalUrl ||
-                  null;
+                const coverPhotoId = job.photos[0]?.id;
+                const cover = coverPhotoId
+                  ? `/api/jobs/${job.id}/photos/${coverPhotoId}/thumb`
+                  : null;
                 // Featured every 7th tile — breaks grid rhythm into an editorial feel
                 const featured = idx % 7 === 0 && jobs.length > 3;
                 return (

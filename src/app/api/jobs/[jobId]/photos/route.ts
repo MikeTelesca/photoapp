@@ -4,10 +4,9 @@ import { requireJobAccess } from "@/lib/api-auth";
 
 // GET /api/jobs/:jobId/photos - list photos for a job.
 //
-// IMPORTANT: `originalUrl` / `editedUrl` / `thumbnailUrl` are stored as base64
-// data URLs in the DB (potentially multiple megabytes each). Shipping those to
-// the client blows the page up. We project lightweight boolean flags instead
-// and expect the UI to request actual image bytes via the /thumb endpoint.
+// Only short URLs (http[s]) are returned in *Url fields. Data URLs remain in
+// the DB for legacy rows but are stripped from the wire — the grid falls back
+// to /api/.../thumb when no http URL is present.
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
@@ -36,6 +35,9 @@ export async function GET(
     id: p.id,
     orderIndex: p.orderIndex,
     status: p.status,
+    originalUrl: shortUrl(p.originalUrl),
+    editedUrl: shortUrl(p.editedUrl),
+    thumbnailUrl: shortUrl(p.thumbnailUrl),
     hasOriginal: !!p.originalUrl,
     hasEdited: !!p.editedUrl,
     hasThumbnail: !!p.thumbnailUrl,
@@ -45,4 +47,10 @@ export async function GET(
   }));
 
   return NextResponse.json(photos);
+}
+
+function shortUrl(v: string | null): string | null {
+  if (!v) return null;
+  if (v.startsWith("data:")) return null;
+  return v;
 }

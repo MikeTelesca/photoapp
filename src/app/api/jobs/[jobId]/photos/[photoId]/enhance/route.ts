@@ -4,6 +4,7 @@ import { enhancePhoto } from "@/lib/ai-enhance";
 import { requireJobAccess } from "@/lib/api-auth";
 import { checkRate } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
+import { persistEnhancedEdit } from "@/lib/dropbox";
 
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
@@ -100,11 +101,23 @@ export async function POST(
       return NextResponse.json({ error: result.error ?? "Enhance failed" }, { status: 500 });
     }
 
-    const editedDataUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+    let editedUrl: string;
+    let thumbnailUrl: string | null = null;
+    try {
+      const imageBuffer = Buffer.from(result.imageBase64, "base64");
+      const urls = await persistEnhancedEdit(photoId, imageBuffer, jobId);
+      editedUrl = urls.editedUrl;
+      thumbnailUrl = urls.thumbnailUrl;
+    } catch (uploadErr) {
+      log.warn("[photo-enhance] dropbox upload failed, falling back to data URL", {
+        err: uploadErr instanceof Error ? uploadErr.message : String(uploadErr),
+      });
+      editedUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+    }
 
     const updated = await prisma.photo.update({
       where: { id: photoId },
-      data: { status: "review", editedUrl: editedDataUrl },
+      data: { status: "review", editedUrl, thumbnailUrl },
     });
 
     return NextResponse.json(updated);

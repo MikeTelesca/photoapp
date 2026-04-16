@@ -4,6 +4,7 @@ import { enhancePhoto } from "@/lib/ai-enhance";
 import { requireJobAccess } from "@/lib/api-auth";
 import { checkRate } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
+import { persistEnhancedEdit } from "@/lib/dropbox";
 
 // Allow up to 5 minutes for AI processing
 export const maxDuration = 300;
@@ -119,11 +120,26 @@ export async function POST(
         return NextResponse.json({ error: result.error ?? "Enhance failed" }, { status: 500 });
       }
 
-      const editedDataUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+      // Store enhanced bytes in Dropbox, not the DB. Falls back to a base64
+      // data URL only if Dropbox upload fails — that path is slow but keeps
+      // the pipeline from hanging if creds are missing.
+      let editedUrl: string;
+      let thumbnailUrl: string | null = null;
+      try {
+        const imageBuffer = Buffer.from(result.imageBase64, "base64");
+        const urls = await persistEnhancedEdit(nextPhoto.id, imageBuffer, jobId);
+        editedUrl = urls.editedUrl;
+        thumbnailUrl = urls.thumbnailUrl;
+      } catch (uploadErr) {
+        log.warn("[start-enhance] dropbox upload failed, falling back to data URL", {
+          err: uploadErr instanceof Error ? uploadErr.message : String(uploadErr),
+        });
+        editedUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+      }
 
       await prisma.photo.update({
         where: { id: nextPhoto.id },
-        data: { status: "review", editedUrl: editedDataUrl },
+        data: { status: "review", editedUrl, thumbnailUrl },
       });
 
       const processed = await prisma.photo.count({

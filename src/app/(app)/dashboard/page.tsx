@@ -194,35 +194,48 @@ export default async function DashboardPage({
       }))} />
       <OnboardingTour hasJobs={jobs.length > 0} />
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-10">
-          <p className="text-xs uppercase tracking-wider text-graphite-500 dark:text-graphite-400 mb-1">
-            Dashboard
-          </p>
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-graphite-900 dark:text-white">
-            {session?.user?.name
-              ? `Have a good one, ${session.user.name.split(" ")[0]}.`
-              : "Welcome back."}
-          </h1>
-          <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-2">
-            {stats.reviewJobs > 0
-              ? `${stats.reviewJobs} job${stats.reviewJobs === 1 ? "" : "s"} waiting on your review.`
-              : stats.processingJobs > 0
-              ? `${stats.processingJobs} job${stats.processingJobs === 1 ? "" : "s"} processing.`
-              : "No jobs in flight."}
-          </p>
+        <div className="mb-10 flex items-start justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan mb-1.5">
+              Dashboard
+            </p>
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-graphite-900 dark:text-white">
+              {session?.user?.name
+                ? `Welcome back, ${session.user.name.split(" ")[0]}`
+                : "Welcome back"}
+            </h1>
+            <p className="text-sm text-graphite-500 dark:text-graphite-400 mt-2">
+              {stats.reviewJobs > 0
+                ? `${stats.reviewJobs} job${stats.reviewJobs === 1 ? "" : "s"} waiting on your review.`
+                : stats.processingJobs > 0
+                ? `${stats.processingJobs} job${stats.processingJobs === 1 ? "" : "s"} processing.`
+                : "No jobs in flight."}
+            </p>
+          </div>
+          <div className="hidden md:flex items-center gap-2 text-xs text-graphite-500 dark:text-graphite-400 border border-graphite-200 dark:border-graphite-800 rounded-full px-3 py-1.5 bg-white dark:bg-graphite-900">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <span className="tabular-nums">
+              {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <StatCard
             label="Total jobs"
             value={stats.totalJobs}
-            subtext="This week"
+            subtext="this week"
+            accent="cyan"
             icon={<FolderIcon className="w-4 h-4" />}
           />
           <StatCard
             label="Processing"
             value={stats.processingJobs}
-            subtext={stats.processingJobs > 0 ? "In progress" : "Idle"}
+            subtext={stats.processingJobs > 0 ? "in progress" : "idle"}
+            accent="violet"
             icon={<ArrowPathIcon className="w-4 h-4" />}
             progress={stats.totalJobs ? (stats.processingJobs / stats.totalJobs) * 100 : 0}
           />
@@ -230,13 +243,15 @@ export default async function DashboardPage({
             label="Needs review"
             value={stats.reviewJobs}
             subtext={`${stats.reviewJobs} propert${stats.reviewJobs === 1 ? "y" : "ies"}`}
+            accent="amber"
             icon={<EyeIcon className="w-4 h-4" />}
             progress={stats.totalJobs ? (stats.reviewJobs / stats.totalJobs) * 100 : 0}
           />
           <StatCard
             label="Approved today"
             value={stats.approvedToday}
-            subtext="Today"
+            subtext="today"
+            accent="emerald"
             icon={<CheckCircleIcon className="w-4 h-4" />}
           />
         </div>

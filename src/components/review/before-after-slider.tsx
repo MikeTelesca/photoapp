@@ -87,24 +87,24 @@ export function BeforeAfterSlider({ beforeUrl, afterUrl, isLoading, loadingText 
           draggable={false}
         />
       </div>
-      {/* Divider line + handle */}
+      {/* Divider line + cyan handle (BatchBase brand) */}
       <div
-        className="absolute top-0 bottom-0 w-0.5 bg-white pointer-events-none"
+        className="absolute top-0 bottom-0 w-0.5 bg-white/90 pointer-events-none"
         style={{ left: `${position}%`, transform: "translateX(-50%)" }}
       >
         <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-cyan shadow-lg shadow-cyan/40 border-2 border-white flex items-center justify-center"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5 text-graphite-700">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7l-4 5 4 5M16 7l4 5-4 5" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5 text-white">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7l-4 5 4 5M16 7l4 5-4 5" />
           </svg>
         </div>
       </div>
       {/* Labels */}
-      <div className="absolute top-2.5 left-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm">
+      <div className="absolute top-3 left-3 bg-black/50 text-white/95 text-[10px] font-bold uppercase tracking-[0.18em] px-2.5 py-1 rounded backdrop-blur-sm">
         Before
       </div>
-      <div className="absolute top-2.5 right-2.5 bg-black/50 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded backdrop-blur-sm">
+      <div className="absolute top-3 right-3 bg-black/50 text-white/95 text-[10px] font-bold uppercase tracking-[0.18em] px-2.5 py-1 rounded backdrop-blur-sm">
         After
       </div>
     </div>

@@ -4006,7 +4006,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
           ) : (
             <>
               {/* Before / After Compare */}
-              <div className="flex-1 bg-graphite-950 min-h-0 p-0">
+              <div className="flex-1 bg-graphite-950 min-h-0 p-0 flex items-center justify-center overflow-hidden">
             {compareSliderOn && currentPhoto?.originalUrl && currentPhoto?.editedUrl ? (
               <div className="w-full h-full rounded-lg overflow-hidden">
                 <CompareSlider

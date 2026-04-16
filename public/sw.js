@@ -3,7 +3,7 @@
 // want to force all clients to drop their cached static assets. The build
 // step in scripts/bump-sw-version.js will auto-append the git SHA so every
 // deploy gets a unique cache name without manual edits.
-const CACHE_VERSION = 'batchbase-__BUILD_ID__';
+const CACHE_VERSION = 'batchbase-1776352400000-156e875';
 const CACHE_NAME = CACHE_VERSION;
 const CACHE_URLS = ['/manifest.json'];
 

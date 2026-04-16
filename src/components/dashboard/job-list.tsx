@@ -15,7 +15,8 @@ type ViewMode = "list" | "board";
 export function JobList({ jobs }: JobListProps) {
   const activeJobs = jobs.filter((j) => j.status !== "deleted");
 
-  const [view, setView] = useState<ViewMode>("list");
+  // Default to board view per design inspo. Users who prefer list can toggle and it persists.
+  const [view, setView] = useState<ViewMode>("board");
 
   useEffect(() => {
     if (typeof window === "undefined") return;

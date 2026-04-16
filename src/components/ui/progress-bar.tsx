@@ -38,9 +38,16 @@ export function ProgressBar({
       aria-valuemax={100}
     >
       <div
-        className={`${h} ${colorClass[color]} rounded-full transition-all duration-300`}
+        className={`${h} ${colorClass[color]} rounded-full transition-all duration-300 relative overflow-hidden`}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-      />
+      >
+        {/* subtle sheen on active bars — matches inspo #5 motion */}
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-[shimmer_2s_linear_infinite]"
+          style={{ backgroundSize: "200% 100%" }}
+        />
+      </div>
     </div>
   );
 }

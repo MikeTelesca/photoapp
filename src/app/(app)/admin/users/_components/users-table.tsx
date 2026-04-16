@@ -157,15 +157,20 @@ export function UsersTable({
                   className="border-b border-graphite-50 dark:border-graphite-800 bg-white dark:bg-graphite-900 hover:bg-graphite-50 dark:hover:bg-graphite-800/40 transition-colors"
                 >
                   <td className="py-3 px-5 font-medium text-graphite-900 dark:text-white">
-                    {user.name || "—"}
-                    {user.twoFactorEnabled && (
-                      <span
-                        className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
-                        title="2FA enabled"
-                      >
-                        2FA
+                    <div className="flex items-center gap-2.5">
+                      <span className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-cyan/80 to-violet-500/80 text-white text-[11px] font-semibold flex items-center justify-center ring-2 ring-white dark:ring-graphite-900">
+                        {((user.name || user.email).trim()[0] || "?").toUpperCase()}
                       </span>
-                    )}
+                      <span className="min-w-0 truncate">{user.name || "—"}</span>
+                      {user.twoFactorEnabled && (
+                        <span
+                          className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 whitespace-nowrap"
+                          title="2FA enabled"
+                        >
+                          2FA
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-3 px-5 text-graphite-600 dark:text-graphite-300">
                     {user.email}

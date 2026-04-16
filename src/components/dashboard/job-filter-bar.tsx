@@ -523,24 +523,31 @@ export function JobFilterBar({ jobs }: Props) {
           </button>
         </div>
       )}
-      <div className="flex gap-2 px-5 py-3 border-b border-graphite-50 dark:border-graphite-800 bg-graphite-50/30 dark:bg-graphite-900/30 items-center overflow-x-auto flex-nowrap">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search address, client, photographer..."
-          className="flex-1 px-3 py-1.5 text-sm rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-white placeholder:text-graphite-400 dark:placeholder:text-graphite-500 focus:outline-none focus:border-cyan"
-        />
+      {/* Filter row — inspo #3 search+filter+action layout */}
+      <div className="flex gap-3 px-4 py-3 border-b border-graphite-100 dark:border-graphite-800 items-center overflow-x-auto flex-nowrap">
+        {/* Search with icon */}
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <span className="absolute inset-y-0 left-3 flex items-center text-graphite-400 pointer-events-none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          </span>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search address, client, photographer..."
+            className="w-full h-9 pl-9 pr-3 text-sm rounded-lg bg-graphite-100 dark:bg-graphite-900 border border-transparent hover:border-graphite-200 dark:hover:border-graphite-700 focus:border-cyan focus:outline-none focus:ring-2 focus:ring-cyan/20 text-graphite-900 dark:text-white placeholder:text-graphite-400"
+          />
+        </div>
         <select value={status} onChange={(e) => setStatus(e.target.value)}
-          className="px-2 py-1.5 text-sm rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-white">
-          {statuses.map(s => <option key={s} value={s}>{s === "all" ? "All statuses" : s}</option>)}
+          className="h-9 px-3 text-sm rounded-lg bg-graphite-100 dark:bg-graphite-900 border border-transparent hover:border-graphite-200 dark:hover:border-graphite-700 focus:border-cyan focus:outline-none text-graphite-900 dark:text-white cursor-pointer">
+          {statuses.map(s => <option key={s} value={s}>{s === "all" ? "All statuses" : s[0].toUpperCase() + s.slice(1)}</option>)}
         </select>
         <select value={preset} onChange={(e) => setPreset(e.target.value)}
-          className="px-2 py-1.5 text-sm rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-white">
+          className="h-9 px-3 text-sm rounded-lg bg-graphite-100 dark:bg-graphite-900 border border-transparent hover:border-graphite-200 dark:hover:border-graphite-700 focus:border-cyan focus:outline-none text-graphite-900 dark:text-white cursor-pointer">
           {presets.map(p => <option key={p} value={p}>{p === "all" ? "All presets" : p}</option>)}
         </select>
         <button onClick={() => setGroupByDate(!groupByDate)}
-          className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700">
+          className="h-9 px-3 text-xs font-medium rounded-lg bg-graphite-100 dark:bg-graphite-900 border border-transparent hover:border-graphite-200 dark:hover:border-graphite-700 text-graphite-700 dark:text-graphite-200 transition-colors cursor-pointer whitespace-nowrap">
           {groupByDate ? "Grouped" : "Flat"}
         </button>
         <a
@@ -551,15 +558,16 @@ export function JobFilterBar({ jobs }: Props) {
             const qs = params.toString();
             return qs ? `/api/jobs/export-csv?${qs}` : `/api/jobs/export-csv`;
           })()}
-          className="text-xs px-2 py-1.5 rounded border border-graphite-200 dark:border-graphite-700 bg-white dark:bg-graphite-800 text-graphite-900 dark:text-graphite-300 hover:bg-graphite-100 dark:hover:bg-graphite-700"
+          className="h-9 px-3 text-xs font-medium rounded-lg bg-graphite-100 dark:bg-graphite-900 border border-transparent hover:border-graphite-200 dark:hover:border-graphite-700 text-graphite-700 dark:text-graphite-200 transition-colors inline-flex items-center whitespace-nowrap"
           title="Export filtered jobs as CSV"
         >
           Export CSV
         </a>
-        <div className="flex gap-0.5 ml-auto">
+        {/* Density toggle — S/M/L pills */}
+        <div className="flex gap-0.5 ml-auto bg-graphite-100 dark:bg-graphite-900 rounded-lg p-0.5">
           {(["compact", "normal", "comfortable"] as Density[]).map(d => (
             <button key={d} onClick={() => setDensity(d)}
-              className={`text-[10px] px-2 py-1 rounded ${density === d ? "bg-cyan text-white" : "border border-graphite-200 dark:border-graphite-700 text-graphite-500 dark:text-graphite-400"}`}
+              className={`text-[10px] font-semibold w-7 h-7 rounded-md transition-colors ${density === d ? "bg-cyan text-white shadow-sm" : "text-graphite-400 hover:text-graphite-700 dark:hover:text-white"}`}
               title={`${d} layout`}>
               {d === "compact" ? "S" : d === "normal" ? "M" : "L"}
             </button>

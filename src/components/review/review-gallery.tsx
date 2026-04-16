@@ -51,6 +51,7 @@ import { PhotoPins } from "./photo-pins";
 import { CustomFieldsEditor } from "./custom-fields-editor";
 import { PhotoMinimap } from "./photo-minimap";
 import { JobColorPalette } from "./job-color-palette";
+import { FloatingToolbar, ToolbarButton, ToolbarText, ToolbarDivider } from "@/components/ui/floating-toolbar";
 
 interface Photo {
   id: string;
@@ -2608,7 +2609,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         />
       )}
       {/* Top Bar */}
-      <div className="app-header review-toolbar-extras bg-white/92 dark:bg-graphite-900/92 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-800 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
+      <div className="app-header review-toolbar-extras bg-white/95 dark:bg-graphite-950/95 backdrop-blur-xl border-b border-graphite-200 dark:border-graphite-800 px-4 md:px-7 py-3 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3.5">
           <Link
             href="/dashboard"
@@ -3640,7 +3641,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Thumbnail Strip - hidden on mobile */}
-        <div className="hidden md:flex w-[100px] bg-white dark:bg-graphite-900 border-r border-graphite-200 dark:border-graphite-700 flex-col flex-shrink-0">
+        <div className="hidden md:flex w-[100px] bg-graphite-100 dark:bg-graphite-950 border-r border-graphite-200 dark:border-graphite-800 flex-col flex-shrink-0">
           {/* Filter pills */}
           <div className="flex flex-col gap-0.5 p-1 border-b border-graphite-200 dark:border-graphite-700 flex-shrink-0">
             {/* Only favorites toggle */}
@@ -3947,7 +3948,7 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
         </div>
 
         {/* Viewer */}
-        <div className="flex-1 flex flex-col" {...swipe}>
+        <div className="flex-1 flex flex-col relative" {...swipe}>
           {viewMode === "grid" ? (
             <GridView
               photos={sortedPhotos}
@@ -4156,6 +4157,70 @@ export function ReviewGallery({ job: initialJob }: ReviewGalleryProps) {
             )}
               </div>
             </>
+          )}
+
+          {/* Floating toolbar — inspo #1 bottom pill */}
+          {currentPhoto && viewMode === "single" && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30">
+              <FloatingToolbar>
+                <ToolbarButton
+                  ariaLabel="Zoom out"
+                  onClick={() => setZoom(z => Math.max(0.25, z / 1.5))}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>
+                </ToolbarButton>
+                <ToolbarButton
+                  ariaLabel="Reset zoom"
+                  onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+                  title="Reset"
+                >
+                  {Math.round(zoom * 100)}%
+                </ToolbarButton>
+                <ToolbarButton
+                  ariaLabel="Zoom in"
+                  onClick={() => setZoom(z => Math.min(8, z * 1.5))}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>
+                </ToolbarButton>
+                <ToolbarDivider />
+                <ToolbarButton
+                  ariaLabel="Compare before/after"
+                  active={compareSliderOn}
+                  onClick={() => setCompareSliderOn(v => !v)}
+                  title="Before/After slider"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 3v18M3 12h18"/></svg>
+                </ToolbarButton>
+                <ToolbarButton
+                  ariaLabel="Toggle split/slider view"
+                  onClick={() => setCompareMode(m => m === "split" ? "slider" : "split")}
+                  title={compareMode === "split" ? "Slider" : "Split"}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg>
+                </ToolbarButton>
+                <ToolbarDivider />
+                <ToolbarText>
+                  {currentIndex + 1} / {photos.length}
+                </ToolbarText>
+                <ToolbarDivider />
+                <ToolbarButton
+                  ariaLabel="EXIF data"
+                  onClick={() => setExifPanelOpen(v => !v)}
+                  active={exifPanelOpen}
+                  title="EXIF"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                </ToolbarButton>
+                <ToolbarButton
+                  ariaLabel="Focus mode"
+                  onClick={() => setFocusMode(v => !v)}
+                  active={focusMode}
+                  title="Focus"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                </ToolbarButton>
+              </FloatingToolbar>
+            </div>
           )}
 
           {/* EXIF metadata popover */}

@@ -109,10 +109,13 @@ function PhotoTile({
 }) {
   const [imgError, setImgError] = useState(false);
   const badge = statusConfig[photo.status] ?? statusConfig.pending;
-  const hasAnyImage = photo.hasEdited || photo.hasOriginal || photo.hasThumbnail;
-  const showImage = hasAnyImage && !imgError;
-  // Prefer the direct Dropbox/CDN URL so the browser never pipes through our
-  // serverless function. Fall back to /thumb only for legacy data URLs.
+  // Always try /thumb — the route falls back to Dropbox path lookup when no
+  // URL is stored (e.g. freshly-uploaded brackets). Only drop to the gradient
+  // placeholder if the thumb endpoint 404s or fails.
+  const showImage = !imgError;
+  // Prefer the direct Dropbox CDN URL so the browser never pipes through our
+  // serverless function; otherwise hit /thumb which handles Dropbox fallback
+  // via the file path embedded in exifData.
   const directThumb = photo.thumbnailUrl || photo.editedUrl || photo.originalUrl;
   const thumbSrc = directThumb ?? `/api/jobs/${jobId}/photos/${photo.id}/thumb`;
 

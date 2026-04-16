@@ -207,6 +207,27 @@ export async function uploadToDropbox(
 }
 
 /**
+ * Get a 4-hour temporary direct-download link for a file at a Dropbox path.
+ * Used by /thumb to stream un-enhanced originals for display without needing
+ * a permanent share link per file.
+ */
+export async function getTemporaryLink(path: string): Promise<string> {
+  const res = await getDbx().filesGetTemporaryLink({ path });
+  return res.result.link;
+}
+
+/**
+ * Fetch a file from Dropbox via a temporary link. Used by /thumb to resize
+ * originals for display.
+ */
+export async function downloadViaTemporaryLink(path: string): Promise<Buffer> {
+  const link = await getTemporaryLink(path);
+  const res = await fetch(link);
+  if (!res.ok) throw new Error(`Fetch temp link failed: ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+/**
  * Test the Dropbox connection by getting account info.
  */
 export async function testConnection(): Promise<{

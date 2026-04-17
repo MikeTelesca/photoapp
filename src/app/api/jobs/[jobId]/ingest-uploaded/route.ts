@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
 import { detectJobTwilight } from "@/lib/twilight-detect";
 import { createShareLinkForPath } from "@/lib/dropbox";
+import { groupFilesByExif } from "@/lib/bracket-from-dropbox";
 import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -80,27 +81,26 @@ export async function POST(
     }
   }
 
-  // Bracket grouping — 5 if divisible by 5, else 3 if divisible by 3, else 1
-  const bracketCount =
-    files.length > 1 && files.length % 5 === 0
-      ? 5
-      : files.length > 1 && files.length % 3 === 0
-        ? 3
-        : 1;
-  const groupCount = Math.ceil(files.length / bracketCount);
+  // Group by EXIF — handles mixed brackets + single-frame drone shots.
+  const bracketGroups = await groupFilesByExif(files);
+  const groupCount = bracketGroups.length;
+
+  // Map back to the full file metadata for each grouped photo. exifr only
+  // returned filename — we still need path + size for the Photo row.
+  const byName = new Map(files.map((f) => [f.name, f]));
 
   // Replace any existing photos for this job (upload is idempotent re-ingest)
   await prisma.photo.deleteMany({ where: { jobId } });
 
-  const photoRecords = [];
-  for (let g = 0; g < groupCount; g += 1) {
-    const startIdx = g * bracketCount;
-    const groupFiles = files.slice(startIdx, startIdx + bracketCount);
-    photoRecords.push({
+  const photoRecords = bracketGroups.map((g, idx) => {
+    const groupFiles = g.photos
+      .map((p) => byName.get(p.fileName))
+      .filter((f): f is UploadedFile => !!f);
+    return {
       jobId,
-      orderIndex: g,
+      orderIndex: idx,
       status: "pending",
-      bracketGroup: g,
+      bracketGroup: idx,
       bracketIndex: groupFiles.length,
       exifData: JSON.stringify({
         bracketCount: groupFiles.length,
@@ -112,8 +112,8 @@ export async function POST(
       }),
       isExterior: false,
       isTwilight: false,
-    });
-  }
+    };
+  });
 
   await prisma.photo.createMany({ data: photoRecords });
 
@@ -135,12 +135,12 @@ export async function POST(
     jobId,
     groupCount,
     fileCount: files.length,
-    bracketCount,
+    sizes: bracketGroups.map((g) => g.photos.length),
   });
 
   return NextResponse.json({
     added: groupCount,
     files: files.length,
-    bracketCount,
+    groupSizes: bracketGroups.map((g) => g.photos.length),
   });
 }

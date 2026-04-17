@@ -2,6 +2,7 @@ import { Dropbox } from "dropbox";
 import { prisma } from "./db";
 import { detectJobTwilight } from "./twilight-detect";
 import { slugifyForFilename } from "./dropbox";
+import { groupFilesByExif } from "./bracket-from-dropbox";
 import { log } from "./logger";
 
 export interface IngestResult {
@@ -113,33 +114,39 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
       return { jobId, totalFiles: 0, bracketGroups: 0, bracketCount: 0, photosCreated: 0 };
     }
 
-    const bracketCount =
-      imageFiles.length % 5 === 0 ? 5 : imageFiles.length % 3 === 0 ? 3 : 1;
-    const groupCount = Math.ceil(imageFiles.length / bracketCount);
+    // Group by EXIF so mixed brackets + single-frame drone shots don't break
+    // the heuristic. Each single frame becomes its own 1-photo group.
+    const filesForGrouping = imageFiles.map((f) => ({
+      name: f.name,
+      path: f.path_lower || f.path_display || "",
+      size: f.size || 0,
+    }));
+    const bracketGroups = await groupFilesByExif(filesForGrouping);
+    const groupCount = bracketGroups.length;
 
-    const photoRecords = [];
-    for (let g = 0; g < groupCount; g += 1) {
-      const startIdx = g * bracketCount;
-      const groupFiles = imageFiles.slice(startIdx, startIdx + bracketCount);
-
-      photoRecords.push({
+    const byName = new Map(filesForGrouping.map((f) => [f.name, f]));
+    const photoRecords = bracketGroups.map((g, idx) => {
+      const groupFiles = g.photos
+        .map((p) => byName.get(p.fileName))
+        .filter((f): f is (typeof filesForGrouping)[number] => !!f);
+      return {
         jobId,
-        orderIndex: g,
+        orderIndex: idx,
         status: "pending",
-        bracketGroup: g,
+        bracketGroup: idx,
         bracketIndex: groupFiles.length,
         exifData: JSON.stringify({
           bracketCount: groupFiles.length,
           photos: groupFiles.map((f) => ({
             fileName: f.name,
-            path: f.path_lower || f.path_display || "",
-            size: f.size || 0,
+            path: f.path,
+            size: f.size,
           })),
         }),
         isExterior: false,
         isTwilight: false,
-      });
-    }
+      };
+    });
 
     await prisma.photo.createMany({ data: photoRecords });
 
@@ -159,7 +166,7 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
       jobId,
       totalFiles: imageFiles.length,
       bracketGroups: groupCount,
-      bracketCount,
+      bracketCount: bracketGroups[0]?.photos.length ?? 1,
       photosCreated: groupCount,
     };
   } catch (error: unknown) {

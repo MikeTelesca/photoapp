@@ -91,32 +91,30 @@ export function JobView({ initialJob, initialPhotos }: Props) {
     }
   }, [initialJob.dropboxUrl, initialJob.id, reloadPhotos]);
 
+  // Batch enhance: kick off one Autoenhance order for the whole job, then
+  // poll every 10s until it's done. Consistent colour/tone across the
+  // listing, and Autoenhance's visual AI handles bracket grouping so
+  // mixed brackets + drones can't get slammed together.
   const startEnhance = useCallback(async () => {
     setEnhancing(true);
     setError("");
     try {
-      for (let i = 0; i < 200; i += 1) {
-        const res = await fetch(`/api/jobs/${initialJob.id}/start-enhance`, { method: "POST" });
-        if (!res.ok) {
-          const body = await res.json().catch(() => null);
-          const serverMsg =
-            body && typeof body === "object" && "error" in body
-              ? String((body as { error: unknown }).error)
-              : null;
-          throw new Error(serverMsg ?? `Enhance failed (HTTP ${res.status})`);
-        }
-        await reloadPhotos();
-        const latest = await fetch(`/api/jobs/${initialJob.id}/photos`, { cache: "no-store" });
-        if (!latest.ok) break;
-        const data: unknown = await latest.json();
-        if (!Array.isArray(data)) break;
-        const stillPending = (data as PhotoRow[]).some((p) => p.status === "pending");
-        if (!stillPending) break;
+      const res = await fetch(`/api/jobs/${initialJob.id}/enhance-batch`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const serverMsg =
+          body && typeof body === "object" && "error" in body
+            ? String((body as { error: unknown }).error)
+            : null;
+        throw new Error(serverMsg ?? `Enhance failed (HTTP ${res.status})`);
       }
+      await reloadPhotos();
+      // The polling effect (below) takes over from here — it watches for
+      // any "processing" photos and hits /enhance-poll until all land.
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Enhance failed");
-    } finally {
       setEnhancing(false);
+      await reloadPhotos();
     }
   }, [initialJob.id, reloadPhotos]);
 
@@ -379,14 +377,45 @@ export function JobView({ initialJob, initialPhotos }: Props) {
     [initialJob.id, reloadPhotos],
   );
 
-  // Auto-refresh while anything is processing
+  // Auto-refresh while anything is processing + batch-poll Autoenhance.
+  // Two things happen on each interval:
+  //   1. Hit /enhance-poll which drains ready Autoenhance outputs into
+  //      Dropbox + updates Photo rows (server-side work).
+  //   2. Reload photos list so the grid reflects the updates.
   useEffect(() => {
     if (counts.processing === 0 && !enhancing) return;
+    let cancelled = false;
+
+    async function tick(): Promise<void> {
+      if (cancelled) return;
+      try {
+        const res = await fetch(`/api/jobs/${initialJob.id}/enhance-poll`, {
+          method: "POST",
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const body = (await res.json()) as { status?: string };
+          if (body.status === "done" && !cancelled) {
+            setEnhancing(false);
+          }
+        }
+      } catch {
+        /* transient — next tick will retry */
+      }
+      if (!cancelled) await reloadPhotos();
+    }
+
+    // Kick immediately then every 10s — enhance-poll does real work so
+    // don't hammer it every few seconds.
+    void tick();
     const id = setInterval(() => {
-      void reloadPhotos();
-    }, 3500);
-    return () => clearInterval(id);
-  }, [counts.processing, enhancing, reloadPhotos]);
+      void tick();
+    }, 10_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [counts.processing, enhancing, initialJob.id, reloadPhotos]);
 
   // Viewer keyboard nav
   useEffect(() => {

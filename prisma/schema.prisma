@@ -71,11 +71,13 @@ model Job {
   dropboxSyncedAt  DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  photographerId   String
-  photographer     User     @relation(fields: [photographerId], references: [id], onDelete: Cascade)
-  agentId          String?
-  agent            Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
-  photos           Photo[]
+  photographerId     String
+  photographer       User      @relation(fields: [photographerId], references: [id], onDelete: Cascade)
+  agentId            String?
+  agent              Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  photos             Photo[]
+  autoenhanceOrderId String?
+  enhanceStartedAt   DateTime?
 
   @@index([photographerId, createdAt(sort: Desc)])
   @@index([status])
@@ -109,9 +111,11 @@ model Photo {
   errorAttempts      Int      @default(0)
   retryCount         Int      @default(0)
   maxRetries         Int      @default(3)
-  note               String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  note                  String?
+  autoenhanceBracketIds String?  // JSON array of Autoenhance bracket UUIDs uploaded for this photo
+  autoenhanceImageId    String?  // Autoenhance output image_id once processed
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@index([jobId, status])
   @@index([jobId, orderIndex])

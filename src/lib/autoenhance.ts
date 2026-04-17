@@ -12,7 +12,7 @@ import { log } from "@/lib/logger";
 //   5. GET /v3/images/{imageId}/enhanced?preview=false → { image_url | imageSource }
 //   6. Fetch that URL → raw JPEG bytes
 
-const BASE = "https://api.autoenhance.ai/v3";
+export const BASE = "https://api.autoenhance.ai/v3";
 const POLL_INTERVAL_MS = 5_000;
 const MAX_POLL_ATTEMPTS = 50; // ~4 min, under Vercel's 300s maxDuration
 
@@ -20,6 +20,164 @@ export type AutoenhanceOptions = {
   aiVersion?: string; // default "5.x"
   devMode?: boolean; // skips credit consumption for testing
 };
+
+/**
+ * Build auth headers for every Autoenhance API call. Honours
+ * AUTOENHANCE_DEV_MODE=true by adding the x-dev-mode header which skips
+ * credit consumption (paired with preview=true on downloads).
+ */
+export function autoenhanceHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const apiKey = process.env.AUTOENHANCE_API_KEY;
+  if (!apiKey) throw new Error("AUTOENHANCE_API_KEY not set");
+  const devMode = process.env.AUTOENHANCE_DEV_MODE === "true";
+  const h: Record<string, string> = { "x-api-key": apiKey, ...extra };
+  if (devMode) h["x-dev-mode"] = "true";
+  return h;
+}
+
+export function autoenhanceIsDevMode(): boolean {
+  return process.env.AUTOENHANCE_DEV_MODE === "true";
+}
+
+/**
+ * Create a new Autoenhance order and return the order_id. Use this once
+ * per BatchBase job when starting a batch enhance — all brackets go
+ * into this single order so Autoenhance can visually group + colour-match
+ * them together for a consistent look.
+ */
+export async function createAutoenhanceOrder(): Promise<string> {
+  const res = await fetch(`${BASE}/orders/`, {
+    method: "POST",
+    headers: { ...autoenhanceHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    throw new Error(`create order ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+  const json = (await res.json()) as { order_id?: string };
+  if (!json.order_id) throw new Error("Autoenhance /orders returned no order_id");
+  return json.order_id;
+}
+
+/**
+ * Register a bracket under an order and upload its bytes. Returns the
+ * bracket_id. Caller is expected to track { bracket_id → photoId }
+ * to reconcile outputs back to our Photo rows after processing.
+ */
+export async function registerAndUploadBracket(
+  orderId: string,
+  fileName: string,
+  buffer: Buffer,
+): Promise<string> {
+  const regRes = await fetch(`${BASE}/brackets/`, {
+    method: "POST",
+    headers: { ...autoenhanceHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ order_id: orderId, name: fileName }),
+  });
+  if (!regRes.ok) {
+    throw new Error(`register bracket ${regRes.status}: ${(await regRes.text()).slice(0, 300)}`);
+  }
+  const reg = (await regRes.json()) as { bracket_id?: string; upload_url?: string };
+  if (!reg.bracket_id || !reg.upload_url) throw new Error("bracket response missing id/upload_url");
+
+  const bytes = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  const uploadRes = await fetch(reg.upload_url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/octet-stream" },
+    body: bytes as unknown as BodyInit,
+  });
+  if (!uploadRes.ok) {
+    throw new Error(`upload bracket ${uploadRes.status}: ${(await uploadRes.text()).slice(0, 300)}`);
+  }
+  return reg.bracket_id;
+}
+
+/**
+ * Trigger Autoenhance's auto-grouping + processing for an order. No
+ * number_of_brackets_per_image — that would turn OFF visual grouping.
+ */
+export async function triggerAutoenhanceProcess(orderId: string): Promise<void> {
+  const res = await fetch(`${BASE}/orders/${orderId}/process`, {
+    method: "POST",
+    headers: { ...autoenhanceHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ ai_version: "5.x" }),
+  });
+  if (!res.ok) {
+    throw new Error(`process ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+}
+
+export type AutoenhanceOrderStatus = {
+  is_merging: boolean;
+  is_processing: boolean;
+  images: Array<{
+    image_id: string;
+    image_name?: string;
+    enhanced?: boolean;
+    error?: string | boolean | null;
+    bracket_ids?: string[];
+  }>;
+};
+
+/**
+ * Fetch an order's current status. Caller decides when all the
+ * downstream images are ready (is_merging=false, is_processing=false,
+ * images array populated with enhanced=true).
+ */
+export async function getOrderStatus(orderId: string): Promise<AutoenhanceOrderStatus> {
+  const res = await fetch(`${BASE}/orders/${orderId}`, { headers: autoenhanceHeaders() });
+  if (!res.ok) {
+    throw new Error(`get order ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+  return (await res.json()) as AutoenhanceOrderStatus;
+}
+
+/**
+ * Download an Autoenhance output image. Returns raw JPEG bytes.
+ * Handles the three response shapes: direct image, JSON, HTML redirect.
+ */
+export async function downloadAutoenhanceImage(imageId: string): Promise<{ buffer: Buffer; mimeType: string }> {
+  const preview = autoenhanceIsDevMode() ? "preview=true" : "preview=false";
+  const res = await fetch(`${BASE}/images/${imageId}/enhanced?${preview}`, {
+    headers: autoenhanceHeaders(),
+    redirect: "follow",
+  });
+  if (!res.ok) {
+    throw new Error(`download ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+  const ct = res.headers.get("content-type") ?? "";
+  if (ct.startsWith("image/")) {
+    return { buffer: Buffer.from(await res.arrayBuffer()), mimeType: ct };
+  }
+  if (ct.includes("application/json")) {
+    const j = (await res.json()) as Record<string, unknown>;
+    const url =
+      (typeof j.image_url === "string" && j.image_url) ||
+      (typeof j.imageSource === "string" && j.imageSource) ||
+      (typeof j.url === "string" && j.url) ||
+      null;
+    if (!url) throw new Error("JSON download response missing url");
+    const dl = await fetch(url);
+    if (!dl.ok) throw new Error(`follow json ${dl.status}`);
+    return {
+      buffer: Buffer.from(await dl.arrayBuffer()),
+      mimeType: dl.headers.get("content-type") ?? "image/jpeg",
+    };
+  }
+  // HTML redirect page
+  const html = await res.text();
+  const hrefMatch = html.match(/href="([^"]+)"/i);
+  if (!hrefMatch) throw new Error(`unexpected response content-type ${ct}`);
+  const target = hrefMatch[1].startsWith("http")
+    ? hrefMatch[1]
+    : `https://api.autoenhance.ai${hrefMatch[1]}`;
+  const follow = await fetch(target, { headers: autoenhanceHeaders() });
+  if (!follow.ok) throw new Error(`follow html ${follow.status}`);
+  return {
+    buffer: Buffer.from(await follow.arrayBuffer()),
+    mimeType: follow.headers.get("content-type") ?? "image/jpeg",
+  };
+}
 
 export type AutoenhanceResult =
   | { success: true; imageBuffer: Buffer; mimeType: string }

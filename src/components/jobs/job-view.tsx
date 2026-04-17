@@ -40,6 +40,13 @@ export function JobView({ initialJob, initialPhotos }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [importing, setImporting] = useState(false);
+  const [enhanceStatus, setEnhanceStatus] = useState<{
+    phase: "uploading" | "merging" | "processing" | "downloading" | "done" | "idle";
+    total: number;
+    ready: number;
+    failed: number;
+    lastTick: number;
+  } | null>(null);
   const [error, setError] = useState("");
 
   const counts = useMemo(() => {
@@ -394,9 +401,26 @@ export function JobView({ initialJob, initialPhotos }: Props) {
           cache: "no-store",
         });
         if (res.ok) {
-          const body = (await res.json()) as { status?: string };
+          const body = (await res.json()) as {
+            status?: "idle" | "uploading" | "merging" | "processing" | "downloading" | "done";
+            progress?: { total?: number; ready?: number; failed?: number };
+          };
+          if (!cancelled && body.status) {
+            setEnhanceStatus({
+              phase: body.status,
+              total: body.progress?.total ?? 0,
+              ready: body.progress?.ready ?? 0,
+              failed: body.progress?.failed ?? 0,
+              lastTick: Date.now(),
+            });
+          }
           if (body.status === "done" && !cancelled) {
             setEnhancing(false);
+            // Keep status visible for a moment so the user sees the final state
+            // before it fades out.
+            setTimeout(() => {
+              if (!cancelled) setEnhanceStatus(null);
+            }, 3500);
           }
         }
       } catch {
@@ -491,6 +515,11 @@ export function JobView({ initialJob, initialPhotos }: Props) {
             onUpload={uploadFiles}
           />
         </section>
+
+        {/* Live enhance status banner — only visible while enhancing */}
+        {(enhancing || enhanceStatus) && enhanceStatus && enhanceStatus.phase !== "idle" && (
+          <EnhanceStatusBanner status={enhanceStatus} />
+        )}
 
         {/* Progress + stats */}
         <section className="rounded-3xl bg-graphite-900 border border-graphite-800 p-6 sm:p-7">
@@ -721,5 +750,174 @@ function ActionsCluster({
         {downloading ? "Zipping…" : `Download ZIP (${approved})`}
       </button>
     </div>
+  );
+}
+
+// Rotating pools of playful status lines per phase. Picked real estate &
+// photo editing motifs so it feels on-brand, not generic loading spinner.
+const UPLOADING_LINES = [
+  "Teaching the AI your address…",
+  "Wrangling your brackets into a tidy pile…",
+  "Convincing Dropbox to hand over the RAWs…",
+  "Stacking exposures like flapjacks…",
+  "Loading pixels into the cannon…",
+  "Paying the toll at the Autoenhance gate…",
+];
+
+const MERGING_LINES = [
+  "Autoenhance is pairing up your bracket twins…",
+  "Figuring out which shots belong to the same room…",
+  "Asking the photos to please stand in groups…",
+  "Sorting exposures by family resemblance…",
+  "Combobulating the bracket sets…",
+];
+
+const PROCESSING_LINES = [
+  "Straightening the walls…",
+  "Banishing the photographer from the mirror…",
+  "Whispering sweet nothings to the highlights…",
+  "Explaining flambient to the photons…",
+  "Convincing the TV to show Netflix…",
+  "Gently asking the sun to move slightly left…",
+  "Pulling highlights back from the window abyss…",
+  "Reminding the grass it's supposed to be green…",
+  "Bribing the shadows to lift a little…",
+  "Reading the histogram bedtime stories…",
+  "Training the AI on what 'cozy' means…",
+  "Hiding your car keys from the reflection…",
+  "Evicting the ghosts from the hallway…",
+  "Adding 'golden hour' to the sky's to-do list…",
+  "Sending the HDR merge to finishing school…",
+  "Asking the kitchen tile to behave…",
+  "Calibrating the Fresnel of the Fresnel…",
+  "Coaxing the chandelier into cooperating…",
+];
+
+const DOWNLOADING_LINES = [
+  "Ferrying finished photos home to Dropbox…",
+  "Unboxing your enhanced shots…",
+  "Filing photos alphabetically by vibe…",
+  "Wrapping each photo in bubble wrap…",
+  "Hand-delivering to the agent's folder…",
+];
+
+const DONE_LINES = [
+  "All done. Go make someone's listing look expensive.",
+  "Fresh out of the oven. Review below.",
+  "Shiny, straight, and ready for MLS.",
+  "Photos enhanced. Agents rejoicing.",
+];
+
+function EnhanceStatusBanner({
+  status,
+}: {
+  status: {
+    phase: "uploading" | "merging" | "processing" | "downloading" | "done" | "idle";
+    total: number;
+    ready: number;
+    failed: number;
+    lastTick: number;
+  };
+}) {
+  const { phase, total, ready, failed } = status;
+  const pct = total > 0 ? Math.round((ready / total) * 100) : 0;
+
+  // Rotate the fun line every ~4.5s while the phase stays the same.
+  const [lineIdx, setLineIdx] = useState(0);
+  useEffect(() => {
+    setLineIdx((i) => i + 1); // bump on phase change so the new pool starts fresh
+    const id = setInterval(() => setLineIdx((i) => i + 1), 4500);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  function pickLine(pool: string[]): string {
+    return pool[lineIdx % pool.length];
+  }
+
+  const phaseCopy: Record<
+    typeof phase,
+    { title: string; subtitle: string; tone: string }
+  > = {
+    idle: { title: "Idle", subtitle: "Nothing in flight", tone: "graphite" },
+    uploading: {
+      title: pickLine(UPLOADING_LINES),
+      subtitle:
+        "First pass always takes a minute — we're pushing your source brackets up to Autoenhance.",
+      tone: "cyan",
+    },
+    merging: {
+      title: pickLine(MERGING_LINES),
+      subtitle:
+        "Autoenhance's visual AI is clustering shots from the same scene before the enhance pass.",
+      tone: "cyan",
+    },
+    processing: {
+      title: pickLine(PROCESSING_LINES),
+      subtitle:
+        total > 0
+          ? `${ready} of ${total} done — ~30-60 seconds per scene. You can close this tab; we'll keep going.`
+          : "Working on your bracket set. You can close this tab; we'll keep going.",
+      tone: "cyan",
+    },
+    downloading: {
+      title: pickLine(DOWNLOADING_LINES),
+      subtitle: `${ready} of ${total} ready — landing in your Dropbox folder under /Edited/.`,
+      tone: "emerald",
+    },
+    done: {
+      title: pickLine(DONE_LINES),
+      subtitle:
+        failed > 0
+          ? `${ready} enhanced, ${failed} failed — check the grid for the ones that errored.`
+          : `${ready} photos enhanced. Review them below.`,
+      tone: "emerald",
+    },
+  };
+  const copy = phaseCopy[phase];
+  const accent = copy.tone === "emerald" ? "emerald" : "cyan";
+
+  const ringCls = accent === "emerald" ? "ring-emerald-500/30" : "ring-cyan/30";
+  const barCls =
+    accent === "emerald"
+      ? "bg-gradient-to-r from-emerald-500 to-emerald-300"
+      : "bg-gradient-to-r from-cyan to-emerald-400";
+  const dotCls = accent === "emerald" ? "bg-emerald-400" : "bg-cyan animate-pulse";
+  const textCls = accent === "emerald" ? "text-emerald-300" : "text-cyan";
+
+  return (
+    <section
+      className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-graphite-900 via-graphite-900 to-graphite-950 ring-1 ${ringCls} p-5 sm:p-6`}
+    >
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_0%_0%,rgba(34,211,238,0.12),transparent_55%)]" />
+      <div className="relative flex items-start gap-4">
+        <span className={`w-2 h-2 rounded-full mt-2 ${dotCls}`} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <span className={`text-[10px] uppercase tracking-[0.25em] font-semibold ${textCls}`}>
+              {phase === "done" ? "Complete" : "In progress"}
+            </span>
+            {total > 0 && (
+              <span className="text-[11px] text-graphite-500 tabular-nums">
+                {ready}/{total}
+                {failed > 0 && <span className="text-red-300"> · {failed} failed</span>}
+              </span>
+            )}
+          </div>
+          <h3 className="text-lg sm:text-xl font-semibold text-white tracking-tight mt-1">
+            {copy.title}
+          </h3>
+          <p className="text-sm text-graphite-400 mt-1 leading-relaxed">{copy.subtitle}</p>
+
+          {total > 0 && (
+            <div className="relative h-1.5 rounded-full bg-graphite-950 overflow-hidden mt-4">
+              <div
+                className={`absolute inset-y-0 left-0 ${barCls} transition-all duration-700 ease-out`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }

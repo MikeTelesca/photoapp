@@ -129,13 +129,17 @@ export async function POST(
 
     const updated = await prisma.photo.update({
       where: { id: photoId },
-      data: { status: "review", editedUrl, thumbnailUrl },
+      data: { status: "edited", editedUrl, thumbnailUrl },
     });
 
     return NextResponse.json(updated);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    log.error("[photo-enhance] error", { jobId, photoId, err: message });
+    const stack = err instanceof Error ? err.stack : undefined;
+    log.error("[photo-enhance] error", { jobId, photoId, err: message, stack });
+    await prisma.photo
+      .update({ where: { id: photoId }, data: { status: "failed", errorMessage: message } })
+      .catch(() => undefined);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

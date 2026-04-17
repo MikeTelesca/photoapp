@@ -148,7 +148,7 @@ export async function POST(
 
       await prisma.photo.update({
         where: { id: nextPhoto.id },
-        data: { status: "review", editedUrl, thumbnailUrl },
+        data: { status: "edited", editedUrl, thumbnailUrl },
       });
 
       const processed = await prisma.photo.count({

@@ -104,11 +104,10 @@ export async function POST(
       }
 
       // Real HDR merge + straightening + real-estate color via Autoenhance.ai.
-      // (Per-photo preset/seasonal overrides are preserved on the Photo row
-      // for future use — Autoenhance currently uses its own real-estate
-      // defaults; we can map our preset keys to their presets once they
-      // expose stable preset IDs in the process-order payload.)
-      const result = await enhanceViaAutoenhance(bracketBuffers);
+      // Dev mode = x-dev-mode header + preview=true (free, watermarked).
+      const result = await enhanceViaAutoenhance(bracketBuffers, {
+        devMode: process.env.AUTOENHANCE_DEV_MODE === "true",
+      });
 
       if (!result.success) {
         await prisma.photo.update({

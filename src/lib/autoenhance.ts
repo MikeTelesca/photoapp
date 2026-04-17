@@ -144,9 +144,11 @@ export async function enhanceViaAutoenhance(
       throw new Error(`Autoenhance timed out after ${(POLL_INTERVAL_MS * MAX_POLL_ATTEMPTS) / 1000}s`);
     }
 
-    // 5. Get the enhanced image URL (this endpoint returns JSON, not raw bytes)
+    // 5. Get the enhanced image URL. In dev mode we must use preview=true
+    // (free, watermarked low-res); full res requires a paid plan.
+    const previewQuery = options.devMode ? "preview=true" : "preview=false";
     const enhancedRes = await fetch(
-      `${BASE}/images/${imageId}/enhanced?preview=false`,
+      `${BASE}/images/${imageId}/enhanced?${previewQuery}`,
       { headers }
     );
     if (!enhancedRes.ok) {

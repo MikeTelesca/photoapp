@@ -91,8 +91,11 @@ export async function POST(
       bracketBuffers.push({ buffer: buf, name: f.fileName });
     }
 
-    // Real HDR merge + straightening + real-estate color via Autoenhance.ai
-    const result = await enhanceViaAutoenhance(bracketBuffers);
+    // Real HDR merge + straightening + real-estate color via Autoenhance.ai.
+    // Dev mode = x-dev-mode header + preview=true (free, watermarked).
+    const result = await enhanceViaAutoenhance(bracketBuffers, {
+      devMode: process.env.AUTOENHANCE_DEV_MODE === "true",
+    });
 
     if (!result.success) {
       await prisma.photo.update({

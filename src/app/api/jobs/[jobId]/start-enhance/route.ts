@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { enhancePhoto } from "@/lib/ai-enhance";
+import { enhanceViaAutoenhance } from "@/lib/autoenhance";
 import { requireJobAccess } from "@/lib/api-auth";
 import { checkRate } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
@@ -78,54 +78,31 @@ export async function POST(
     }
 
     try {
-      // Download all bracket images
-      const buffers: Buffer[] = [];
+      // Download each bracket from the editor's Dropbox folder
+      const bracketBuffers: Array<{ buffer: Buffer; name: string }> = [];
       for (const f of bracketFiles) {
         const buf = await downloadFileFromSharedLink(job.dropboxUrl, `/${f.fileName}`);
-        buffers.push(buf);
+        bracketBuffers.push({ buffer: buf, name: f.fileName });
       }
 
-      // Per-photo overrides win over job defaults. A null override means
-      // "use the job's setting".
-      const effectivePreset = nextPhoto.preset ?? job.preset;
-      const effectiveSeasonal = nextPhoto.seasonalStyle ?? job.seasonalStyle ?? null;
+      // Real HDR merge + straightening + real-estate color via Autoenhance.ai.
+      // (Per-photo preset/seasonal overrides are preserved on the Photo row
+      // for future use — Autoenhance currently uses its own real-estate
+      // defaults; we can map our preset keys to their presets once they
+      // expose stable preset IDs in the process-order payload.)
+      const result = await enhanceViaAutoenhance(bracketBuffers);
 
-      // If the preset isn't a built-in, see if the photographer has a user
-      // preset matching this slug and pass the prompt through.
-      let customPresetPrompt: string | null = null;
-      const BUILTIN_PRESETS = ["standard", "bright-airy", "flambient-hdr", "mls-standard", "flambient"];
-      if (!BUILTIN_PRESETS.includes(effectivePreset)) {
-        const userPreset = await prisma.preset.findUnique({
-          where: { photographerId_slug: { photographerId: access.userId, slug: effectivePreset } },
-        });
-        if (userPreset) customPresetPrompt = userPreset.prompt;
-      }
-
-      const result = await enhancePhoto(
-        buffers.length === 1 ? buffers[0] : buffers,
-        "image/jpeg",
-        effectivePreset,
-        nextPhoto.customInstructions ?? null,
-        effectiveSeasonal,
-        null,
-        customPresetPrompt,
-      );
-
-      if (!result.success || !result.imageBase64) {
+      if (!result.success) {
         await prisma.photo.update({
           where: { id: nextPhoto.id },
-          data: { status: "error", errorMessage: result.error ?? "Enhance failed" },
+          data: { status: "failed", errorMessage: result.error },
         });
-        return NextResponse.json({ error: result.error ?? "Enhance failed" }, { status: 500 });
+        return NextResponse.json({ error: result.error }, { status: 500 });
       }
 
-      // Store enhanced bytes in Dropbox, not the DB. Falls back to a base64
-      // data URL only if Dropbox upload fails — that path is slow but keeps
-      // the pipeline from hanging if creds are missing.
       let editedUrl: string;
       let thumbnailUrl: string | null = null;
       try {
-        const imageBuffer = Buffer.from(result.imageBase64, "base64");
         const destFolderPath = job.agent?.dropboxFolder
           ? `${job.agent.dropboxFolder}/${sanitizeFolderName(job.address)}`
           : `/BatchBase/_uploads/${job.id}`;
@@ -133,7 +110,7 @@ export async function POST(
         const num = String(nextPhoto.orderIndex + 1).padStart(2, "0");
         const fileBaseName = `${addressSlug}-${num}`;
         const urls = await persistEnhancedEdit({
-          imageBuffer,
+          imageBuffer: result.imageBuffer,
           destFolderPath,
           fileBaseName,
         });
@@ -143,7 +120,7 @@ export async function POST(
         log.warn("[start-enhance] dropbox upload failed, falling back to data URL", {
           err: uploadErr instanceof Error ? uploadErr.message : String(uploadErr),
         });
-        editedUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
+        editedUrl = `data:${result.mimeType};base64,${result.imageBuffer.toString("base64")}`;
       }
 
       await prisma.photo.update({

@@ -4,35 +4,16 @@ import { enhancePhoto } from "@/lib/ai-enhance";
 import { requireJobAccess } from "@/lib/api-auth";
 import { checkRate } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
-import { persistEnhancedEdit, sanitizeFolderName, slugifyForFilename } from "@/lib/dropbox";
+import {
+  persistEnhancedEdit,
+  sanitizeFolderName,
+  slugifyForFilename,
+  downloadFileFromSharedLink,
+} from "@/lib/dropbox";
 
 // Allow up to 5 minutes for AI processing
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
-
-// Download a file from Dropbox shared link using raw API
-async function downloadFromDropbox(sharedUrl: string, fileName: string): Promise<Buffer> {
-  const token = process.env.DROPBOX_ACCESS_TOKEN;
-  if (!token) throw new Error("No Dropbox token");
-
-  const response = await fetch("https://content.dropboxapi.com/2/sharing/get_shared_link_file", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Dropbox-API-Arg": JSON.stringify({
-        url: sharedUrl,
-        path: `/${fileName.toLowerCase()}`,
-      }),
-    },
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Dropbox download failed: ${errText}`);
-  }
-
-  return Buffer.from(await response.arrayBuffer());
-}
 
 // POST /api/jobs/:jobId/start-enhance - process the NEXT unprocessed photo.
 // Called repeatedly by the client; each call processes exactly one photo.
@@ -100,7 +81,7 @@ export async function POST(
       // Download all bracket images
       const buffers: Buffer[] = [];
       for (const f of bracketFiles) {
-        const buf = await downloadFromDropbox(job.dropboxUrl, f.fileName);
+        const buf = await downloadFileFromSharedLink(job.dropboxUrl, `/${f.fileName}`);
         buffers.push(buf);
       }
 

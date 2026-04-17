@@ -104,12 +104,34 @@ export async function listFilesFromSharedLink(
 
 /**
  * Download a file from a Dropbox path we own (no shared link needed).
- * Uses the SDK's filesDownload, which handles refresh-token rotation
- * automatically. Use this for any file that lives in the editor's own
- * Dropbox — e.g. the bracket JPEGs we uploaded for a job.
+ * Uses filesGetTemporaryLink → fetch rather than filesDownload so we avoid
+ * the SDK's varying `fileBinary` shapes across runtimes (it can hand back
+ * Buffer, Uint8Array, ArrayBuffer, Blob, or a ReadableStream depending on
+ * environment). fetch().arrayBuffer() is consistent everywhere.
  */
 export async function downloadInternalFile(path: string): Promise<Buffer> {
-  const response = await getDbx().filesDownload({ path });
+  const link = await getTemporaryLink(path);
+  const res = await fetch(link);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`download ${path} via temp link ${res.status}: ${body.slice(0, 200)}`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}
+
+/**
+ * Download a single file from a Dropbox shared link.
+ * Returns the file as a Buffer. Robust across SDK binary-shape variance.
+ */
+export async function downloadFileFromSharedLink(
+  sharedLink: string,
+  filePath: string
+): Promise<Buffer> {
+  const response = await getDbx().sharingGetSharedLinkFile({
+    url: sharedLink,
+    path: filePath,
+  });
+
   const result = response.result as unknown as Record<string, unknown>;
   const binary = result.fileBinary;
 
@@ -127,50 +149,54 @@ export async function downloadInternalFile(path: string): Promise<Buffer> {
     const ab = await (binary as Blob).arrayBuffer();
     return Buffer.from(ab);
   }
-  throw new Error("Unexpected file binary format from Dropbox filesDownload");
-}
 
-/**
- * Download a single file from a Dropbox shared link.
- * Returns the file as a Buffer.
- */
-export async function downloadFileFromSharedLink(
-  sharedLink: string,
-  filePath: string
-): Promise<Buffer> {
-  const response = await getDbx().sharingGetSharedLinkFile({
-    url: sharedLink,
-    path: filePath,
-  });
-
-  // The Dropbox SDK attaches file data as fileBinary on the result
-  const result = response.result as unknown as Record<string, unknown>;
-  const binary = result.fileBinary;
-
-  if (binary instanceof Buffer) {
-    return binary;
-  }
-
-  if (binary instanceof Uint8Array) {
-    return Buffer.from(binary.buffer, binary.byteOffset, binary.byteLength);
-  }
-
-  if (binary instanceof ArrayBuffer) {
-    return Buffer.from(new Uint8Array(binary));
-  }
-
-  // Handle Blob-like objects (edge/browser environments)
+  // ReadableStream (Web) — collect chunks
   if (
     binary &&
     typeof binary === "object" &&
-    "arrayBuffer" in binary &&
-    typeof (binary as { arrayBuffer: unknown }).arrayBuffer === "function"
+    "getReader" in binary &&
+    typeof (binary as { getReader: unknown }).getReader === "function"
   ) {
-    const ab = await (binary as Blob).arrayBuffer();
-    return Buffer.from(ab);
+    const reader = (binary as ReadableStream<Uint8Array>).getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        total += value.length;
+      }
+    }
+    const out = new Uint8Array(total);
+    let offset = 0;
+    for (const c of chunks) {
+      out.set(c, offset);
+      offset += c.length;
+    }
+    return Buffer.from(out);
   }
 
-  throw new Error("Unexpected file binary format from Dropbox API");
+  // Node Readable stream — collect data events
+  if (
+    binary &&
+    typeof binary === "object" &&
+    "on" in binary &&
+    typeof (binary as { on: unknown }).on === "function"
+  ) {
+    return await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const stream = binary as NodeJS.ReadableStream;
+      stream.on("data", (c) => chunks.push(typeof c === "string" ? Buffer.from(c) : c));
+      stream.on("end", () => resolve(Buffer.concat(chunks)));
+      stream.on("error", (err) => reject(err));
+    });
+  }
+
+  throw new Error(
+    `Unexpected file binary format from Dropbox API: ${Object.prototype.toString.call(binary)}`,
+  );
 }
 
 /**

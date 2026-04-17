@@ -112,6 +112,13 @@ export function JobView({ initialJob, initialPhotos }: Props) {
   const startEnhance = useCallback(async () => {
     setEnhancing(true);
     setError("");
+    // Ask the browser for notification permission on first Start Enhance
+    // so we can ping the user when it finishes even if they've tabbed away.
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        void Notification.requestPermission();
+      }
+    }
     // Optimistically paint an "uploading" banner IMMEDIATELY so the user
     // isn't staring at a dead UI during the 60-90s /enhance-batch call.
     const pendingCount = photos.filter((p) => p.status === "pending" || p.status === "failed").length;
@@ -498,6 +505,28 @@ export function JobView({ initialJob, initialPhotos }: Props) {
           }
           if (body.status === "done" && !cancelled) {
             setEnhancing(false);
+            // Ping the user via Web Notifications so they know it's done
+            // even if they've tabbed away. Silent no-op if permission denied.
+            if (
+              typeof window !== "undefined" &&
+              "Notification" in window &&
+              Notification.permission === "granted"
+            ) {
+              try {
+                const ready = body.progress?.ready ?? 0;
+                const total = body.progress?.total ?? 0;
+                const failed = body.progress?.failed ?? 0;
+                new Notification("BatchBase — enhance complete", {
+                  body:
+                    failed > 0
+                      ? `${ready}/${total} photos ready · ${failed} failed`
+                      : `${ready} photos ready at ${initialJob.address}`,
+                  tag: `enhance-done-${initialJob.id}`,
+                });
+              } catch {
+                /* some browsers throw for bad tags / cross-origin */
+              }
+            }
             // Keep status visible for a moment so the user sees the final state
             // before it fades out.
             setTimeout(() => {
@@ -522,6 +551,36 @@ export function JobView({ initialJob, initialPhotos }: Props) {
       clearInterval(id);
     };
   }, [counts.processing, enhancing, initialJob.id, reloadPhotos]);
+
+  // Dynamic page title: shows progress in the browser tab so the user can
+  // watch it from another tab without flipping back.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const base = initialJob.address || "Job";
+    if (enhancing && enhanceStatus) {
+      const { phase, ready, total } = enhanceStatus;
+      const label =
+        phase === "uploading"
+          ? "Uploading"
+          : phase === "merging"
+            ? "Grouping"
+            : phase === "processing"
+              ? total > 0
+                ? `${ready}/${total} done`
+                : "Enhancing"
+              : phase === "downloading"
+                ? `${ready}/${total} ready`
+                : phase === "done"
+                  ? "Done"
+                  : "Working";
+      document.title = `[${label}] ${base} — BatchBase`;
+    } else {
+      document.title = `${base} — BatchBase`;
+    }
+    return () => {
+      document.title = "BatchBase";
+    };
+  }, [enhancing, enhanceStatus, initialJob.address]);
 
   // Viewer keyboard nav
   useEffect(() => {

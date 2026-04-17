@@ -97,7 +97,14 @@ export function JobView({ initialJob, initialPhotos }: Props) {
     try {
       for (let i = 0; i < 200; i += 1) {
         const res = await fetch(`/api/jobs/${initialJob.id}/start-enhance`, { method: "POST" });
-        if (!res.ok) throw new Error("Enhance failed");
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          const serverMsg =
+            body && typeof body === "object" && "error" in body
+              ? String((body as { error: unknown }).error)
+              : null;
+          throw new Error(serverMsg ?? `Enhance failed (HTTP ${res.status})`);
+        }
         await reloadPhotos();
         const latest = await fetch(`/api/jobs/${initialJob.id}/photos`, { cache: "no-store" });
         if (!latest.ok) break;
@@ -121,7 +128,14 @@ export function JobView({ initialJob, initialPhotos }: Props) {
         const res = await fetch(`/api/jobs/${initialJob.id}/photos/${photoId}/enhance`, {
           method: "POST",
         });
-        if (!res.ok) throw new Error("Enhance failed");
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          const serverMsg =
+            body && typeof body === "object" && "error" in body
+              ? String((body as { error: unknown }).error)
+              : null;
+          throw new Error(serverMsg ?? `Enhance failed (HTTP ${res.status})`);
+        }
         await reloadPhotos();
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Enhance failed");

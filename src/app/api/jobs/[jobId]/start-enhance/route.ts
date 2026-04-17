@@ -79,13 +79,27 @@ export async function POST(
     }
 
     try {
-      // Download each bracket — prefer internal path (files live in our own
-      // Dropbox) via SDK + refresh token. Shared-link path is a legacy fallback.
+      // Always derive the absolute Dropbox path from the job's destination
+      // folder. Whatever is in exifData.photos[n].path may be relative if the
+      // row was created by the shared-link sync flow — the folderPath + name
+      // construction is canonical.
+      const folderPath = job.agent?.dropboxFolder
+        ? `${job.agent.dropboxFolder}/${sanitizeFolderName(job.address)}`
+        : `/BatchBase/_uploads/${job.id}`;
+
       const bracketBuffers: Array<{ buffer: Buffer; name: string }> = [];
       for (const f of bracketFiles) {
-        const buf = f.path
-          ? await downloadInternalFile(f.path)
-          : await downloadFileFromSharedLink(job.dropboxUrl, `/${f.fileName}`);
+        const absolutePath = `${folderPath}/${f.fileName}`;
+        let buf: Buffer;
+        try {
+          buf = await downloadInternalFile(absolutePath);
+        } catch (dlErr: unknown) {
+          log.warn("[start-enhance] internal download failed, trying shared link", {
+            absolutePath,
+            err: dlErr instanceof Error ? dlErr.message : String(dlErr),
+          });
+          buf = await downloadFileFromSharedLink(job.dropboxUrl, `/${f.fileName}`);
+        }
         bracketBuffers.push({ buffer: buf, name: f.fileName });
       }
 

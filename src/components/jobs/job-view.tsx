@@ -264,7 +264,7 @@ export function JobView({ initialJob, initialPhotos }: Props) {
       for (let i = 0; i < list.length; i += 1) {
         const f = list[i];
         const ext = f.name.slice(f.name.lastIndexOf(".")).toLowerCase();
-        if (![".jpg", ".jpeg", ".png"].includes(ext)) {
+        if (![".jpg", ".jpeg", ".png", ".dng"].includes(ext)) {
           failed.push({ name: f.name, reason: "unsupported extension" });
           setUploadProgress({ done: i + 1, total: list.length });
           continue;

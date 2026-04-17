@@ -200,7 +200,7 @@ function BrowseButton({
       <input
         type="file"
         multiple
-        accept="image/*"
+        accept="image/*,.dng,image/x-adobe-dng"
         className="hidden"
         disabled={disabled}
         onChange={(e) => e.target.files && onUpload(e.target.files)}

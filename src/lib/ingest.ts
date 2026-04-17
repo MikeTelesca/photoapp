@@ -11,9 +11,10 @@ export interface IngestResult {
   photosCreated: number;
 }
 
-// Only JPEG/PNG supported — RAW formats (DNG/CR2/ARW/NEF) aren't processable on serverless.
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
-const RAW_EXTENSIONS = [".dng", ".cr2", ".cr3", ".arw", ".nef", ".raf", ".tif", ".tiff"];
+// DNG is supported — Autoenhance accepts DNG and does its own RAW handling.
+// Other RAW formats (CR2/ARW/NEF/RAF/TIFF) still need exporting to JPEG first.
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".dng"];
+const RAW_EXTENSIONS = [".cr2", ".cr3", ".arw", ".nef", ".raf", ".tif", ".tiff"];
 
 function dbx(): Dropbox {
   if (process.env.DROPBOX_REFRESH_TOKEN) {

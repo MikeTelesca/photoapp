@@ -7,7 +7,7 @@ import { log } from "@/lib/logger";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".dng"];
 
 // POST /api/jobs/:jobId/upload — accepts one or more images in multipart/form-data
 // and uploads each to Dropbox. Returns the stored path + size + filename per

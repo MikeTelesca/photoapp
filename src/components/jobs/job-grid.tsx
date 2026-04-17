@@ -290,6 +290,12 @@ function PhotoTile({
           icon="x"
           tone={photo.status === "rejected" ? "red" : "default"}
         />
+        <IconButton
+          label="Download"
+          onClick={() => void downloadPhoto(jobId, photo.id, photo.orderIndex)}
+          icon="download"
+          disabled={!photo.hasEdited && !photo.hasOriginal}
+        />
         <div className="flex-1" />
         <IconButton label="Settings" onClick={onOpenSettings} icon="gear" />
         <IconButton label="Delete" onClick={onDelete} icon="trash" tone="danger" />
@@ -312,7 +318,7 @@ function IconButton({
 }: {
   label: string;
   onClick: () => void;
-  icon: "view" | "enhance" | "check" | "x" | "trash" | "gear";
+  icon: "view" | "enhance" | "check" | "x" | "trash" | "gear" | "download";
   tone?: "default" | "emerald" | "red" | "danger";
   disabled?: boolean;
 }) {
@@ -339,7 +345,28 @@ function IconButton({
   );
 }
 
-function renderIcon(kind: "view" | "enhance" | "check" | "x" | "trash" | "gear") {
+async function downloadPhoto(jobId: string, photoId: string, orderIndex: number): Promise<void> {
+  try {
+    const res = await fetch(`/api/jobs/${jobId}/photos/${photoId}/download`);
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const cd = res.headers.get("content-disposition") ?? "";
+    const match = /filename="?([^";]+)"?/.exec(cd);
+    const fileName = match?.[1] ?? `photo-${String(orderIndex + 1).padStart(2, "0")}.jpg`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch {
+    /* user can retry from the viewer if this silently fails */
+  }
+}
+
+function renderIcon(kind: "view" | "enhance" | "check" | "x" | "trash" | "gear" | "download") {
   const p = "currentColor";
   switch (kind) {
     case "gear":
@@ -383,6 +410,12 @@ function renderIcon(kind: "view" | "enhance" | "check" | "x" | "trash" | "gear")
       return (
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
           <path d="M3 5h10M6.5 5V3h3v2M5 5v9h6V5M7 8v3M9 8v3" stroke={p} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "download":
+      return (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v8M5 7l3 3 3-3M3 13h10" stroke={p} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
   }

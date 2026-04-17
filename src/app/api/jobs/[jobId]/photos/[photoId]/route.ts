@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireJobAccess } from "@/lib/api-auth";
+import { log } from "@/lib/logger";
 
 // Fields that the client is allowed to update via PATCH. Server trusts
 // nothing else from the request body.
@@ -122,4 +123,59 @@ export async function PATCH(
 
   void access;
   return NextResponse.json(photo);
+}
+
+// DELETE /api/jobs/:jobId/photos/:photoId - remove a photo (bracket group)
+// from the job. Dropbox cleanup is intentionally skipped — the shooter's
+// originals stay on Dropbox so they can be recovered; the user can purge
+// the folder manually if needed.
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ jobId: string; photoId: string }> }
+) {
+  const { jobId, photoId } = await params;
+  const access = await requireJobAccess(jobId);
+  if ("error" in access) return access.error;
+
+  const existing = await prisma.photo.findUnique({ where: { id: photoId } });
+  if (!existing || existing.jobId !== jobId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  try {
+    await prisma.photo.delete({ where: { id: photoId } });
+  } catch (err: unknown) {
+    log.error("photo.delete.failed", {
+      jobId,
+      photoId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Delete failed" },
+      { status: 500 },
+    );
+  }
+
+  // Recompute job counts after the row is gone.
+  const [total, approvedCount, rejectedCount, processedCount] = await Promise.all([
+    prisma.photo.count({ where: { jobId } }),
+    prisma.photo.count({ where: { jobId, status: "approved" } }),
+    prisma.photo.count({ where: { jobId, status: "rejected" } }),
+    prisma.photo.count({
+      where: { jobId, status: { notIn: ["pending", "processing"] } },
+    }),
+  ]);
+
+  await prisma.job.update({
+    where: { id: jobId },
+    data: {
+      totalPhotos: total,
+      approvedPhotos: approvedCount,
+      rejectedPhotos: rejectedCount,
+      processedPhotos: processedCount,
+    },
+  });
+
+  void access;
+  return NextResponse.json({ ok: true });
 }

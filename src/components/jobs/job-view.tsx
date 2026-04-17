@@ -188,7 +188,14 @@ export function JobView({ initialJob, initialPhotos }: Props) {
         const res = await fetch(`/api/jobs/${initialJob.id}/photos/${photoId}`, {
           method: "DELETE",
         });
-        if (!res.ok) throw new Error("Delete failed");
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          const serverMsg =
+            body && typeof body === "object" && "error" in body
+              ? String((body as { error: unknown }).error)
+              : null;
+          throw new Error(serverMsg ?? `Delete failed (HTTP ${res.status})`);
+        }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Delete failed");
         setPhotos(prev);

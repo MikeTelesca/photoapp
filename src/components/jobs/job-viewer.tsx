@@ -44,7 +44,10 @@ export function JobViewer({
   const [showCompare, setShowCompare] = useState(false);
   const badge = statusConfig[photo.status] ?? statusConfig.pending;
 
-  const canCompare = photo.hasEdited && photo.hasOriginal;
+  // Compare is available whenever the photo is enhanced: the "before" side
+  // falls back through /thumb?variant=original to the first bracket exposure
+  // stored in exifData, so we don't need photo.originalUrl to be populated.
+  const canCompare = photo.hasEdited && (photo.hasOriginal || photo.bracketCount > 0);
   const base = `/api/jobs/${jobId}/photos/${photo.id}/thumb`;
   // Prefer direct URLs (Dropbox CDN) for full-resolution viewing. Fall back
   // to the /thumb endpoint which handles legacy data URLs + variant routing.

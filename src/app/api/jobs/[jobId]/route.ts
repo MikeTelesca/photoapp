@@ -52,10 +52,16 @@ export async function PATCH(
     const body = await request.json();
 
     // Mass assignment defense: whitelist allowed fields
-    const allowed: Record<string, any> = {};
+    const allowed: Record<string, unknown> = {};
     const allowedFields = ["address", "preset", "tvStyle", "skyStyle", "seasonalStyle", "notes"] as const;
     for (const field of allowedFields) {
       if (body[field] !== undefined) allowed[field] = body[field];
+    }
+    // agentId: null is a valid value (clears the agent link) — honour explicit
+    // presence of the key regardless of value.
+    if ("agentId" in body) {
+      const v = body.agentId;
+      allowed.agentId = typeof v === "string" && v.trim() ? v.trim() : null;
     }
 
     // Status field has additional role checks

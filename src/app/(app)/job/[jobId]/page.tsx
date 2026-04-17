@@ -88,6 +88,7 @@ export default async function JobPage({
         tvStyle: job.tvStyle,
         skyStyle: job.skyStyle,
         seasonalStyle: job.seasonalStyle,
+        agentId: job.agentId ?? null,
         agentName: job.agent?.name ?? null,
       }}
       initialPhotos={job.photos.map((p) => ({

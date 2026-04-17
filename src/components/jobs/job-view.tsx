@@ -11,6 +11,7 @@ import {
 } from "@/components/jobs/photo-settings-modal";
 import { StyleSummary } from "@/components/jobs/style-summary";
 import { UploadZone } from "@/components/jobs/upload-zone";
+import { JobSettingsModal } from "@/components/jobs/job-settings-modal";
 
 export type JobSummary = {
   id: string;
@@ -21,6 +22,7 @@ export type JobSummary = {
   tvStyle: string;
   skyStyle: string;
   seasonalStyle: string | null;
+  agentId: string | null;
   agentName: string | null;
 };
 
@@ -34,6 +36,7 @@ export function JobView({ initialJob, initialPhotos }: Props) {
   const [photos, setPhotos] = useState<PhotoRow[]>(initialPhotos);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [settingsIndex, setSettingsIndex] = useState<number | null>(null);
+  const [jobSettingsOpen, setJobSettingsOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -554,6 +557,23 @@ export function JobView({ initialJob, initialPhotos }: Props) {
             <span className="text-graphite-700">/</span>
             <span className="text-[13px] text-white font-medium truncate">{initialJob.address}</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setJobSettingsOpen(true)}
+            className="h-8 px-3 rounded-lg text-[13px] font-medium text-graphite-400 hover:text-white hover:bg-graphite-900 transition inline-flex items-center gap-1.5"
+            title="Edit job settings"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.3" />
+              <path
+                d="M7 1v2M7 11v2M1 7h2M11 7h2M2.5 2.5l1.4 1.4M10.1 10.1l1.4 1.4M2.5 11.5l1.4-1.4M10.1 3.9l1.4-1.4"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+            </svg>
+            Settings
+          </button>
         </div>
       </header>
 
@@ -764,6 +784,21 @@ export function JobView({ initialJob, initialPhotos }: Props) {
             savePhotoOverrides(photos[settingsIndex!].id, overrides)
           }
           onEnhance={() => enhanceOne(photos[settingsIndex!].id)}
+        />
+      )}
+
+      {jobSettingsOpen && (
+        <JobSettingsModal
+          jobId={initialJob.id}
+          initialAddress={initialJob.address}
+          initialPreset={initialJob.preset}
+          initialTvStyle={initialJob.tvStyle}
+          initialSkyStyle={initialJob.skyStyle}
+          initialSeasonalStyle={initialJob.seasonalStyle}
+          initialAgentId={initialJob.agentId}
+          initialAgentName={initialJob.agentName}
+          onClose={() => setJobSettingsOpen(false)}
+          onSaved={() => router.refresh()}
         />
       )}
     </main>

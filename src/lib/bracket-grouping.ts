@@ -32,18 +32,20 @@ export function groupBrackets(
     return a.fileName.localeCompare(b.fileName);
   });
 
-  // Resolve the bracket count to split by. If the caller didn't specify,
-  // detect from ExposureBiasValue distribution across the set.
-  const targetCount = expectedBracketCount ?? detectBracketCount(sorted);
-
-  // If we have timestamps, group by time proximity then split oversized
-  // clusters to the detected count. Clusters smaller than targetCount
-  // (drones, standalones) pass through as single-photo groups.
+  // If caller explicitly tells us the bracket count, honour it by splitting
+  // oversized clusters. Otherwise: cluster temporally with NO size cap and
+  // trust the shooter's burst. Autoenhance's visual grouping re-groups at
+  // enhance time anyway, so our role pre-enhance is just to show a useful
+  // tile count — not to be perfect.
   if (sorted[0]?.timestamp) {
-    return groupByTimestamp(sorted, targetCount);
+    return expectedBracketCount
+      ? groupByTimestampWithCap(sorted, expectedBracketCount)
+      : groupByTimestampLoose(sorted);
   }
 
-  // Fallback: group by filename order with the detected/expected count.
+  // No timestamps at all (shooter stripped EXIF). Fall back to the simple
+  // sequential heuristic.
+  const targetCount = expectedBracketCount ?? detectBracketCount(sorted);
   return groupBySequence(sorted, targetCount);
 }
 
@@ -52,7 +54,42 @@ export function groupBrackets(
 // still separates distinct brackets of the same scene taken moments apart.
 const MAX_GAP_SECONDS = 3;
 
-function groupByTimestamp(
+// Cluster photos by timestamp proximity with NO size cap — shooter bursts
+// of 3, 5, or whatever all get kept intact. Single shots (drones) fall
+// out as 1-photo groups naturally.
+function groupByTimestampLoose(photos: ExifInfo[]): BracketGroup[] {
+  const groups: BracketGroup[] = [];
+  let currentGroup: ExifInfo[] = [photos[0]];
+
+  for (let i = 1; i < photos.length; i++) {
+    const prev = photos[i - 1];
+    const curr = photos[i];
+    const prevTime = prev.timestamp?.getTime() || 0;
+    const currTime = curr.timestamp?.getTime() || 0;
+    const gapSeconds = (currTime - prevTime) / 1000;
+
+    const sameAperture =
+      prev.aperture === null ||
+      curr.aperture === null ||
+      Math.abs((prev.aperture || 0) - (curr.aperture || 0)) < 0.1;
+
+    const sameFocal =
+      prev.focalLength === null ||
+      curr.focalLength === null ||
+      Math.abs((prev.focalLength || 0) - (curr.focalLength || 0)) < 1;
+
+    if (gapSeconds <= MAX_GAP_SECONDS && sameAperture && sameFocal) {
+      currentGroup.push(curr);
+    } else {
+      groups.push(makeGroup(groups.length, currentGroup));
+      currentGroup = [curr];
+    }
+  }
+  if (currentGroup.length > 0) groups.push(makeGroup(groups.length, currentGroup));
+  return groups;
+}
+
+function groupByTimestampWithCap(
   photos: ExifInfo[],
   expectedCount: 3 | 5
 ): BracketGroup[] {

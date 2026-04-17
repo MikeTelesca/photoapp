@@ -1,6 +1,7 @@
 import { Dropbox } from "dropbox";
 import { prisma } from "./db";
 import { detectJobTwilight } from "./twilight-detect";
+import { slugifyForFilename } from "./dropbox";
 import { log } from "./logger";
 
 export interface IngestResult {
@@ -69,28 +70,20 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
       limit: 2000,
     });
 
-    const allEntries: DropboxEntry[] = [...(listResponse.result.entries as DropboxEntry[])];
+    // Only top-level entries. We intentionally do NOT recurse into subfolders
+    // because the Edited/ and _thumbs/ subfolders we create during enhance
+    // would otherwise pollute the source-image list and break bracket
+    // grouping on re-sync.
+    const allEntries = listResponse.result.entries as DropboxEntry[];
 
-    // Recurse into subfolders
-    const folders = allEntries.filter((e) => e[".tag"] === "folder");
-    for (const folder of folders) {
-      try {
-        const subPath = folder.path_lower || folder.path_display || "";
-        if (!subPath) continue;
-        const subResponse = await client.filesListFolder({
-          path: subPath,
-          shared_link: { url: job.dropboxUrl },
-          limit: 2000,
-        });
-        allEntries.push(...(subResponse.result.entries as DropboxEntry[]));
-      } catch (err: unknown) {
-        log.warn("ingest.subfolder_list_failed", {
-          jobId,
-          folder: folder.name,
-          err: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
+    // Filter out files that match our enhanced-output naming convention
+    // ({address-slug}-NN.jpg) to cover the case where an old enhance run
+    // wrote outputs at the top level before we moved them into Edited/.
+    const slug = slugifyForFilename(job.address);
+    const enhancedPattern = new RegExp(
+      `^${slug.replace(/[-]/g, "\\-")}-\\d{2}\\.jpg$`,
+      "i",
+    );
 
     const rawFileCount = allEntries.filter((e) => {
       if (e[".tag"] !== "file") return false;
@@ -101,6 +94,7 @@ export async function ingestFromDropbox(jobId: string): Promise<IngestResult> {
     const imageFiles = allEntries
       .filter((e) => {
         if (e[".tag"] !== "file") return false;
+        if (enhancedPattern.test(e.name)) return false; // skip enhanced outputs
         const ext = e.name.toLowerCase().slice(e.name.lastIndexOf("."));
         return IMAGE_EXTENSIONS.includes(ext);
       })

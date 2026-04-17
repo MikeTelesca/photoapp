@@ -385,21 +385,32 @@ export async function persistEnhancedEdit(args: {
       .toBuffer(),
   ]);
 
-  // Ensure the destination folder (usually agent/property folder) exists
-  // along with the _thumbs subfolder. Creates are idempotent in our helper.
+  // Ensure the destination folder structure:
+  //   {agent}/{address}/            ← shooter's originals (top-level only)
+  //   {agent}/{address}/Edited/     ← enhanced deliverables
+  //   {agent}/{address}/Edited/_thumbs/  ← preview sizes
+  // Separating edits into a subfolder lets "Sync from Dropbox" re-ingest the
+  // property folder without counting enhanced JPEGs as new source photos
+  // (which would break bracket grouping).
   try {
     await createFolder(args.destFolderPath);
   } catch {
     /* non-fatal */
   }
-  const thumbsFolder = `${args.destFolderPath}/_thumbs`;
+  const editedFolder = `${args.destFolderPath}/Edited`;
+  const thumbsFolder = `${editedFolder}/_thumbs`;
+  try {
+    await createFolder(editedFolder);
+  } catch {
+    /* non-fatal */
+  }
   try {
     await createFolder(thumbsFolder);
   } catch {
     /* non-fatal */
   }
 
-  const fullPath = `${args.destFolderPath}/${args.fileBaseName}.jpg`;
+  const fullPath = `${editedFolder}/${args.fileBaseName}.jpg`;
   const thumbPath = `${thumbsFolder}/${args.fileBaseName}.jpg`;
 
   await Promise.all([

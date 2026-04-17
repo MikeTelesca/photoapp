@@ -1,3 +1,5 @@
+import { log } from "@/lib/logger";
+
 // Autoenhance.ai client — real HDR bracket merge + real estate photo enhancement.
 //
 // Flow per bracket group:
@@ -36,6 +38,7 @@ export async function enhanceViaAutoenhance(
 
   try {
     // 1. Create order
+    log.info("autoenhance.create_order.begin", { bracketCount: brackets.length });
     const orderRes = await fetch(`${BASE}/orders/`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
@@ -46,11 +49,16 @@ export async function enhanceViaAutoenhance(
     }
     const { order_id: orderId } = (await orderRes.json()) as { order_id: string };
     if (!orderId) throw new Error("Autoenhance returned no order_id");
+    log.info("autoenhance.order_created", { orderId });
 
-    // 2. Upload each bracket
+    // 2. Upload each bracket. The pre-signed S3 URL is signed for a specific
+    // Content-Type — we match it with the bracket's mime so the PUT doesn't
+    // fail with SignatureDoesNotMatch.
     for (let i = 0; i < brackets.length; i += 1) {
       const b = brackets[i];
+      const mimeType = guessMimeType(b.name);
 
+      log.info("autoenhance.register_bracket.begin", { orderId, i, name: b.name });
       const bracketRes = await fetch(`${BASE}/brackets/`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -59,20 +67,37 @@ export async function enhanceViaAutoenhance(
       if (!bracketRes.ok) {
         throw new Error(`register bracket ${i} ${bracketRes.status}: ${await safeText(bracketRes)}`);
       }
-      const { upload_url: uploadUrl } = (await bracketRes.json()) as { upload_url: string };
+      const bracketJson = (await bracketRes.json()) as {
+        upload_url?: string;
+        bracket_id?: string;
+      };
+      const uploadUrl = bracketJson.upload_url;
       if (!uploadUrl) throw new Error(`no upload_url for bracket ${i}`);
+      log.info("autoenhance.bracket_registered", {
+        orderId,
+        i,
+        bracketId: bracketJson.bracket_id,
+      });
 
+      log.info("autoenhance.upload_bracket.begin", {
+        orderId,
+        i,
+        size: b.buffer.length,
+        mimeType,
+      });
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": "application/octet-stream" },
+        headers: { "Content-Type": mimeType },
         body: new Uint8Array(b.buffer),
       });
       if (!uploadRes.ok) {
         throw new Error(`upload bracket ${i} ${uploadRes.status}: ${await safeText(uploadRes)}`);
       }
+      log.info("autoenhance.bracket_uploaded", { orderId, i });
     }
 
     // 3. Trigger processing
+    log.info("autoenhance.process.begin", { orderId });
     const processRes = await fetch(`${BASE}/orders/${orderId}/process`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
@@ -84,6 +109,7 @@ export async function enhanceViaAutoenhance(
     if (!processRes.ok) {
       throw new Error(`process ${processRes.status}: ${await safeText(processRes)}`);
     }
+    log.info("autoenhance.process.triggered", { orderId });
 
     // 4. Poll for completion
     let imageId: string | null = null;
@@ -159,4 +185,11 @@ async function safeText(res: Response): Promise<string> {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function guessMimeType(filename: string): string {
+  const ext = filename.toLowerCase().slice(filename.lastIndexOf("."));
+  if (ext === ".png") return "image/png";
+  if (ext === ".webp") return "image/webp";
+  return "image/jpeg";
 }

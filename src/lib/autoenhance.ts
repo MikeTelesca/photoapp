@@ -84,10 +84,15 @@ export async function enhanceViaAutoenhance(
         i,
         size: b.buffer.length,
       });
+      const bytes = new Uint8Array(
+        b.buffer.buffer,
+        b.buffer.byteOffset,
+        b.buffer.byteLength,
+      );
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": "application/octet-stream" },
-        body: new Uint8Array(b.buffer.buffer, b.buffer.byteOffset, b.buffer.byteLength),
+        body: bytes as unknown as BodyInit,
       });
       if (!uploadRes.ok) {
         throw new Error(`upload bracket ${i} ${uploadRes.status}: ${await safeText(uploadRes)}`);

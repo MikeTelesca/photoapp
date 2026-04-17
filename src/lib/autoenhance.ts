@@ -210,9 +210,11 @@ export async function enhanceViaAutoenhance(
       `Unexpected /enhanced response content-type: ${finalContentType}. Body prefix: ${html.slice(0, 200)}`,
     );
   } catch (err: unknown) {
+    const raw = err instanceof Error ? err.message : "Unknown Autoenhance error";
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Unknown Autoenhance error",
+      // Strip null bytes so the caller can safely persist this to Postgres.
+      error: raw.replace(/\x00/g, "").slice(0, 1000),
     };
   }
 }
@@ -220,7 +222,9 @@ export async function enhanceViaAutoenhance(
 async function safeText(res: Response): Promise<string> {
   try {
     const t = await res.text();
-    return t.slice(0, 500);
+    // Strip NUL bytes — Postgres UTF8 columns reject 0x00. Also clamp length
+    // so one bad response can't blow up our error messages.
+    return t.slice(0, 500).replace(/\x00/g, "");
   } catch {
     return "";
   }

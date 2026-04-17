@@ -135,7 +135,8 @@ export async function POST(
 
     return NextResponse.json(updated);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const rawMessage = err instanceof Error ? err.message : "Unknown error";
+    const message = rawMessage.replace(/\x00/g, "").slice(0, 1000);
     const stack = err instanceof Error ? err.stack : undefined;
     log.error("[photo-enhance] error", { jobId, photoId, err: message, stack });
     await prisma.photo

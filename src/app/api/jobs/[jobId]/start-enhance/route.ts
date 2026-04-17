@@ -156,10 +156,11 @@ export async function POST(
 
       return NextResponse.json({ photoId: nextPhoto.id, processed });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      const rawMessage = err instanceof Error ? err.message : "Unknown error";
+      const message = rawMessage.replace(/\x00/g, "").slice(0, 1000);
       await prisma.photo.update({
         where: { id: nextPhoto.id },
-        data: { status: "error", errorMessage: message },
+        data: { status: "failed", errorMessage: message },
       });
       log.error("[start-enhance] error", { jobId, photoId: nextPhoto.id, err: message });
       return NextResponse.json({ error: message }, { status: 500 });

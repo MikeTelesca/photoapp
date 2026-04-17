@@ -32,20 +32,29 @@ export function groupBrackets(
     return a.fileName.localeCompare(b.fileName);
   });
 
-  // If we have timestamps, group by time proximity
+  // Resolve the bracket count to split by. If the caller didn't specify,
+  // detect from ExposureBiasValue distribution across the set.
+  const targetCount = expectedBracketCount ?? detectBracketCount(sorted);
+
+  // If we have timestamps, group by time proximity then split oversized
+  // clusters to the detected count. Clusters smaller than targetCount
+  // (drones, standalones) pass through as single-photo groups.
   if (sorted[0]?.timestamp) {
-    return groupByTimestamp(sorted, expectedBracketCount);
+    return groupByTimestamp(sorted, targetCount);
   }
 
-  // Fallback: group by filename order with expected bracket count
-  return groupBySequence(sorted, expectedBracketCount || 3);
+  // Fallback: group by filename order with the detected/expected count.
+  return groupBySequence(sorted, targetCount);
 }
 
-const MAX_GAP_SECONDS = 10; // Max seconds between shots in a bracket
+// Brackets are fired in continuous burst mode — the gap between shots within
+// a bracket is sub-second on most cameras. 3s is a generous ceiling that
+// still separates distinct brackets of the same scene taken moments apart.
+const MAX_GAP_SECONDS = 3;
 
 function groupByTimestamp(
   photos: ExifInfo[],
-  expectedCount?: 3 | 5
+  expectedCount: 3 | 5
 ): BracketGroup[] {
   const groups: BracketGroup[] = [];
   let currentGroup: ExifInfo[] = [photos[0]];
@@ -69,7 +78,12 @@ function groupByTimestamp(
       curr.focalLength === null ||
       Math.abs((prev.focalLength || 0) - (curr.focalLength || 0)) < 1;
 
-    if (gapSeconds <= MAX_GAP_SECONDS && sameAperture && sameFocal) {
+    // Hard ceiling: a single group can never exceed the detected bracket
+    // count. Prevents runs of the same aperture/focal taken within the gap
+    // window from merging into mega-groups.
+    const atCeiling = currentGroup.length >= expectedCount;
+
+    if (!atCeiling && gapSeconds <= MAX_GAP_SECONDS && sameAperture && sameFocal) {
       currentGroup.push(curr);
     } else {
       // Finalize current group
@@ -83,12 +97,8 @@ function groupByTimestamp(
     groups.push(makeGroup(groups.length, currentGroup));
   }
 
-  // If expected count is set, split oversized groups
-  if (expectedCount) {
-    return splitGroups(groups, expectedCount);
-  }
-
-  return groups;
+  // Final safety split (e.g. when expectedCount was guessed wrong).
+  return splitGroups(groups, expectedCount);
 }
 
 function groupBySequence(

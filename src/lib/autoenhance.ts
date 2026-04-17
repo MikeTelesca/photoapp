@@ -144,34 +144,71 @@ export async function enhanceViaAutoenhance(
       throw new Error(`Autoenhance timed out after ${(POLL_INTERVAL_MS * MAX_POLL_ATTEMPTS) / 1000}s`);
     }
 
-    // 5. Get the enhanced image URL. In dev mode we must use preview=true
-    // (free, watermarked low-res); full res requires a paid plan.
+    // 5. Download the enhanced image. In dev mode we use preview=true (free,
+    // watermarked, low-res); full-res requires a paid plan.
+    //
+    // Autoenhance redirects GET /v3/images/:id/enhanced to an asset URL that
+    // serves the JPEG bytes directly. Depending on whether fetch follows the
+    // redirect we land on either:
+    //   - Content-Type: image/* → binary body is the image
+    //   - Content-Type: text/html → Flask redirect page with href target
+    //   - Content-Type: application/json → legacy shape with image_url field
     const previewQuery = options.devMode ? "preview=true" : "preview=false";
+    log.info("autoenhance.download.begin", { imageId, previewQuery });
     const enhancedRes = await fetch(
       `${BASE}/images/${imageId}/enhanced?${previewQuery}`,
-      { headers }
+      { headers, redirect: "follow" }
     );
     if (!enhancedRes.ok) {
       throw new Error(`get enhanced ${enhancedRes.status}: ${await safeText(enhancedRes)}`);
     }
-    const enhancedJson = (await enhancedRes.json()) as Record<string, unknown>;
-    const imageUrl =
-      typeof enhancedJson.image_url === "string"
-        ? enhancedJson.image_url
-        : typeof enhancedJson.imageSource === "string"
-          ? enhancedJson.imageSource
-          : typeof enhancedJson.url === "string"
-            ? (enhancedJson.url as string)
-            : null;
-    if (!imageUrl) throw new Error("Autoenhance /enhanced response missing image URL");
+    const finalContentType = enhancedRes.headers.get("content-type") ?? "";
 
-    // 6. Fetch the actual bytes
-    const dlRes = await fetch(imageUrl);
-    if (!dlRes.ok) throw new Error(`download image ${dlRes.status}`);
-    const imageBuffer = Buffer.from(await dlRes.arrayBuffer());
-    const mimeType = dlRes.headers.get("content-type") ?? "image/jpeg";
+    // Direct image response
+    if (finalContentType.startsWith("image/")) {
+      const imageBuffer = Buffer.from(await enhancedRes.arrayBuffer());
+      log.info("autoenhance.download.ok", { imageId, size: imageBuffer.length, path: "direct" });
+      return { success: true, imageBuffer, mimeType: finalContentType };
+    }
 
-    return { success: true, imageBuffer, mimeType };
+    // Legacy JSON response — contains image URL to fetch
+    if (finalContentType.includes("application/json")) {
+      const enhancedJson = (await enhancedRes.json()) as Record<string, unknown>;
+      const imageUrl =
+        typeof enhancedJson.image_url === "string"
+          ? enhancedJson.image_url
+          : typeof enhancedJson.imageSource === "string"
+            ? enhancedJson.imageSource
+            : typeof enhancedJson.url === "string"
+              ? (enhancedJson.url as string)
+              : null;
+      if (!imageUrl) throw new Error("Autoenhance /enhanced JSON missing image URL");
+      const dlRes = await fetch(imageUrl);
+      if (!dlRes.ok) throw new Error(`download image ${dlRes.status}`);
+      const imageBuffer = Buffer.from(await dlRes.arrayBuffer());
+      const mimeType = dlRes.headers.get("content-type") ?? "image/jpeg";
+      log.info("autoenhance.download.ok", { imageId, size: imageBuffer.length, path: "json" });
+      return { success: true, imageBuffer, mimeType };
+    }
+
+    // HTML redirect page — parse the target href and follow it manually
+    const html = await enhancedRes.text();
+    const hrefMatch = html.match(/href="([^"]+)"/i);
+    if (hrefMatch) {
+      const target = hrefMatch[1].startsWith("http")
+        ? hrefMatch[1]
+        : `https://api.autoenhance.ai${hrefMatch[1]}`;
+      const followRes = await fetch(target, { headers });
+      if (!followRes.ok) throw new Error(`follow download ${followRes.status}`);
+      const imageBuffer = Buffer.from(await followRes.arrayBuffer());
+      const mimeType = followRes.headers.get("content-type") ?? "image/jpeg";
+      log.info("autoenhance.download.ok", { imageId, size: imageBuffer.length, path: "html-follow" });
+      return { success: true, imageBuffer, mimeType };
+    }
+
+    throw new Error(
+      `Unexpected /enhanced response content-type: ${finalContentType}. Body prefix: ${html.slice(0, 200)}`,
+    );
   } catch (err: unknown) {
     return {
       success: false,

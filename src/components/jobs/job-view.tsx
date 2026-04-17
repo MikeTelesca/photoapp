@@ -55,18 +55,22 @@ export function JobView({ initialJob, initialPhotos }: Props) {
     let pending = 0;
     let edited = 0;
     let processing = 0;
+    let failed = 0;
     for (const p of photos) {
       if (p.status === "approved") approved += 1;
       else if (p.status === "rejected") rejected += 1;
       else if (p.status === "edited") edited += 1;
       else if (p.status === "processing" || p.status === "regenerating") processing += 1;
+      else if (p.status === "failed" || p.status === "error") failed += 1;
       else pending += 1;
     }
     const total = photos.length;
     const done = approved + rejected;
     const percent = total > 0 ? Math.round(((approved + edited) / total) * 100) : 0;
-    return { total, approved, rejected, pending, edited, processing, done, percent };
+    return { total, approved, rejected, pending, edited, processing, failed, done, percent };
   }, [photos]);
+
+  const failedCount = counts.failed;
 
   const reloadPhotos = useCallback(async () => {
     try {
@@ -105,6 +109,16 @@ export function JobView({ initialJob, initialPhotos }: Props) {
   const startEnhance = useCallback(async () => {
     setEnhancing(true);
     setError("");
+    // Optimistically paint an "uploading" banner IMMEDIATELY so the user
+    // isn't staring at a dead UI during the 60-90s /enhance-batch call.
+    const pendingCount = photos.filter((p) => p.status === "pending" || p.status === "failed").length;
+    setEnhanceStatus({
+      phase: "uploading",
+      total: pendingCount,
+      ready: 0,
+      failed: 0,
+      lastTick: Date.now(),
+    });
     try {
       const res = await fetch(`/api/jobs/${initialJob.id}/enhance-batch`, { method: "POST" });
       if (!res.ok) {
@@ -168,6 +182,71 @@ export function JobView({ initialJob, initialPhotos }: Props) {
       }
     },
     [initialJob.id, photos]
+  );
+
+  // One-click retry for every photo that errored out. Flips their status
+  // back to "pending" + calls enhance-batch which will pick them up
+  // alongside any remaining pending photos.
+  const retryFailed = useCallback(async () => {
+    setError("");
+    const failed = photos.filter((p) => p.status === "failed");
+    if (failed.length === 0) return;
+    const prev = photos;
+    setPhotos((ps) =>
+      ps.map((p) => (p.status === "failed" ? { ...p, status: "pending", errorMessage: null } : p)),
+    );
+    try {
+      await Promise.all(
+        failed.map((p) =>
+          fetch(`/api/jobs/${initialJob.id}/photos/${p.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "pending" }),
+          }),
+        ),
+      );
+      // Now fire enhance-batch — will include these newly-resurrected photos.
+      await startEnhance();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Retry failed");
+      setPhotos(prev);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialJob.id, photos, startEnhance]);
+
+  // Bulk helpers — approve/reject every photo that isn't already at that
+  // status (skip pending/processing so you don't accidentally approve an
+  // un-enhanced shot). Optimistic + one request per photo, in parallel.
+  const bulkSetStatus = useCallback(
+    async (targetStatus: "approved" | "rejected") => {
+      setError("");
+      const targets = photos.filter(
+        (p) => p.status !== targetStatus && (p.status === "edited" || p.status === "approved" || p.status === "rejected"),
+      );
+      if (targets.length === 0) return;
+      const prev = photos;
+      setPhotos((ps) =>
+        ps.map((p) =>
+          targets.some((t) => t.id === p.id) ? { ...p, status: targetStatus } : p,
+        ),
+      );
+      try {
+        await Promise.all(
+          targets.map((p) =>
+            fetch(`/api/jobs/${initialJob.id}/photos/${p.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: targetStatus }),
+            }),
+          ),
+        );
+        await reloadPhotos();
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Bulk update failed");
+        setPhotos(prev);
+      }
+    },
+    [initialJob.id, photos, reloadPhotos],
   );
 
   const savePhotoOverrides = useCallback(
@@ -551,6 +630,44 @@ export function JobView({ initialJob, initialPhotos }: Props) {
             <MiniStat label="Approved" value={counts.approved} tone="emerald" />
             <MiniStat label="Rejected" value={counts.rejected} tone="red" />
           </div>
+
+          {(counts.edited > 0 || counts.rejected > 0 || failedCount > 0) && (
+            <div className="mt-5 flex flex-wrap items-center gap-2 pt-5 border-t border-graphite-800">
+              <span className="text-[11px] uppercase tracking-[0.2em] text-graphite-500 mr-1">
+                Bulk actions
+              </span>
+              {(counts.edited > 0 || counts.rejected > 0) && (
+                <button
+                  type="button"
+                  onClick={() => void bulkSetStatus("approved")}
+                  disabled={counts.edited === 0 && counts.rejected === 0}
+                  className="h-8 px-3 rounded-lg text-[13px] font-medium border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  Approve all ({counts.edited + counts.rejected})
+                </button>
+              )}
+              {(counts.edited > 0 || counts.approved > 0) && (
+                <button
+                  type="button"
+                  onClick={() => void bulkSetStatus("rejected")}
+                  disabled={counts.edited === 0 && counts.approved === 0}
+                  className="h-8 px-3 rounded-lg text-[13px] font-medium border border-red-500/30 bg-red-500/5 text-red-300 hover:bg-red-500/15 hover:border-red-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  Reject all ({counts.edited + counts.approved})
+                </button>
+              )}
+              {failedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void retryFailed()}
+                  disabled={enhancing}
+                  className="h-8 px-3 rounded-lg text-[13px] font-medium border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 hover:border-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  Retry {failedCount} failed
+                </button>
+              )}
+            </div>
+          )}
         </section>
 
         {error && (

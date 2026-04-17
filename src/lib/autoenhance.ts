@@ -51,12 +51,12 @@ export async function enhanceViaAutoenhance(
     if (!orderId) throw new Error("Autoenhance returned no order_id");
     log.info("autoenhance.order_created", { orderId });
 
-    // 2. Upload each bracket. The pre-signed S3 URL is signed for a specific
-    // Content-Type — we match it with the bracket's mime so the PUT doesn't
-    // fail with SignatureDoesNotMatch.
+    // 2. Upload each bracket. The Autoenhance pre-signed S3 URL is signed
+    // with content-type=application/octet-stream (verified by inspecting
+    // the query string). The PUT MUST match or S3 returns
+    // SignatureDoesNotMatch.
     for (let i = 0; i < brackets.length; i += 1) {
       const b = brackets[i];
-      const mimeType = guessMimeType(b.name);
 
       log.info("autoenhance.register_bracket.begin", { orderId, i, name: b.name });
       const bracketRes = await fetch(`${BASE}/brackets/`, {
@@ -83,12 +83,11 @@ export async function enhanceViaAutoenhance(
         orderId,
         i,
         size: b.buffer.length,
-        mimeType,
       });
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": mimeType },
-        body: new Uint8Array(b.buffer),
+        headers: { "Content-Type": "application/octet-stream" },
+        body: new Uint8Array(b.buffer.buffer, b.buffer.byteOffset, b.buffer.byteLength),
       });
       if (!uploadRes.ok) {
         throw new Error(`upload bracket ${i} ${uploadRes.status}: ${await safeText(uploadRes)}`);

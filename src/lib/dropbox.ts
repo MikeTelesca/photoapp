@@ -103,6 +103,34 @@ export async function listFilesFromSharedLink(
 }
 
 /**
+ * Download a file from a Dropbox path we own (no shared link needed).
+ * Uses the SDK's filesDownload, which handles refresh-token rotation
+ * automatically. Use this for any file that lives in the editor's own
+ * Dropbox — e.g. the bracket JPEGs we uploaded for a job.
+ */
+export async function downloadInternalFile(path: string): Promise<Buffer> {
+  const response = await getDbx().filesDownload({ path });
+  const result = response.result as unknown as Record<string, unknown>;
+  const binary = result.fileBinary;
+
+  if (binary instanceof Buffer) return binary;
+  if (binary instanceof Uint8Array) {
+    return Buffer.from(binary.buffer, binary.byteOffset, binary.byteLength);
+  }
+  if (binary instanceof ArrayBuffer) return Buffer.from(new Uint8Array(binary));
+  if (
+    binary &&
+    typeof binary === "object" &&
+    "arrayBuffer" in binary &&
+    typeof (binary as { arrayBuffer: unknown }).arrayBuffer === "function"
+  ) {
+    const ab = await (binary as Blob).arrayBuffer();
+    return Buffer.from(ab);
+  }
+  throw new Error("Unexpected file binary format from Dropbox filesDownload");
+}
+
+/**
  * Download a single file from a Dropbox shared link.
  * Returns the file as a Buffer.
  */

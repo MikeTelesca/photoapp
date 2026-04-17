@@ -8,6 +8,7 @@ import {
   persistEnhancedEdit,
   sanitizeFolderName,
   slugifyForFilename,
+  downloadInternalFile,
   downloadFileFromSharedLink,
 } from "@/lib/dropbox";
 
@@ -44,7 +45,7 @@ export async function POST(
       return NextResponse.json({ error: "Job has no Dropbox URL" }, { status: 400 });
     }
 
-    let bracketFiles: Array<{ fileName: string }> = [];
+    let bracketFiles: Array<{ fileName: string; path?: string }> = [];
     try {
       const exif = photo.exifData ? JSON.parse(photo.exifData) : null;
       if (exif?.photos && Array.isArray(exif.photos)) {
@@ -63,10 +64,15 @@ export async function POST(
       data: { status: "processing" },
     });
 
-    // Pull each bracket out of the editor's Dropbox folder
+    // Pull each bracket. Prefer the internal path (files live in our own
+    // Dropbox) via SDK — it auto-refreshes the access token via the stored
+    // refresh token. Fall back to the job's shared link if we only have a
+    // fileName (legacy ingest).
     const bracketBuffers: Array<{ buffer: Buffer; name: string }> = [];
     for (const f of bracketFiles) {
-      const buf = await downloadFileFromSharedLink(job.dropboxUrl, `/${f.fileName}`);
+      const buf = f.path
+        ? await downloadInternalFile(f.path)
+        : await downloadFileFromSharedLink(job.dropboxUrl, `/${f.fileName}`);
       bracketBuffers.push({ buffer: buf, name: f.fileName });
     }
 

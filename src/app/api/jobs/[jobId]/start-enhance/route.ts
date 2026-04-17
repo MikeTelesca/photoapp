@@ -8,6 +8,7 @@ import {
   persistEnhancedEdit,
   sanitizeFolderName,
   slugifyForFilename,
+  downloadInternalFile,
   downloadFileFromSharedLink,
 } from "@/lib/dropbox";
 
@@ -59,7 +60,7 @@ export async function POST(
     });
 
     // Load bracket group files from exifData JSON
-    let bracketFiles: Array<{ fileName: string }> = [];
+    let bracketFiles: Array<{ fileName: string; path?: string }> = [];
     try {
       const exif = nextPhoto.exifData ? JSON.parse(nextPhoto.exifData) : null;
       if (exif?.photos && Array.isArray(exif.photos)) {
@@ -78,10 +79,13 @@ export async function POST(
     }
 
     try {
-      // Download each bracket from the editor's Dropbox folder
+      // Download each bracket — prefer internal path (files live in our own
+      // Dropbox) via SDK + refresh token. Shared-link path is a legacy fallback.
       const bracketBuffers: Array<{ buffer: Buffer; name: string }> = [];
       for (const f of bracketFiles) {
-        const buf = await downloadFileFromSharedLink(job.dropboxUrl, `/${f.fileName}`);
+        const buf = f.path
+          ? await downloadInternalFile(f.path)
+          : await downloadFileFromSharedLink(job.dropboxUrl, `/${f.fileName}`);
         bracketBuffers.push({ buffer: buf, name: f.fileName });
       }
 

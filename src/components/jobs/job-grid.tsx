@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type PhotoRow = {
   id: string;
@@ -63,6 +63,52 @@ function gradientForId(id: string): string {
 }
 
 export function JobGrid({ jobId, photos, onOpen, onEnhance, onApprove, onReject, onDelete, onOpenSettings }: Props) {
+  // Keyboard shortcuts — whichever tile is currently hovered (or last-hovered)
+  // responds to A/R/D/E/Enter. Skips if the user is typing into an input.
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const hoveredRef = useRef<number | null>(null);
+  useEffect(() => {
+    hoveredRef.current = hoveredIndex;
+  }, [hoveredIndex]);
+
+  useEffect(() => {
+    if (photos.length === 0) return;
+    function onKey(e: KeyboardEvent): void {
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName?.toLowerCase();
+        if (tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable) return;
+      }
+      const idx = hoveredRef.current;
+      if (idx === null || idx < 0 || idx >= photos.length) return;
+      const p = photos[idx];
+      // Ignore modifier keys — don't hijack Cmd/Ctrl+R (browser reload) etc.
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === "a") {
+        e.preventDefault();
+        onApprove(p.id);
+      } else if (k === "r") {
+        e.preventDefault();
+        onReject(p.id);
+      } else if (k === "e") {
+        e.preventDefault();
+        onEnhance(p.id);
+      } else if (k === "delete" || k === "backspace") {
+        e.preventDefault();
+        onDelete(p.id);
+      } else if (k === "enter") {
+        e.preventDefault();
+        onOpen(idx);
+      } else if (k === "s") {
+        e.preventDefault();
+        onOpenSettings(idx);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [photos, onApprove, onReject, onEnhance, onDelete, onOpen, onOpenSettings]);
+
   if (photos.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-graphite-800 bg-graphite-900/40 p-16 text-center">
@@ -77,22 +123,53 @@ export function JobGrid({ jobId, photos, onOpen, onEnhance, onApprove, onReject,
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-      {photos.map((p, i) => (
-        <PhotoTile
-          key={p.id}
-          jobId={jobId}
-          photo={p}
-          index={i}
-          onOpen={() => onOpen(i)}
-          onEnhance={() => onEnhance(p.id)}
-          onApprove={() => onApprove(p.id)}
-          onReject={() => onReject(p.id)}
-          onDelete={() => onDelete(p.id)}
-          onOpenSettings={() => onOpenSettings(i)}
-        />
-      ))}
+    <>
+      <KeyboardHelpStrip />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+        {photos.map((p, i) => (
+          <div
+            key={p.id}
+            onMouseEnter={() => setHoveredIndex(i)}
+            onMouseLeave={() => setHoveredIndex((cur) => (cur === i ? null : cur))}
+          >
+            <PhotoTile
+              jobId={jobId}
+              photo={p}
+              index={i}
+              isHovered={hoveredIndex === i}
+              onOpen={() => onOpen(i)}
+              onEnhance={() => onEnhance(p.id)}
+              onApprove={() => onApprove(p.id)}
+              onReject={() => onReject(p.id)}
+              onDelete={() => onDelete(p.id)}
+              onOpenSettings={() => onOpenSettings(i)}
+            />
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function KeyboardHelpStrip() {
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px] text-graphite-500">
+      <span className="uppercase tracking-[0.2em] mr-1">Hover a tile</span>
+      <Kbd>A</Kbd> approve
+      <Kbd>R</Kbd> reject
+      <Kbd>E</Kbd> re-enhance
+      <Kbd>S</Kbd> settings
+      <Kbd>Enter</Kbd> open
+      <Kbd>Del</Kbd> remove
     </div>
+  );
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-graphite-900 border border-graphite-800 text-graphite-300 font-mono text-[10px] min-w-[1.5em] justify-center">
+      {children}
+    </span>
   );
 }
 
@@ -100,6 +177,7 @@ function PhotoTile({
   jobId,
   photo,
   index,
+  isHovered,
   onOpen,
   onEnhance,
   onApprove,
@@ -110,6 +188,7 @@ function PhotoTile({
   jobId: string;
   photo: PhotoRow;
   index: number;
+  isHovered: boolean;
   onOpen: () => void;
   onEnhance: () => void;
   onApprove: () => void;
@@ -134,7 +213,11 @@ function PhotoTile({
 
   return (
     <div
-      className="group relative aspect-[3/2] overflow-hidden rounded-2xl bg-graphite-900 border border-graphite-800 hover:border-graphite-600 transition-colors"
+      className={`group relative aspect-[3/2] overflow-hidden rounded-2xl bg-graphite-900 border transition-colors ${
+        isHovered
+          ? "border-cyan/70 ring-2 ring-cyan/20"
+          : "border-graphite-800 hover:border-graphite-600"
+      }`}
     >
       {/* Cover */}
       {showImage ? (

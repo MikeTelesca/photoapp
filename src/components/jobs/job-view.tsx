@@ -194,6 +194,43 @@ export function JobView({ initialJob, initialPhotos }: Props) {
     [initialJob.id, photos]
   );
 
+  // Pulls already-enhanced outputs from an existing Autoenhance order and
+  // distributes them to Photo rows. Useful when a bug marked photos as
+  // failed even though Autoenhance actually delivered them.
+  const [recovering, setRecovering] = useState(false);
+  const recoverFromAutoenhance = useCallback(async () => {
+    setRecovering(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/jobs/${initialJob.id}/recover-from-autoenhance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const msg =
+          body && typeof body === "object" && "error" in body
+            ? String((body as { error: unknown }).error)
+            : null;
+        throw new Error(msg ?? `Recovery failed (HTTP ${res.status})`);
+      }
+      const result = (await res.json()) as {
+        downloaded?: number;
+        matched?: number;
+        failed?: number;
+      };
+      await reloadPhotos();
+      if ((result.downloaded ?? 0) === 0) {
+        setError(`No outputs recovered — Autoenhance had no matching images.`);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Recovery failed");
+    } finally {
+      setRecovering(false);
+    }
+  }, [initialJob.id, reloadPhotos]);
+
   // One-click retry for every photo that errored out. Flips their status
   // back to "pending" + calls enhance-batch which will pick them up
   // alongside any remaining pending photos.
@@ -738,11 +775,23 @@ export function JobView({ initialJob, initialPhotos }: Props) {
               {failedCount > 0 && (
                 <button
                   type="button"
+                  onClick={() => void recoverFromAutoenhance()}
+                  disabled={enhancing || recovering}
+                  title="Pulls already-enhanced outputs from Autoenhance — no new credits spent"
+                  className="h-8 px-3 rounded-lg text-[13px] font-medium border border-cyan/40 bg-cyan/10 text-cyan hover:bg-cyan/20 hover:border-cyan disabled:opacity-40 disabled:cursor-not-allowed transition"
+                >
+                  {recovering ? "Recovering…" : `Recover ${failedCount} from Autoenhance`}
+                </button>
+              )}
+              {failedCount > 0 && (
+                <button
+                  type="button"
                   onClick={() => void retryFailed()}
-                  disabled={enhancing}
+                  disabled={enhancing || recovering}
+                  title="Re-runs these photos through Autoenhance (uses credits)"
                   className="h-8 px-3 rounded-lg text-[13px] font-medium border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 hover:border-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
-                  Retry {failedCount} failed
+                  Retry {failedCount} (uses credits)
                 </button>
               )}
             </div>

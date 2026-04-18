@@ -120,6 +120,28 @@ export type AutoenhanceOrderStatus = {
 };
 
 /**
+ * List all orders for this API key, newest first. Each entry has the same
+ * shape as getOrderStatus. Used by the recovery endpoint to find a
+ * completed Autoenhance order whose outputs belong to a given BatchBase
+ * job — important when Photo.autoenhanceOrderId was cleared by a buggy
+ * earlier poll and we need to re-attach outputs without burning credits.
+ */
+export async function listOrders(): Promise<
+  Array<AutoenhanceOrderStatus & { order_id: string; created_at?: string; total_images?: number }>
+> {
+  const res = await fetch(`${BASE}/orders/`, { headers: autoenhanceHeaders() });
+  if (!res.ok) {
+    throw new Error(`list orders ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+  const json = (await res.json()) as {
+    orders?: Array<
+      AutoenhanceOrderStatus & { order_id: string; created_at?: string; total_images?: number }
+    >;
+  };
+  return json.orders ?? [];
+}
+
+/**
  * Fetch an order's current status. Caller decides when all the
  * downstream images are ready (is_merging=false, is_processing=false,
  * images array populated with enhanced=true).

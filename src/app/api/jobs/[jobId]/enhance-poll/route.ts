@@ -83,29 +83,81 @@ export async function POST(
     : `/BatchBase/_uploads/${job.id}`;
   const addressSlug = slugifyForFilename(job.address);
 
+  // Precompute fileName → photoId fallback lookup (Autoenhance's image_name
+  // typically mirrors the first bracket filename we uploaded).
+  const fileNameToPhoto = new Map<string, string>();
+  for (const p of photosInOrder) {
+    try {
+      const exif = p.exifData ? JSON.parse(p.exifData) : null;
+      const files = exif?.photos;
+      if (Array.isArray(files)) {
+        for (const f of files) {
+          if (f?.fileName && typeof f.fileName === "string") {
+            fileNameToPhoto.set(f.fileName.toLowerCase(), p.id);
+            // Strip extension too — Autoenhance sometimes renames/drops suffixes
+            const stem = f.fileName.toLowerCase().replace(/\.[^.]+$/, "");
+            fileNameToPhoto.set(stem, p.id);
+          }
+        }
+      }
+    } catch {
+      /* skip malformed */
+    }
+  }
+
   // Process all ready Autoenhance images in this poll cycle.
   let downloadedThisPoll = 0;
   let failedThisPoll = 0;
+  let firstUnmatched = true;
 
   for (const image of status.images ?? []) {
     if (!image.image_id) continue;
 
-    // Find the Photo(s) this output maps to. Autoenhance might have grouped
-    // brackets differently than us — unify to the first matching Photo by
-    // orderIndex and merge the rest into it.
-    const bracketIds = image.bracket_ids ?? [];
+    // Find the Photo(s) this output maps to. Try bracket_ids first, then
+    // fall back to image_name → fileName. Autoenhance's bracket_ids field
+    // sometimes isn't populated in the images array even though the order
+    // returns them at registration time.
     const matchedPhotoIds = new Set<string>();
-    for (const bid of bracketIds) {
+    for (const bid of image.bracket_ids ?? []) {
       const pid = bracketToPhoto.get(bid);
       if (pid) matchedPhotoIds.add(pid);
     }
+    // Filename fallback
+    const rawImage = image as unknown as Record<string, unknown>;
+    const candidateNames: string[] = [];
+    for (const key of ["image_name", "name", "source_name", "filename"]) {
+      const v = rawImage[key];
+      if (typeof v === "string" && v) candidateNames.push(v.toLowerCase());
+    }
     if (matchedPhotoIds.size === 0) {
-      log.warn("enhance-poll.no_photo_match", {
-        jobId,
-        orderId: job.autoenhanceOrderId,
-        imageId: image.image_id,
-        bracketIds,
-      });
+      for (const name of candidateNames) {
+        const stem = name.replace(/\.[^.]+$/, "");
+        const pid = fileNameToPhoto.get(name) ?? fileNameToPhoto.get(stem);
+        if (pid) {
+          matchedPhotoIds.add(pid);
+          break;
+        }
+      }
+    }
+    if (matchedPhotoIds.size === 0) {
+      // Log the ENTIRE image object the first time so we can see what
+      // Autoenhance's actual response shape looks like and fix the mapping.
+      if (firstUnmatched) {
+        log.warn("enhance-poll.no_photo_match.shape", {
+          jobId,
+          orderId: job.autoenhanceOrderId,
+          imageId: image.image_id,
+          imageKeys: Object.keys(rawImage),
+          imageSample: JSON.stringify(image).slice(0, 1500),
+        });
+        firstUnmatched = false;
+      } else {
+        log.warn("enhance-poll.no_photo_match", {
+          jobId,
+          orderId: job.autoenhanceOrderId,
+          imageId: image.image_id,
+        });
+      }
       continue;
     }
 
@@ -241,8 +293,33 @@ export async function POST(
     const readyCount = await prisma.photo.count({ where: { jobId, status: "edited" } });
     const failedCount = await prisma.photo.count({ where: { jobId, status: "failed" } });
 
-    // Some photos may still be stuck in "processing" if Autoenhance
-    // silently dropped them — flag them as failed so the UI isn't stuck.
+    // Safety: if Autoenhance says "done" but we couldn't match ANY images
+    // to our Photo rows on this tick, and there are still processing photos,
+    // don't mark them failed or clear the order — leave it so the client
+    // can retry polling after a code fix, or so the user can investigate.
+    const hasImages = (status.images ?? []).length > 0;
+    const matchingTotallyBroken = hasImages && downloadedThisPoll === 0 && remainingProcessing > 0;
+    if (matchingTotallyBroken) {
+      log.error("enhance-poll.matching_broken", {
+        jobId,
+        orderId: job.autoenhanceOrderId,
+        autoenhanceImageCount: (status.images ?? []).length,
+        ourPhotoInOrderCount: photosInOrder.length,
+        remainingProcessing,
+      });
+      return NextResponse.json({
+        status: "processing",
+        progress: {
+          total: photosInOrder.length,
+          ready: readyCount,
+          failed: errorCountFromImages(status.images),
+        },
+        note: "Autoenhance finished but we couldn't match any outputs to photos. Order preserved for retry.",
+      });
+    }
+
+    // Normal completion: mark any genuinely orphaned processing photos as
+    // failed (e.g. Autoenhance dropped them silently) and clear the order.
     if (remainingProcessing > 0) {
       await prisma.photo.updateMany({
         where: { jobId, status: "processing" },
@@ -279,7 +356,7 @@ export async function POST(
 
   // Still in flight — report progress.
   const readyCount = (status.images ?? []).filter((i) => i.enhanced && !i.error).length;
-  const errorCount = (status.images ?? []).filter((i) => !!i.error).length;
+  const errorCount = errorCountFromImages(status.images);
 
   const phase = status.is_merging ? "merging" : status.is_processing ? "processing" : "downloading";
 
@@ -293,4 +370,8 @@ export async function POST(
     downloadedThisPoll,
     failedThisPoll,
   });
+}
+
+function errorCountFromImages(images?: Array<{ error?: string | boolean | null }>): number {
+  return (images ?? []).filter((i) => !!i.error).length;
 }
